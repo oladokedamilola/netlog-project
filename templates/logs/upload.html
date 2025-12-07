@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm p-4">
+        <h4 class="mb-3">Upload Log File</h4>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label">Log Type</label>
+                {{ form.log_type }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Select File</label>
+                {{ form.file }}
+            </div>
+
+            <button class="btn btn-primary">Upload</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

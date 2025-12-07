@@ -1,0 +1,443 @@
+/* style.css
+   LogSight — Concept 5 "Data Pulse"
+   Warm + Bold brand: Warm Orange (#FF7A00), Deep Navy (#1A1F36), Light Cream (#FFF4E6)
+   Purpose: global brand styles, Bootstrap overrides, UI components (cards, nav, buttons, forms, charts)
+*/
+
+/* -------------------------
+   1) Theme variables
+   ------------------------- */
+:root{
+  /* Brand colors */
+  --ls-orange: #FF7A00;
+  --ls-navy: #1A1F36;
+  --ls-cream: #FFF4E6;
+
+  /* Accents */
+  --ls-orange-600: #e36b00;
+  --ls-navy-700: #111422;
+  --ls-muted: #6b7280; /* neutral gray-ish */
+  --ls-success: #16a34a;
+  --ls-warning: #f59e0b;
+  --ls-danger: #ef4444;
+
+  /* UI scale */
+  --max-width: 1200px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* Typography */
+  --font-sans: "Inter", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --type-base: 16px;
+  --type-scale-sm: 0.875rem; /* 14px */
+  --type-scale-md: 1rem;     /* 16px */
+  --type-scale-lg: 1.125rem; /* 18px */
+  --type-scale-xl: 1.5rem;   /* 24px */
+}
+
+/* -------------------------
+   2) Base / Reset
+   ------------------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { font-size: var(--type-base); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+body{
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--ls-navy);
+  background: linear-gradient(180deg, var(--ls-cream) 0%, #fff 100%);
+  -webkit-font-smoothing:antialiased;
+  line-height: 1.45;
+  min-height: 100vh;
+}
+
+/* Make images responsive */
+img { max-width: 100%; display: block; height: auto; }
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ls-navy);
+  margin: 0 0 .5rem 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Utility helpers */
+.container {
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Small text */
+.small { font-size: var(--type-scale-sm); color: var(--ls-muted); }
+
+/* -------------------------
+   3) Brand logo / mark
+   ------------------------- */
+/* A circular "data pulse" mark using gradients & radiating segments */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .75rem;
+  text-decoration: none;
+  color: inherit;
+}
+.brand-logo {
+  --logo-size: 44px;
+  width: var(--logo-size);
+  height: var(--logo-size);
+  position: relative;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(255,255,255,0) 30%),
+              conic-gradient(from 180deg at 50% 50%, var(--ls-orange) 0deg 70deg, transparent 70deg 150deg, rgba(255,122,0,0.18) 150deg 220deg, var(--ls-navy) 220deg 360deg);
+  display: inline-grid;
+  place-items: center;
+  box-shadow: 0 4px 18px rgba(26,30,50,0.12), inset 0 -6px 18px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+
+/* inner core circle */
+.brand-logo::after {
+  content: "";
+  width: 56%;
+  height: 56%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5), inset 0 -4px 8px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+  display: block;
+}
+
+/* brand text */
+.brand-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--ls-navy);
+}
+.brand-sub {
+  display: block;
+  font-size: var(--type-scale-sm);
+  color: var(--ls-muted);
+  margin-top: -2px;
+}
+
+/* -------------------------
+   4) Navbar / header
+   ------------------------- */
+.header {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.90));
+  border-bottom: 1px solid rgba(26,30,50,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+.header-inner {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: .75rem 1rem;
+}
+.nav-left { display:flex; align-items:center; gap:1rem; }
+.nav-links { display:flex; gap:.5rem; align-items:center; }
+.nav-links a {
+  color: var(--ls-navy);
+  padding: .45rem .6rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.nav-links a:hover { background: rgba(26,30,50,0.04); }
+
+/* CTA in nav */
+.btn-cta {
+  display:inline-flex;
+  align-items:center;
+  gap:.6rem;
+  padding: .45rem .9rem;
+  background: var(--ls-orange);
+  color: white;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255,122,0,0.15);
+}
+.btn-cta:hover { background: var(--ls-orange-600); transform: translateY(-1px); }
+
+/* small avatar */
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--ls-navy), #0b1220);
+  color: #fff;
+  display:inline-grid;
+  place-items:center;
+  font-weight:600;
+  font-size: .9rem;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+}
+
+/* -------------------------
+   5) Sidebar (optional layout)
+   ------------------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+@media (max-width: 992px) {
+  .layout { grid-template-columns: 1fr; padding: 1rem; }
+}
+
+.sidebar {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: 0 8px 30px rgba(20,24,40,0.04);
+  height: calc(100vh - 120px);
+  position: sticky;
+  top: 72px;
+}
+.sidebar .nav-item {
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  padding: .55rem;
+  border-radius: 8px;
+  color: var(--ls-navy);
+  text-decoration: none;
+}
+.sidebar .nav-item:hover { background: rgba(26,30,50,0.03); }
+
+/* active item highlight */
+.sidebar .nav-item.active {
+  background: linear-gradient(90deg, rgba(255,122,0,0.08), rgba(26,30,50,0.02));
+  border-left: 3px solid var(--ls-orange);
+  padding-left: .45rem;
+}
+
+/* -------------------------
+   6) Cards / panels
+   ------------------------- */
+.card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: 0 8px 30px rgba(20,24,40,0.04);
+  border: 1px solid rgba(26,30,50,0.03);
+}
+
+/* stat / KPI tile */
+.kpi {
+  display:flex;
+  align-items:center;
+  gap: .75rem;
+  padding: .9rem;
+  border-radius: 10px;
+}
+.kpi .kpi-value { font-size: 1.25rem; font-weight: 700; color: var(--ls-navy); }
+.kpi .kpi-label { font-size: var(--type-scale-sm); color: var(--ls-muted); }
+
+/* colored accent bar for cards */
+.card-accent {
+  position: relative;
+  overflow: hidden;
+}
+.card-accent::before{
+  content: "";
+  position: absolute;
+  left: -40%;
+  top: -30%;
+  width: 200%;
+  height: 120%;
+  background: radial-gradient(closest-side, rgba(255,122,0,0.12), rgba(255,122,0,0.03));
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+/* small badges */
+.badge {
+  display:inline-block;
+  padding: .25rem .5rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+}
+.badge--muted { background: rgba(26,30,50,0.06); color: var(--ls-navy); }
+.badge--orange { background: var(--ls-orange); color: white; }
+.badge--success { background: var(--ls-success); color: white; }
+
+/* -------------------------
+   7) Buttons & forms
+   ------------------------- */
+.btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.5rem;
+  border-radius: .65rem;
+  padding: .52rem .8rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--ls-navy);
+  color: white;
+  box-shadow: 0 6px 18px rgba(10,14,24,0.12);
+}
+.btn-primary:hover { background: #0e1626; transform: translateY(-1px); }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(26,30,50,0.08);
+  color: var(--ls-navy);
+}
+.form-control {
+  width:100%;
+  padding: .6rem .75rem;
+  border-radius: .6rem;
+  border: 1px solid rgba(26,30,50,0.08);
+  background: white;
+  font-size: var(--type-scale-md);
+}
+
+/* file input (custom) */
+.input-file {
+  position: relative;
+  display: grid;
+  gap:.5rem;
+}
+.input-file input[type="file"] { display: none; }
+
+.input-file .dropzone {
+  border: 2px dashed rgba(26,30,50,0.06);
+  padding: 1.1rem;
+  border-radius: .8rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.98));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.6rem;
+  cursor: pointer;
+}
+.input-file .dropzone:hover { background: rgba(255,255,255,1); box-shadow: 0 8px 18px rgba(26,30,50,0.03); }
+
+/* small helper under form */
+.form-help { font-size: var(--type-scale-sm); color: var(--ls-muted); }
+
+/* -------------------------
+   8) Tables & lists
+   ------------------------- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th, .table td {
+  padding: .65rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(26,30,50,0.04);
+}
+.table thead th { font-weight: 700; color: var(--ls-navy); font-size: .95rem; }
+
+/* status pills */
+.pill {
+  display:inline-block;
+  padding: .28rem .5rem;
+  border-radius: 999px;
+  font-weight:700;
+  font-size: .75rem;
+}
+.pill--ok { background: rgba(34,197,94,0.12); color: var(--ls-success); }
+.pill--warn { background: rgba(245,158,11,0.12); color: var(--ls-warning); }
+.pill--err { background: rgba(239,68,68,0.10); color: var(--ls-danger); }
+
+/* -------------------------
+   9) Charts container
+   ------------------------- */
+.chart-card {
+  padding: .85rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #fff, #fff);
+  border: 1px solid rgba(26,30,50,0.03);
+}
+.chart-canvas {
+  width: 100%;
+  height: 320px;
+}
+
+/* small legend */
+.chart-legend { display:flex; gap: .6rem; align-items:center; flex-wrap:wrap; }
+
+/* -------------------------
+   10) Upload history / file list
+   ------------------------- */
+.upload-list { display:flex; flex-direction:column; gap:.6rem; }
+.upload-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: .6rem;
+  border-radius: .6rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.96));
+  border: 1px solid rgba(26,30,50,0.03);
+}
+
+/* -------------------------
+   11) Responsive helpers
+   ------------------------- */
+.row { display:flex; gap: 1rem; flex-wrap:wrap; }
+.col { flex: 1 1 0; min-width: 220px; }
+.col-2 { flex: 0 0 48%; }
+@media (max-width: 768px) {
+  .col-2 { flex-basis: 100%; }
+}
+
+/* -------------------------
+   12) Microinteractions & focus
+   ------------------------- */
+:focus { outline: none; box-shadow: 0 0 0 4px rgba(255,122,0,0.12); border-color: var(--ls-orange-600); }
+
+/* link styles */
+a { color: var(--ls-navy); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* -------------------------
+   13) Footer
+   ------------------------- */
+.footer {
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--ls-muted);
+  font-size: .9rem;
+  margin-top: 2rem;
+}
+
+/* -------------------------
+   14) Small utilities (spacing)
+   ------------------------- */
+.mt-1 { margin-top: .5rem; }
+.mt-2 { margin-top: 1rem; }
+.mb-1 { margin-bottom: .5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.p-1 { padding: .5rem; }
+.p-2 { padding: 1rem; }
+
+/* -------------------------
+   15) Accessibility tweaks
+   ------------------------- */
+/* Ensure important interactive colors meet contrast
+   Use big, bold text on CTAs and avoid low-contrast text on brand orange */
+.btn-cta, .btn-primary { font-size: 0.95rem; }
+
+/* End of style.css */

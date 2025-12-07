@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4>Your Upload History</h4>
+    <hr>
+
+    {% if uploads %}
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>Log Type</th>
+                    <th>File</th>
+                    <th>Uploaded At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in uploads %}
+                <tr>
+                    <td>{{ item.get_log_type_display }}</td>
+                    <td><a href="{{ item.file.url }}" target="_blank">Download</a></td>
+                    <td>{{ item.uploaded_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No uploads yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

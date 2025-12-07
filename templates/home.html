@@ -1,0 +1,43 @@
+{% extends "base_public.html" %}
+{% block title %}Home - LogSight{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero text-center py-5">
+    <h1 class="display-4">LogSight</h1>
+    <p class="lead">Clarity, insights, and control over your server logs — in seconds.</p>
+    <a href="{% url 'register' %}" class="btn btn-warning btn-lg mt-3">Get Started</a>
+</section>
+
+<!-- Features Section -->
+<section class="features py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card p-4 border rounded shadow-sm h-100">
+                    <h4>Upload Logs</h4>
+                    <p>Supports Apache, Nginx, IIS, and more. Drag, drop, and go.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card p-4 border rounded shadow-sm h-100">
+                    <h4>Analyze & Visualize</h4>
+                    <p>Instant charts and insights with top IPs, endpoints, and error trends.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card p-4 border rounded shadow-sm h-100">
+                    <h4>Export Reports</h4>
+                    <p>Download detailed reports for monitoring or compliance purposes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="cta py-5 text-center bg-light rounded">
+    <h2>Start gaining insights today</h2>
+    <a href="{% url 'register' %}" class="btn btn-warning btn-lg mt-3">Create Account</a>
+</section>
+{% endblock %}
