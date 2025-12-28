@@ -440,4 +440,50 @@ a:hover { text-decoration: underline; }
    Use big, bold text on CTAs and avoid low-contrast text on brand orange */
 .btn-cta, .btn-primary { font-size: 0.95rem; }
 
+
+/* -------------------------
+   16) Fixes for home.html layout issues
+   ------------------------- */
+
+/* Prevent horizontal scroll globally */
+body {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* Fix container width issues */
+.container, .section-container {
+    width: 100%;
+    max-width: var(--max-width);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Ensure Bootstrap rows don't cause overflow */
+.row {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+}
+
+.row > * {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* Fix for data-pulse overflow */
+.hero-section {
+    overflow: hidden;
+}
+
+.data-pulse {
+    pointer-events: none;
+}
+
+/* Make sure all section containers are properly constrained */
+section {
+    width: 100%;
+    overflow: hidden;
+}
 /* End of style.css */

@@ -2,15 +2,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-
+from .views import home
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    path('', include('accounts.urls')),
+    path('', home, name='home'),
+    path('accounts', include('accounts.urls')),
     path('logs/', include('logs.urls')),
     path('analytics/', include('analytics.urls')),
     path('api/analytics/', include('analytics.urls')),
-    path('reports/', include('reports.urls')),
+    # path('reports/', include('reports.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,9 +1,71 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="container mt-5">
-    <h2>Welcome, {{ request.user.username }} 👋</h2>
-    <p>This is your dashboard. More analytics coming soon.</p>
+{% extends "base_user.html" %}
+{% block title %}Dashboard - LogSight{% endblock %}
 
-    <a href="{% url 'logout' %}" class="btn btn-danger mt-3">Logout</a>
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">Welcome, {{ user.first_name }}!</h2>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card p-3 shadow-sm">
+                <h5>Total Uploads</h5>
+                <h3>{{ total_uploads }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card p-3 shadow-sm">
+                <h5>Total Parsed Entries</h5>
+                <h3>{{ total_entries }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card p-3 shadow-sm">
+                <h5>Recent Errors</h5>
+                <h3>{{ recent_errors }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card p-3 shadow-sm">
+                <h5>Top IPs</h5>
+                <h3>{{ top_ips_count }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Uploads Table -->
+    <div class="card shadow-sm p-3">
+        <h5 class="mb-3">Recent Uploads</h5>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Uploaded At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for upload in recent_uploads %}
+                    <tr>
+                        <td>{{ upload.file.name|truncatechars:30 }}</td>
+                        <td>{{ upload.log_type }}</td>
+                        <td>{{ upload.status }}</td>
+                        <td>{{ upload.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <a href="{% url 'upload_detail' upload.id %}" class="btn btn-sm btn-warning">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No uploads yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

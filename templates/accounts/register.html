@@ -1,46 +1,795 @@
 {% extends "base_public.html" %}
+{% load static %}
+
 {% block title %}Register - LogSight{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Password strength indicator */
+    .password-strength {
+        margin-top: 0.5rem;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease-out;
+    }
+    
+    .password-strength.show {
+        max-height: 100px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .strength-bar {
+        height: 6px;
+        background-color: #e9ecef;
+        border-radius: 3px;
+        margin-bottom: 5px;
+        overflow: hidden;
+    }
+    
+    .strength-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 3px;
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    
+    .strength-text {
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .strength-weak {
+        color: #dc3545;
+    }
+    
+    .strength-fair {
+        color: #fd7e14;
+    }
+    
+    .strength-good {
+        color: #ffc107;
+    }
+    
+    .strength-strong {
+        color: #20c997;
+    }
+    
+    .strength-very-strong {
+        color: #198754;
+    }
+    
+    /* Password requirement list */
+    .password-requirements {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease-out;
+    }
+    
+    .password-requirements.show {
+        max-height: 200px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .requirement {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.25rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s ease;
+    }
+    
+    .password-requirements.show .requirement {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    
+    /* Stagger the requirement animations */
+    .password-requirements.show .requirement:nth-child(1) { transition-delay: 0.05s; }
+    .password-requirements.show .requirement:nth-child(2) { transition-delay: 0.1s; }
+    .password-requirements.show .requirement:nth-child(3) { transition-delay: 0.15s; }
+    .password-requirements.show .requirement:nth-child(4) { transition-delay: 0.2s; }
+    .password-requirements.show .requirement:nth-child(5) { transition-delay: 0.25s; }
+    
+    .requirement i {
+        margin-right: 0.5rem;
+        width: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .requirement.met {
+        color: #198754;
+    }
+    
+    .requirement.unmet {
+        color: #6c757d;
+    }
+    
+    /* Password input wrapper */
+    .password-input-wrapper {
+        position: relative;
+    }
+    
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 4px;
+        z-index: 10;
+        transition: color 0.2s ease;
+    }
+    
+    .password-toggle:hover {
+        color: #495057;
+    }
+    
+    /* Password match indicator */
+    .password-match {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease-out;
+    }
+    
+    .password-match.show {
+        max-height: 30px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .match-valid {
+        color: #198754;
+    }
+    
+    .match-invalid {
+        color: #dc3545;
+    }
+    
+    /* Enhanced card styling */
+    .register-card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .register-card .card-header {
+        background: linear-gradient(135deg, var(--ls-orange), #ff9a3d);
+        color: white;
+        border: none;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .register-card .card-body {
+        padding: 2rem;
+    }
+    
+    /* Brand styling */
+    .brand-section {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .brand-logo-small {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        position: relative;
+        border-radius: 9999px;
+        background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(255,255,255,0) 30%),
+                    conic-gradient(from 180deg at 50% 50%, var(--ls-orange) 0deg 70deg, transparent 70deg 150deg, rgba(255,122,0,0.18) 150deg 220deg, var(--ls-navy) 220deg 360deg);
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 12px rgba(26,30,50,0.12);
+    }
+    
+    .brand-logo-small::after {
+        content: "";
+        width: 56%;
+        height: 56%;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+        box-shadow: 0 1px 0 rgba(255,255,255,0.5);
+    }
+    
+    /* Custom form styling */
+    .form-control:focus {
+        border-color: var(--ls-orange);
+        box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.25);
+    }
+    
+    /* Submit button */
+    .btn-register {
+        background: linear-gradient(135deg, var(--ls-orange), #ff9a3d);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        margin-top: 1.5rem;
+    }
+    
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 122, 0, 0.3);
+    }
+    
+    .btn-register:disabled {
+        opacity: 0.65;
+        transform: none;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+    
+    /* Password field hint */
+    .password-hint {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        opacity: 0;
+        transform: translateY(-5px);
+        transition: all 0.3s ease;
+    }
+    
+    .password-hint.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm p-4">
-            <h3 class="text-center mb-4">Create a LogSight Account</h3>
-            <form method="POST" action="{% url 'register' %}">
-                {% csrf_token %}
-
-                <div class="mb-3">
-                    <label for="first_name" class="form-label">First Name</label>
-                    <input type="text" name="first_name" class="form-control" id="first_name" placeholder="Enter first name" required>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card register-card shadow-lg">
+                <div class="card-header">
+                    <div class="brand-section">
+                        <div class="brand-logo-small"></div>
+                        <h3 class="mb-0">Join LogSight</h3>
+                        <p class="mb-0">Start analyzing your logs in minutes</p>
+                    </div>
                 </div>
-
-                <div class="mb-3">
-                    <label for="last_name" class="form-label">Last Name</label>
-                    <input type="text" name="last_name" class="form-control" id="last_name" placeholder="Enter last name" required>
+                
+                <div class="card-body">
+                    <form method="POST" action="{% url 'register' %}" id="registerForm" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Please correct the errors below.
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Email Field -->
+                        <div class="mb-4">
+                            <label for="email" class="form-label fw-semibold">
+                                <i class="fas fa-envelope me-2"></i>Email Address
+                            </label>
+                            <input type="email" 
+                                   name="email" 
+                                   class="form-control form-control-lg {% if form.email.errors %}is-invalid{% endif %}" 
+                                   id="email" 
+                                   placeholder="your.email@example.com" 
+                                   value="{{ form.email.value|default:'' }}"
+                                   required
+                                   autocomplete="email">
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.email.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Password Field -->
+                        <div class="mb-4">
+                            <label for="password1" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            <div class="password-input-wrapper">
+                                <input type="password" 
+                                       name="password1" 
+                                       class="form-control form-control-lg {% if form.password1.errors %}is-invalid{% endif %}" 
+                                       id="password1" 
+                                       placeholder="Create a strong password" 
+                                       required
+                                       autocomplete="new-password"
+                                       onfocus="showPasswordConstraints()"
+                                       onblur="hidePasswordConstraints()"
+                                       oninput="checkPasswordStrength(this.value)">
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password1', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Password hint -->
+                            <div class="password-hint" id="passwordHint">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Click to see password requirements</span>
+                            </div>
+                            
+                            <!-- Password Strength Indicator -->
+                            <div class="password-strength" id="passwordStrength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strengthFill"></div>
+                                </div>
+                                <div class="strength-text" id="strengthText"></div>
+                            </div>
+                            
+                            <!-- Password Requirements -->
+                            <div class="password-requirements" id="passwordRequirements">
+                                <div class="requirement unmet" id="reqLength">
+                                    <i class="fas fa-circle"></i>
+                                    <span>At least 8 characters</span>
+                                </div>
+                                <div class="requirement unmet" id="reqLowercase">
+                                    <i class="fas fa-circle"></i>
+                                    <span>One lowercase letter</span>
+                                </div>
+                                <div class="requirement unmet" id="reqUppercase">
+                                    <i class="fas fa-circle"></i>
+                                    <span>One uppercase letter</span>
+                                </div>
+                                <div class="requirement unmet" id="reqNumber">
+                                    <i class="fas fa-circle"></i>
+                                    <span>One number</span>
+                                </div>
+                                <div class="requirement unmet" id="reqSpecial">
+                                    <i class="fas fa-circle"></i>
+                                    <span>One special character</span>
+                                </div>
+                            </div>
+                            
+                            {% if form.password1.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password1.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Confirm Password Field -->
+                        <div class="mb-4">
+                            <label for="password2" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Confirm Password
+                            </label>
+                            <div class="password-input-wrapper">
+                                <input type="password" 
+                                       name="password2" 
+                                       class="form-control form-control-lg {% if form.password2.errors %}is-invalid{% endif %}" 
+                                       id="password2" 
+                                       placeholder="Re-enter your password" 
+                                       required
+                                       autocomplete="new-password"
+                                       oninput="checkPasswordMatch()"
+                                       onfocus="showConfirmPasswordMatch()"
+                                       onblur="hideConfirmPasswordMatch()">
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password2', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Password Match Indicator -->
+                            <div class="password-match" id="passwordMatch">
+                                <i class="fas fa-check-circle d-none" id="matchIcon"></i>
+                                <span id="matchText"></span>
+                            </div>
+                            
+                            {% if form.password2.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password2.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label small" for="terms">
+                                I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and <a href="#" class="text-decoration-none">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-register btn-lg w-100" id="submitBtn" disabled>
+                            <i class="fas fa-rocket me-2"></i>Create Account
+                        </button>
+                        
+                        <!-- Divider -->
+                        <div class="text-center my-4">
+                            <span class="text-muted">or</span>
+                        </div>
+                        
+                        <!-- Login Link -->
+                        <div class="text-center">
+                            <p class="mb-0">
+                                Already have an account? 
+                                <a href="{% url 'login' %}" class="fw-semibold text-decoration-none">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                                </a>
+                            </p>
+                        </div>
+                    </form>
                 </div>
-
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" id="email" placeholder="Enter email" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="password1" class="form-label">Password</label>
-                    <input type="password" name="password1" class="form-control" id="password1" placeholder="Enter password" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="password2" class="form-label">Confirm Password</label>
-                    <input type="password" name="password2" class="form-control" id="password2" placeholder="Confirm password" required>
-                </div>
-
-                <button type="submit" class="btn btn-warning w-100">Register</button>
-
-                <div class="mt-3 text-center">
-                    <small>Already have an account? <a href="{% url 'login' %}">Login</a></small>
-                </div>
-            </form>
+            </div>
+            
+            <!-- Security Note -->
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Your data is secured with enterprise-grade encryption
+                </small>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Variables to track state
+    let isPasswordFocused = false;
+    let isConfirmPasswordFocused = false;
+    let hasPasswordContent = false;
+    
+    // Show password constraints
+    function showPasswordConstraints() {
+        isPasswordFocused = true;
+        const passwordHint = document.getElementById('passwordHint');
+        const passwordRequirements = document.getElementById('passwordRequirements');
+        
+        // Show hint with animation
+        setTimeout(() => {
+            passwordHint.classList.add('show');
+        }, 100);
+        
+        // Show requirements with animation
+        setTimeout(() => {
+            passwordRequirements.classList.add('show');
+        }, 200);
+        
+        // If there's content, also show strength indicator
+        const password = document.getElementById('password1').value;
+        if (password) {
+            setTimeout(() => {
+                document.getElementById('passwordStrength').classList.add('show');
+            }, 300);
+        }
+    }
+    
+    // Hide password constraints
+    function hidePasswordConstraints() {
+        isPasswordFocused = false;
+        const passwordHint = document.getElementById('passwordHint');
+        const passwordRequirements = document.getElementById('passwordRequirements');
+        const passwordStrength = document.getElementById('passwordStrength');
+        const password = document.getElementById('password1').value;
+        
+        // Hide hint
+        passwordHint.classList.remove('show');
+        
+        // Only hide if password is empty
+        if (!password) {
+            setTimeout(() => {
+                passwordRequirements.classList.remove('show');
+            }, 100);
+            
+            setTimeout(() => {
+                passwordStrength.classList.remove('show');
+            }, 200);
+        } else {
+            // Keep strength indicator visible if there's content
+            passwordStrength.classList.add('show');
+        }
+    }
+    
+    // Show confirm password match indicator
+    function showConfirmPasswordMatch() {
+        isConfirmPasswordFocused = true;
+        const passwordMatch = document.getElementById('passwordMatch');
+        const password2 = document.getElementById('password2').value;
+        
+        if (password2) {
+            setTimeout(() => {
+                passwordMatch.classList.add('show');
+            }, 100);
+        }
+    }
+    
+    // Hide confirm password match indicator
+    function hideConfirmPasswordMatch() {
+        isConfirmPasswordFocused = false;
+        const passwordMatch = document.getElementById('passwordMatch');
+        const password2 = document.getElementById('password2').value;
+        
+        // Only hide if field is empty
+        if (!password2) {
+            setTimeout(() => {
+                passwordMatch.classList.remove('show');
+            }, 100);
+        }
+    }
+    
+    // Password strength checker
+    function checkPasswordStrength(password) {
+        const strengthBar = document.getElementById('strengthFill');
+        const strengthText = document.getElementById('strengthText');
+        const passwordStrength = document.getElementById('passwordStrength');
+        const passwordHint = document.getElementById('passwordHint');
+        
+        // Update hasPasswordContent state
+        hasPasswordContent = password.length > 0;
+        
+        // Reset
+        strengthBar.style.width = '0%';
+        strengthBar.style.backgroundColor = '#dc3545';
+        strengthText.textContent = '';
+        
+        if (!password) {
+            // Hide hint if field is focused but empty
+            if (isPasswordFocused) {
+                passwordHint.innerHTML = '<i class="fas fa-info-circle"></i><span>Click to see password requirements</span>';
+                passwordHint.classList.add('show');
+            }
+            return;
+        }
+        
+        // Update hint text
+        passwordHint.innerHTML = '<i class="fas fa-key"></i><span>Password strength indicator</span>';
+        
+        // Show strength indicator if not already showing
+        if (!passwordStrength.classList.contains('show')) {
+            passwordStrength.classList.add('show');
+        }
+        
+        // Check requirements
+        const hasMinLength = password.length >= 8;
+        const hasLowercase = /[a-z]/.test(password);
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+        
+        // Update requirement indicators
+        updateRequirement('reqLength', hasMinLength);
+        updateRequirement('reqLowercase', hasLowercase);
+        updateRequirement('reqUppercase', hasUppercase);
+        updateRequirement('reqNumber', hasNumber);
+        updateRequirement('reqSpecial', hasSpecial);
+        
+        // Calculate strength score (0-100)
+        let score = 0;
+        if (hasMinLength) score += 20;
+        if (hasLowercase) score += 20;
+        if (hasUppercase) score += 20;
+        if (hasNumber) score += 20;
+        if (hasSpecial) score += 20;
+        
+        // Determine strength level
+        let strengthLevel, color, text;
+        if (score <= 20) {
+            strengthLevel = 'Weak';
+            color = '#dc3545';
+        } else if (score <= 40) {
+            strengthLevel = 'Fair';
+            color = '#fd7e14';
+        } else if (score <= 60) {
+            strengthLevel = 'Good';
+            color = '#ffc107';
+        } else if (score <= 80) {
+            strengthLevel = 'Strong';
+            color = '#20c997';
+        } else {
+            strengthLevel = 'Very Strong';
+            color = '#198754';
+        }
+        
+        // Update UI
+        strengthBar.style.width = score + '%';
+        strengthBar.style.backgroundColor = color;
+        strengthText.textContent = `Password Strength: ${strengthLevel}`;
+        strengthText.className = `strength-text strength-${strengthLevel.toLowerCase().replace(' ', '-')}`;
+        
+        // Enable/disable submit button based on minimum requirements
+        const isValidPassword = score >= 60; // At least "Good" strength
+        checkFormValidity(isValidPassword);
+    }
+    
+    // Update requirement indicator
+    function updateRequirement(elementId, isMet) {
+        const element = document.getElementById(elementId);
+        const icon = element.querySelector('i');
+        
+        if (isMet) {
+            element.classList.remove('unmet');
+            element.classList.add('met');
+            icon.className = 'fas fa-check-circle';
+        } else {
+            element.classList.remove('met');
+            element.classList.add('unmet');
+            icon.className = 'fas fa-circle';
+        }
+    }
+    
+    // Check if passwords match
+    function checkPasswordMatch() {
+        const password1 = document.getElementById('password1').value;
+        const password2 = document.getElementById('password2').value;
+        const matchIcon = document.getElementById('matchIcon');
+        const matchText = document.getElementById('matchText');
+        const passwordMatch = document.getElementById('passwordMatch');
+        
+        if (!password2) {
+            passwordMatch.classList.remove('show');
+            return;
+        }
+        
+        // Show match indicator if not already showing
+        if (!passwordMatch.classList.contains('show') && (isConfirmPasswordFocused || password2.length > 0)) {
+            passwordMatch.classList.add('show');
+        }
+        
+        if (password1 === password2 && password1.length > 0) {
+            matchIcon.className = 'fas fa-check-circle match-valid';
+            matchText.textContent = 'Passwords match';
+            matchText.className = 'match-valid';
+            matchIcon.classList.remove('d-none');
+        } else {
+            matchIcon.className = 'fas fa-times-circle match-invalid';
+            matchText.textContent = 'Passwords do not match';
+            matchText.className = 'match-invalid';
+            matchIcon.classList.remove('d-none');
+        }
+        
+        // Check form validity
+        const isValidPassword = checkPasswordStrengthValue(document.getElementById('password1').value) >= 60;
+        const passwordsMatch = password1 === password2 && password1.length > 0;
+        checkFormValidity(isValidPassword && passwordsMatch);
+    }
+    
+    // Calculate password strength score
+    function checkPasswordStrengthValue(password) {
+        if (!password) return 0;
+        
+        let score = 0;
+        if (password.length >= 8) score += 20;
+        if (/[a-z]/.test(password)) score += 20;
+        if (/[A-Z]/.test(password)) score += 20;
+        if (/\d/.test(password)) score += 20;
+        if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score += 20;
+        
+        return score;
+    }
+    
+    // Toggle password visibility
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+            button.setAttribute('aria-label', 'Hide password');
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+            button.setAttribute('aria-label', 'Show password');
+        }
+    }
+    
+    // Check overall form validity
+    function checkFormValidity(isValidPassword) {
+        const email = document.getElementById('email').value;
+        const password1 = document.getElementById('password1').value;
+        const password2 = document.getElementById('password2').value;
+        const terms = document.getElementById('terms').checked;
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Check if passwords match
+        const passwordsMatch = password1 === password2 && password1.length > 0;
+        
+        // Enable submit button only if all conditions are met
+        if (email && isValidPassword && passwordsMatch && terms) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+    
+    // Initialize form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check form validity on email and terms changes
+        document.getElementById('email').addEventListener('input', function() {
+            const isValidPassword = checkPasswordStrengthValue(document.getElementById('password1').value) >= 60;
+            checkFormValidity(isValidPassword);
+        });
+        
+        document.getElementById('terms').addEventListener('change', function() {
+            const isValidPassword = checkPasswordStrengthValue(document.getElementById('password1').value) >= 60;
+            checkFormValidity(isValidPassword);
+        });
+        
+        // Initial check
+        checkPasswordStrength('');
+        checkPasswordMatch();
+        
+        // Add real-time validation for password requirements
+        document.getElementById('password1').addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+            // Also trigger password match check
+            setTimeout(checkPasswordMatch, 100);
+        });
+        
+        document.getElementById('password2').addEventListener('input', checkPasswordMatch);
+        
+        // Show/hide constraints on focus/blur
+        document.getElementById('password1').addEventListener('focus', showPasswordConstraints);
+        document.getElementById('password1').addEventListener('blur', hidePasswordConstraints);
+        document.getElementById('password2').addEventListener('focus', showConfirmPasswordMatch);
+        document.getElementById('password2').addEventListener('blur', hideConfirmPasswordMatch);
+        
+        // Form submission handler
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password1 = document.getElementById('password1').value;
+            const password2 = document.getElementById('password2').value;
+            const isValidPassword = checkPasswordStrengthValue(password1) >= 60;
+            
+            if (!isValidPassword) {
+                e.preventDefault();
+                alert('Please create a stronger password. Your password should be at least "Good" strength.');
+                document.getElementById('password1').focus();
+                // Show constraints
+                showPasswordConstraints();
+                return;
+            }
+            
+            if (password1 !== password2) {
+                e.preventDefault();
+                alert('Passwords do not match. Please ensure both password fields are identical.');
+                document.getElementById('password2').focus();
+                // Show match indicator
+                showConfirmPasswordMatch();
+                return;
+            }
+            
+            // Add loading state
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+        });
+        
+        // Show password requirements if there's an error
+        const passwordError = document.querySelector('.password-requirements').parentElement.querySelector('.invalid-feedback');
+        if (passwordError && passwordError.textContent.trim()) {
+            setTimeout(() => {
+                showPasswordConstraints();
+                document.getElementById('passwordStrength').classList.add('show');
+                document.getElementById('passwordRequirements').classList.add('show');
+            }, 300);
+        }
+    });
+</script>
 {% endblock %}

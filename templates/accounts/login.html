@@ -1,31 +1,479 @@
 {% extends "base_public.html" %}
+{% load static %}
+
 {% block title %}Login - LogSight{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Consistent with register styling */
+    .login-card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .login-card .card-header {
+        background: linear-gradient(135deg, var(--ls-orange), #ff9a3d);
+        color: white;
+        border: none;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .login-card .card-body {
+        padding: 2rem;
+    }
+    
+    /* Brand styling - identical to register */
+    .brand-section {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .brand-logo-small {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        position: relative;
+        border-radius: 9999px;
+        background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(255,255,255,0) 30%),
+                    conic-gradient(from 180deg at 50% 50%, var(--ls-orange) 0deg 70deg, transparent 70deg 150deg, rgba(255,122,0,0.18) 150deg 220deg, var(--ls-navy) 220deg 360deg);
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 12px rgba(26,30,50,0.12);
+    }
+    
+    .brand-logo-small::after {
+        content: "";
+        width: 56%;
+        height: 56%;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+        box-shadow: 0 1px 0 rgba(255,255,255,0.5);
+    }
+    
+    /* Custom form styling - identical to register */
+    .form-control:focus {
+        border-color: var(--ls-orange);
+        box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.25);
+    }
+    
+    /* Login button - similar styling to register button */
+    .btn-login {
+        background: linear-gradient(135deg, var(--ls-orange), #ff9a3d);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 122, 0, 0.3);
+    }
+    
+    .btn-login:disabled {
+        opacity: 0.65;
+        transform: none;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+    
+    /* Password input wrapper - consistent with register */
+    .password-input-wrapper {
+        position: relative;
+    }
+    
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 4px;
+        z-index: 10;
+        transition: color 0.2s ease;
+    }
+    
+    .password-toggle:hover {
+        color: #495057;
+    }
+    
+    /* Remember me styling */
+    .form-check-input:checked {
+        background-color: var(--ls-orange);
+        border-color: var(--ls-orange);
+    }
+    
+    .form-check-input:focus {
+        border-color: var(--ls-orange);
+        box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.25);
+    }
+    
+    /* Forgot password link */
+    .forgot-password-link {
+        color: var(--ls-orange);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .forgot-password-link:hover {
+        color: #e66a00;
+        text-decoration: underline;
+    }
+    
+    /* Social login buttons (if needed) */
+    .social-login-btn {
+        border: 1px solid #dee2e6;
+        background: white;
+        color: #495057;
+        font-weight: 500;
+        padding: 0.75rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        margin-bottom: 0.75rem;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .social-login-btn:hover {
+        background: #f8f9fa;
+        border-color: #ced4da;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Divider styling */
+    .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 1.5rem 0;
+        color: #6c757d;
+    }
+    
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .divider span {
+        padding: 0 1rem;
+    }
+    
+    /* Error message styling */
+    .login-error {
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    /* Loading animation */
+    .spinner {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Welcome back message */
+    .welcome-message {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm p-4">
-            <h3 class="text-center mb-4">Login to LogSight</h3>
-            <form method="POST" action="{% url 'login' %}">
-                {% csrf_token %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card login-card shadow-lg">
+                <div class="card-header">
+                    <div class="brand-section">
+                        <div class="brand-logo-small"></div>
+                        <h3 class="mb-0">Welcome Back</h3>
+                        <p class="mb-0">Sign in to your LogSight account</p>
+                    </div>
+                </div>
                 
-                <div class="mb-3">
-                    <label for="username" class="form-label">Email or Username</label>
-                    <input type="text" name="username" class="form-control" id="username" placeholder="Enter your email or username" required>
+                <div class="card-body">
+                    <div class="welcome-message">
+                        <i class="fas fa-chart-line me-1"></i>
+                        Continue analyzing your logs and monitoring your systems
+                    </div>
+                    
+                    <form method="POST" action="{% url 'login' %}" id="loginForm" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger login-error" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Invalid email or password. Please try again.
+                        </div>
+                        {% endif %}
+                        
+                        {% if next %}
+                            {% if user.is_authenticated %}
+                            <div class="alert alert-warning" role="alert">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Your account doesn't have access to this page. Please login with an account that has access.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Please login to access this page.
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                        
+                        <!-- Email Field -->
+                        <div class="mb-4">
+                            <label for="email" class="form-label fw-semibold">
+                                <i class="fas fa-envelope me-2"></i>Email Address
+                            </label>
+                            <input type="email" 
+                                   name="username" 
+                                   class="form-control form-control-lg {% if form.errors %}is-invalid{% endif %}" 
+                                   id="email" 
+                                   placeholder="your.email@example.com" 
+                                   value="{{ form.username.value|default:'' }}"
+                                   required
+                                   autocomplete="email"
+                                   autofocus>
+                            <div class="invalid-feedback">
+                                Please enter a valid email address.
+                            </div>
+                        </div>
+                        
+                        <!-- Password Field -->
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            <div class="password-input-wrapper">
+                                <input type="password" 
+                                       name="password" 
+                                       class="form-control form-control-lg {% if form.errors %}is-invalid{% endif %}" 
+                                       id="password" 
+                                       placeholder="Enter your password" 
+                                       required
+                                       autocomplete="current-password">
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">
+                                Please enter your password.
+                            </div>
+                            
+                            <!-- Forgot Password Link -->
+                            <div class="text-end mt-2">
+                                <a href="#" class="forgot-password-link small">
+                                    <i class="fas fa-key me-1"></i>Forgot your password?
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Remember Me -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                            <label class="form-check-label" for="remember">
+                                Remember me on this device
+                            </label>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-login btn-lg w-100" id="submitBtn">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+                        
+                        <!-- Divider -->
+                        <div class="divider">
+                            <span>or</span>
+                        </div>
+                        
+                        <!-- Social Login Options (Optional) -->
+                        <!-- Uncomment if you have social auth configured -->
+                        {% comment %} {#
+                        <div class="mb-3">
+                            <button type="button" class="social-login-btn">
+                                <i class="fab fa-google text-danger"></i>
+                                Continue with Google
+                            </button>
+                            <button type="button" class="social-login-btn">
+                                <i class="fab fa-github"></i>
+                                Continue with GitHub
+                            </button>
+                        </div>
+                        #} {% endcomment %}
+                        
+                        <!-- Register Link -->
+                        <div class="text-center mt-4">
+                            <p class="mb-0">
+                                Don't have an account? 
+                                <a href="{% url 'register' %}" class="fw-semibold text-decoration-none">
+                                    <i class="fas fa-user-plus me-1"></i>Create Account
+                                </a>
+                            </p>
+                        </div>
+                        
+                        <!-- Hidden next field -->
+                        {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                        {% endif %}
+                    </form>
                 </div>
-
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" id="password" placeholder="Enter password" required>
-                </div>
-
-                <button type="submit" class="btn btn-warning w-100">Login</button>
-
-                <div class="mt-3 text-center">
-                    <small>Don't have an account? <a href="{% url 'register' %}">Register</a></small>
-                </div>
-            </form>
+            </div>
+            
+            <!-- Security Note - Consistent with register -->
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Your data is secured with enterprise-grade encryption
+                </small>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle password visibility
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+            button.setAttribute('aria-label', 'Hide password');
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+            button.setAttribute('aria-label', 'Show password');
+        }
+    }
+    
+    // Form validation and submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        
+        // Real-time validation
+        function validateForm() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const isEmailValid = emailRegex.test(email);
+            
+            // Update UI based on validation
+            emailInput.classList.toggle('is-invalid', !isEmailValid && email !== '');
+            passwordInput.classList.toggle('is-invalid', password === '');
+            
+            return isEmailValid && password !== '';
+        }
+        
+        // Validate on input
+        emailInput.addEventListener('input', validateForm);
+        passwordInput.addEventListener('input', validateForm);
+        
+        // Form submission
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                // Add shake animation to form
+                loginForm.classList.add('login-error');
+                setTimeout(() => {
+                    loginForm.classList.remove('login-error');
+                }, 500);
+                
+                // Focus on first invalid field
+                if (!emailInput.value.trim()) {
+                    emailInput.focus();
+                } else if (!passwordInput.value) {
+                    passwordInput.focus();
+                }
+                return;
+            }
+            
+            // Show loading state
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner spinner me-2"></i>Signing In...';
+            
+            // Add slight delay to show loading state
+            setTimeout(() => {
+                // Actually submit the form
+                loginForm.submit();
+            }, 300);
+        });
+        
+        // Auto-focus email field if empty
+        if (!emailInput.value) {
+            emailInput.focus();
+        }
+        
+        // Handle Enter key press
+        loginForm.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const focusedElement = document.activeElement;
+                if (focusedElement === passwordInput) {
+                    // Trigger form submission when Enter is pressed in password field
+                    submitBtn.click();
+                }
+            }
+        });
+        
+        // Clear validation errors when user starts typing
+        emailInput.addEventListener('focus', function() {
+            this.classList.remove('is-invalid');
+        });
+        
+        passwordInput.addEventListener('focus', function() {
+            this.classList.remove('is-invalid');
+        });
+        
+        // Check for URL parameters (for password reset success, etc.)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('password_reset')) {
+            // Show success message for password reset
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                Your password has been reset successfully. You can now login with your new password.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            loginForm.insertBefore(alertDiv, loginForm.firstChild);
+        }
+    });
+</script>
 {% endblock %}

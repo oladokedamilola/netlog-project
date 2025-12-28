@@ -1,43 +1,1182 @@
+<!--templates/home.html-->
 {% extends "base_public.html" %}
-{% block title %}Home - LogSight{% endblock %}
+{% load static %}
+
+{% block title %}LogSight - Network Log Analysis Made Simple{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reset any conflicting container styles */
+    main > .container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Hero Section with Background Image */
+    .hero-section {
+        position: relative;
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(rgba(26, 30, 50, 0.85), rgba(26, 30, 50, 0.95)),
+                    url('{% static "images/hero.jpeg" %}') center/cover no-repeat;
+        color: white;
+        padding: 6rem 0;
+        overflow: hidden;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+        padding: 0 1rem;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #fff 0%, var(--ls-cream) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .hero-cta {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    /* Animated data pulse elements */
+    .data-pulse {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 122, 0, 0.3) 0%, transparent 70%);
+        animation: pulse 2s infinite;
+    }
+    
+    .data-pulse-1 {
+        width: 300px;
+        height: 300px;
+        top: -100px;
+        right: -100px;
+        animation-delay: 0s;
+    }
+    
+    .data-pulse-2 {
+        width: 200px;
+        height: 200px;
+        bottom: -50px;
+        left: -50px;
+        animation-delay: 1s;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
+    }
+    
+    /* Stats Section */
+    .stats-section {
+        background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+        padding: 4rem 0;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.06);
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--ls-orange);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    /* Features Section */
+    .features-section {
+        padding: 6rem 0;
+    }
+    
+    .section-title {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .section-title h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--ls-navy);
+        margin-bottom: 1rem;
+    }
+    
+    .section-title p {
+        color: var(--ls-muted);
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(26, 30, 50, 0.06);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
+    }
+    
+    .feature-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.75rem;
+        color: var(--ls-orange);
+    }
+    
+    .feature-card h4 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        color: var(--ls-navy);
+    }
+    
+    .feature-card p {
+        color: var(--ls-muted);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    
+    .feature-card ul {
+        padding-left: 0;
+    }
+    
+    .feature-card li {
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Log Types Section */
+    .log-types-section {
+        background: linear-gradient(135deg, #f8fafc 0%, #fff 100%);
+        padding: 6rem 0;
+    }
+    
+    .log-type {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: var(--radius-md);
+        margin-bottom: 1rem;
+        border: 1px solid rgba(26, 30, 50, 0.06);
+        transition: transform 0.2s ease;
+    }
+    
+    .log-type:hover {
+        transform: translateX(5px);
+        border-color: var(--ls-orange);
+    }
+    
+    .log-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1.25rem;
+    }
+    
+    /* How It Works Section */
+    .how-it-works-section {
+        padding: 6rem 0;
+    }
+    
+    .step-card {
+        text-align: center;
+        padding: 2rem;
+        position: relative;
+    }
+    
+    .step-number {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--ls-orange);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .step-connector {
+        position: absolute;
+        top: 30px;
+        left: 75%;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--ls-orange), rgba(255, 122, 0, 0.2));
+        z-index: -1;
+    }
+    
+    @media (max-width: 768px) {
+        .step-connector {
+            display: none;
+        }
+    }
+    
+    /* Testimonials Section */
+    .testimonials-section {
+        background: linear-gradient(135deg, var(--ls-navy) 0%, #0b1220 100%);
+        padding: 6rem 0;
+        color: white;
+    }
+    
+    .testimonial-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        height: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .testimonial-content {
+        font-style: italic;
+        margin-bottom: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.6;
+    }
+    
+    .testimonial-author {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .author-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--ls-orange), #ff9a3d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+    }
+    
+    /* Pricing CTA */
+    .pricing-cta-section {
+        padding: 6rem 0;
+        background: linear-gradient(135deg, #fff 0%, var(--ls-cream) 100%);
+        text-align: center;
+    }
+    
+    .pricing-cta-content {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    /* Ensure proper spacing for all containers */
+    .section-container {
+        width: 100%;
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+        
+        .section-title h2 {
+            font-size: 2rem;
+        }
+        
+        .hero-section {
+            padding: 4rem 0;
+            min-height: 70vh;
+        }
+        
+        .features-section,
+        .log-types-section,
+        .how-it-works-section,
+        .testimonials-section,
+        .pricing-cta-section {
+            padding: 4rem 0;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-cta {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .hero-cta a {
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+        }
+    }
+
+
+
+    /* Fix for centering content in all sections */
+
+/* Center content in features section */
+.features-section .row {
+    justify-content: center;
+}
+
+/* Center feature cards within their columns */
+.features-section .col-lg-4 {
+    display: flex;
+    justify-content: center;
+}
+
+/* Ensure feature cards have consistent width and are centered */
+.feature-card {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+/* Center log types content */
+.log-types-section .row {
+    justify-content: center;
+}
+
+.log-types-section .col-lg-6 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Center log type items */
+.log-type {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* Center how-it-works steps */
+.how-it-works-section .row {
+    justify-content: center;
+}
+
+.how-it-works-section .col-lg-3 {
+    display: flex;
+    justify-content: center;
+}
+
+/* Center testimonial cards */
+.testimonials-section .row {
+    justify-content: center;
+}
+
+.testimonials-section .col-lg-4 {
+    display: flex;
+    justify-content: center;
+}
+
+.testimonial-card {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+/* Center stats items */
+.stats-section .row {
+    justify-content: center;
+}
+
+.stats-section .col-md-3 {
+    display: flex;
+    justify-content: center;
+}
+
+.stat-item {
+    width: 100%;
+    max-width: 200px;
+}
+
+/* Fix Bootstrap column alignment */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -0.5rem;
+    margin-left: -0.5rem;
+}
+
+.row > * {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+/* Ensure all content in section containers is centered */
+.section-container > .row {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Center the how-it-works connector lines */
+.step-connector {
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 120px);
+}
+
+/* Responsive adjustments for better centering */
+@media (max-width: 992px) {
+    .log-types-section .col-lg-6 {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .features-section .col-lg-4 {
+        max-width: 400px;
+    }
+    
+    .step-connector {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .feature-card {
+        max-width: 100%;
+    }
+    
+    .stat-item {
+        max-width: 150px;
+    }
+    
+    .log-type {
+        max-width: 100%;
+    }
+}
+
+/* Fix for mobile view - ensure everything stays centered */
+@media (max-width: 576px) {
+    .row {
+        margin-right: -0.25rem;
+        margin-left: -0.25rem;
+    }
+    
+    .row > * {
+        padding-right: 0.25rem;
+        padding-left: 0.25rem;
+    }
+    
+    .col-md-3, .col-lg-4, .col-lg-6 {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+/* Fix hero section alignment */
+.hero-section .section-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.hero-content {
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Features Section - 3 cards per row */
+.features-section .row {
+    justify-content: center;
+}
+
+.features-section .col-xl-4 {
+    display: flex;
+    justify-content: center;
+}
+
+.feature-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(26, 30, 50, 0.06);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
+}
+
+.feature-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+    color: var(--ls-orange);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.feature-card h4 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--ls-navy);
+    text-align: center;
+}
+
+.feature-card p {
+    color: var(--ls-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.feature-card ul {
+    padding-left: 0;
+    text-align: left;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.feature-card li {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Log Types Section - 3 cards per row */
+.log-types-section .row {
+    justify-content: center;
+}
+
+.log-type-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(26, 30, 50, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+.log-type-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
+    border-color: var(--ls-orange);
+}
+
+.log-type-card .log-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+    color: var(--ls-orange);
+}
+
+.log-type-content h4 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--ls-navy);
+}
+
+.log-type-content p {
+    color: var(--ls-muted);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .feature-card, .log-type-card {
+        max-width: 350px;
+    }
+}
+
+@media (max-width: 992px) {
+    .feature-card, .log-type-card {
+        max-width: 320px;
+    }
+    
+    .features-section .col-lg-6,
+    .log-types-section .col-lg-4 {
+        max-width: 50%;
+        flex: 0 0 50%;
+    }
+}
+
+@media (max-width: 768px) {
+    .feature-card, .log-type-card {
+        max-width: 100%;
+    }
+    
+    .features-section .col-md-6,
+    .log-types-section .col-md-6 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+    
+    .feature-card, .log-type-card {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
+<!-- Remove the container div from base_public that's causing the shift -->
+<div style="width: 100%;">
+
 <!-- Hero Section -->
-<section class="hero text-center py-5">
-    <h1 class="display-4">LogSight</h1>
-    <p class="lead">Clarity, insights, and control over your server logs — in seconds.</p>
-    <a href="{% url 'register' %}" class="btn btn-warning btn-lg mt-3">Get Started</a>
+<section class="hero-section">
+    <div class="data-pulse data-pulse-1"></div>
+    <div class="data-pulse data-pulse-2"></div>
+    
+    <div class="section-container">
+        <div class="hero-content">
+            <h1 class="hero-title">Transform Logs Into Actionable Insights</h1>
+            <p class="hero-subtitle">
+                LogSight is your intelligent log analysis platform that turns complex network data 
+                into clear, actionable intelligence. No setup required, instant results.
+            </p>
+            <div class="hero-cta">
+                <a href="{% url 'register' %}" class="btn-cta btn-lg">
+                    <i class="fas fa-rocket me-2"></i> Start Free Trial
+                </a>
+                <a href="#features" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
+                    <i class="fas fa-play-circle me-2"></i> Watch Demo
+                </a>
+            </div>
+            <div class="mt-4">
+                <p class="small" style="color: rgba(255,255,255,0.7);">
+                    <i class="fas fa-check-circle me-1"></i> No credit card required • 14-day free trial
+                </p>
+            </div>
+        </div>
+    </div>
 </section>
 
-<!-- Features Section -->
-<section class="features py-5">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4 mb-4">
-                <div class="feature-card p-4 border rounded shadow-sm h-100">
-                    <h4>Upload Logs</h4>
-                    <p>Supports Apache, Nginx, IIS, and more. Drag, drop, and go.</p>
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="section-container">
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">10K+</div>
+                    <div class="stat-label">Logs Analyzed</div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-card p-4 border rounded shadow-sm h-100">
-                    <h4>Analyze & Visualize</h4>
-                    <p>Instant charts and insights with top IPs, endpoints, and error trends.</p>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Uptime</div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-card p-4 border rounded shadow-sm h-100">
-                    <h4>Export Reports</h4>
-                    <p>Download detailed reports for monitoring or compliance purposes.</p>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Real-time Analysis</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Integrations</div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Call to Action -->
-<section class="cta py-5 text-center bg-light rounded">
-    <h2>Start gaining insights today</h2>
-    <a href="{% url 'register' %}" class="btn btn-warning btn-lg mt-3">Create Account</a>
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <div class="section-container">
+        <div class="section-title">
+            <h2>Powerful Features for Modern Teams</h2>
+            <p>Everything you need to monitor, analyze, and optimize your network performance</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <h4>Smart Log Upload</h4>
+                    <p>
+                        Drag-and-drop support for Apache, Nginx, IIS, and custom formats. 
+                        Automatic parsing and structure detection.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> Multiple file formats</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Bulk upload support</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Secure cloud storage</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-network"></i>
+                    </div>
+                    <h4>Advanced Analytics</h4>
+                    <p>
+                        Interactive dashboards with real-time charts, anomaly detection, 
+                        and predictive insights powered by AI.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> Real-time monitoring</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Anomaly detection</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Custom metrics</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4>Security Insights</h4>
+                    <p>
+                        Detect suspicious activity, failed login attempts, and potential 
+                        threats with our security-focused analysis.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> Threat detection</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Compliance reports</li>
+                        <li><i class="fas fa-check text-success me-2"></i> IP reputation check</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-export"></i>
+                    </div>
+                    <h4>Export & Share</h4>
+                    <p>
+                        Generate professional PDF/CSV reports, share dashboards with team members, 
+                        and schedule automated exports.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> PDF/CSV reports</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Team collaboration</li>
+                        <li><i class="fas fa-check text-success me-2"></i> API access</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h4>Real-time Alerts</h4>
+                    <p>
+                        Get instant notifications via email, Slack, or webhook when anomalies 
+                        or critical events are detected.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> Custom alert rules</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Multi-channel notifications</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Alert history</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-infinity"></i>
+                    </div>
+                    <h4>Scalable Infrastructure</h4>
+                    <p>
+                        Built for teams of all sizes. From small startups to enterprise 
+                        deployments with millions of daily logs.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> Unlimited logs</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Team workspaces</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Enterprise grade</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
+
+<!-- Log Types Section -->
+<section class="log-types-section">
+    <div class="section-container">
+        <div class="section-title">
+            <h2>Supported Log Formats</h2>
+            <p>We support all major log formats and can handle custom parsing rules</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Row 1 -->
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <div class="log-type-card">
+                    <div class="log-icon">
+                        <i class="fab fa-linux"></i>
+                    </div>
+                    <div class="log-type-content">
+                        <h4>Apache & Nginx</h4>
+                        <p>Common, Combined, and Custom log formats with full field extraction</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <div class="log-type-card">
+                    <div class="log-icon">
+                        <i class="fab fa-windows"></i>
+                    </div>
+                    <div class="log-type-content">
+                        <h4>IIS & Windows</h4>
+                        <p>W3C extended log format, IIS native logs, Windows Event logs</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <div class="log-type-card">
+                    <div class="log-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="log-type-content">
+                        <h4>Syslog & JSON</h4>
+                        <p>RFC5424, RFC3164, custom JSON formats, and structured logging</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Row 2 -->
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <div class="log-type-card">
+                    <div class="log-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div class="log-type-content">
+                        <h4>Custom Formats</h4>
+                        <p>Define your own parsing rules with our flexible pattern builder</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <div class="log-type-card">
+                    <div class="log-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="log-type-content">
+                        <h4>Cloud Services</h4>
+                        <p>AWS CloudTrail, CloudWatch, Azure Monitor, GCP Stackdriver</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <div class="log-type-card">
+                    <div class="log-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="log-type-content">
+                        <h4>Security Logs</h4>
+                        <p>Firewall logs, IDS/IPS alerts, authentication logs, audit trails</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works-section">
+    <div class="section-container">
+        <div class="section-title">
+            <h2>How LogSight Works</h2>
+            <p>Get from raw logs to actionable insights in four simple steps</p>
+        </div>
+        
+        <div class="row position-relative">
+            <div class="col-lg-3 col-md-6">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h4>Upload Logs</h4>
+                    <p>Drag and drop your log files or connect directly to your servers</p>
+                </div>
+                <div class="step-connector d-none d-lg-block"></div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h4>Auto Parse</h4>
+                    <p>Our AI automatically detects and parses your log format</p>
+                </div>
+                <div class="step-connector d-none d-lg-block"></div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h4>Analyze & Visualize</h4>
+                    <p>Interactive dashboards show key metrics and trends</p>
+                </div>
+                <div class="step-connector d-none d-lg-block"></div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h4>Take Action</h4>
+                    <p>Export reports, set alerts, and make data-driven decisions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials-section">
+    <div class="section-container">
+        <div class="section-title">
+            <h2 style="color: white;">Trusted by DevOps Teams Worldwide</h2>
+            <p style="color: rgba(255,255,255,0.8);">See what our customers have to say</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        "LogSight cut our log analysis time by 80%. What used to take hours now takes minutes. The anomaly detection feature alone has saved us from three major incidents."
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">SC</div>
+                        <div>
+                            <h6 class="mb-0">Sarah Chen</h6>
+                            <p class="small mb-0" style="color: rgba(255,255,255,0.7);">CTO, TechFlow Inc.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        "The security insights have been invaluable for our compliance audits. We can now provide detailed reports in minutes instead of days."
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">MR</div>
+                        <div>
+                            <h6 class="mb-0">Michael Rodriguez</h6>
+                            <p class="small mb-0" style="color: rgba(255,255,255,0.7);">DevOps Lead, SecureBank</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        "As a small startup, we needed enterprise-grade log analysis without the enterprise price tag. LogSight delivered exactly that."
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">AJ</div>
+                        <div>
+                            <h6 class="mb-0">Alex Johnson</h6>
+                            <p class="small mb-0" style="color: rgba(255,255,255,0.7);">Founder, StartupScale</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA Section -->
+<section class="pricing-cta-section">
+    <div class="section-container">
+        <div class="pricing-cta-content">
+            <h2>Ready to Transform Your Log Analysis?</h2>
+            <p class="mb-4">
+                Join thousands of teams who trust LogSight for their log analysis needs. 
+                Start with a free 14-day trial — no credit card required.
+            </p>
+            <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
+                <a href="{% url 'register' %}" class="btn-cta btn-lg">
+                    <i class="fas fa-rocket me-2"></i> Start Free Trial
+                </a>
+                <a href="#" class="btn btn-outline btn-lg">
+                    <i class="fas fa-crown me-2"></i> View Pricing
+                </a>
+            </div>
+            <p class="small mt-3" style="color: var(--ls-muted);">
+                <i class="fas fa-shield-alt me-1"></i> Enterprise-grade security • 
+                <i class="fas fa-headset me-1"></i> 24/7 support • 
+                <i class="fas fa-sync-alt me-1"></i> Cancel anytime
+            </p>
+        </div>
+    </div>
+</section>
+
+</div> <!-- Closing div for the container override -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate stats counter
+        const statElements = document.querySelectorAll('.stat-number');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const stat = entry.target;
+                    const text = stat.textContent;
+                    const targetValue = parseInt(text);
+                    
+                    if (isNaN(targetValue)) return;
+                    
+                    let currentValue = 0;
+                    const increment = targetValue / 50;
+                    const timer = setInterval(() => {
+                        currentValue += increment;
+                        if (currentValue >= targetValue) {
+                            stat.textContent = text; // Keep original text format
+                            clearInterval(timer);
+                        } else {
+                            stat.textContent = Math.floor(currentValue);
+                        }
+                    }, 30);
+                    observer.unobserve(stat);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        statElements.forEach(stat => observer.observe(stat));
+        
+        // Add animation to feature cards on scroll
+        const featureCards = document.querySelectorAll('.feature-card');
+        const cardObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        featureCards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            cardObserver.observe(card);
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        window.scrollTo({
+                            top: target.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

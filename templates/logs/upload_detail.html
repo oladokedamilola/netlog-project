@@ -1,0 +1,16 @@
+{% extends "base_user.html" %}
+{% block title %}Upload Detail - LogSight{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>Upload Details</h2>
+    <div class="card shadow-sm p-3 mb-4">
+        <p><strong>File Name:</strong> {{ upload.file.name }}</p>
+        <p><strong>Type:</strong> {{ upload.log_type }}</p>
+        <p><strong>Uploaded At:</strong> {{ upload.created_at|date:"Y-m-d H:i" }}</p>
+        <p><strong>Parsed Entries:</strong> {{ upload.entries_count }}</p>
+        <p><strong>Status:</strong> {{ upload.status }}</p>
+        <a href="{% url 'analytics_dashboard' upload.id %}" class="btn btn-warning mt-2">View Analytics</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,7 +1,11 @@
 from django.urls import path
 from . import api
+from .views import analytics_dashboard
+
 
 urlpatterns = [
+    path("<int:upload_id>/", analytics_dashboard, name="analysis_dashboard"),
+    
     path('top-ips/', api.TopIPsView.as_view(), name='top_ips'),
     path('status-codes/', api.StatusCodesView.as_view(), name='status_codes'),
     path('traffic/hourly/', api.TrafficPeaksHourlyView.as_view(), name='traffic_hourly'),

@@ -1,0 +1,268 @@
+{% extends "base_user.html" %}
+{% block title %}Analytics - LogSight{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-3">Analytics for: {{ upload.file.name }}</h2>
+    <p>
+        <strong>Log Type:</strong> {{ upload.log_type }} | 
+        <strong>Uploaded At:</strong> {{ upload.uploaded_at|date:"Y-m-d H:i" }}
+    </p>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="analyticsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="traffic-tab" data-bs-toggle="tab" data-bs-target="#traffic" type="button" role="tab">Traffic</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="status-tab" data-bs-toggle="tab" data-bs-target="#status" type="button" role="tab">Status Codes</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ip-tab" data-bs-toggle="tab" data-bs-target="#ip" type="button" role="tab">Top IPs</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="endpoints-tab" data-bs-toggle="tab" data-bs-target="#endpoints" type="button" role="tab">Endpoints</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="errors-tab" data-bs-toggle="tab" data-bs-target="#errors" type="button" role="tab">Error Spikes</button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="analyticsTabsContent">
+
+        <!-- Overview -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 shadow-sm text-center">
+                        <h5>Total Requests</h5>
+                        <h3>{{ total_requests }}</h3>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 shadow-sm text-center">
+                        <h5>Parsed Entries</h5>
+                        <h3>{{ parsed_entries }}</h3>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 shadow-sm text-center">
+                        <h5>Total Errors (4xx + 5xx)</h5>
+                        <h3>{{ total_errors }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic -->
+        <div class="tab-pane fade" id="traffic" role="tabpanel">
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3">
+                    <div class="card p-3 shadow-sm">
+                        <h5>Hourly Traffic</h5>
+                        <canvas id="hourlyTrafficChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card p-3 shadow-sm">
+                        <h5>Daily Traffic</h5>
+                        <canvas id="dailyTrafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Codes -->
+        <div class="tab-pane fade" id="status" role="tabpanel">
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3">
+                    <div class="card p-3 shadow-sm">
+                        <h5>Status Code Distribution</h5>
+                        <canvas id="statusDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card p-3 shadow-sm">
+                        <h5>Error Trends</h5>
+                        <canvas id="errorTrendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top IPs -->
+        <div class="tab-pane fade" id="ip" role="tabpanel">
+            <div class="card p-3 shadow-sm mb-3">
+                <h5>Top IPs</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>Requests</th>
+                            <th>Suspicious Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ip in top_ips %}
+                        <tr class="{% if ip.suspicious %}table-danger{% endif %}">
+                            <td>{{ ip.ip_address }}</td>
+                            <td>{{ ip.requests_count }}</td>
+                            <td>{{ ip.suspicious|yesno:"Yes,No" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center">No IP data available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Endpoints -->
+        <div class="tab-pane fade" id="endpoints" role="tabpanel">
+            <div class="card p-3 shadow-sm mb-3">
+                <h5>Most Visited Endpoints</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Endpoint / URL</th>
+                            <th>Requests</th>
+                            <th>Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for endpoint in endpoints %}
+                        <tr class="{% if endpoint.error_count > 0 %}table-warning{% endif %}">
+                            <td>{{ endpoint.url }}</td>
+                            <td>{{ endpoint.requests_count }}</td>
+                            <td>{{ endpoint.error_count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center">No endpoint data available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Error Spikes -->
+        <div class="tab-pane fade" id="errors" role="tabpanel">
+            <div class="card p-3 shadow-sm mb-3">
+                <h5>Error Spikes</h5>
+                <canvas id="errorSpikeChart"></canvas>
+            </div>
+            <div class="card p-3 shadow-sm">
+                <p><strong>Current Window Errors:</strong> {{ current_errors }}</p>
+                <p><strong>Previous Window Errors:</strong> {{ previous_errors }}</p>
+                <p><strong>Percentage Change:</strong> {{ percent_change|floatformat:2 }}%</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    // === Hourly Traffic Chart ===
+    const hourlyCtx = document.getElementById('hourlyTrafficChart').getContext('2d');
+    const hourlyLabels = {{ hourly_chart|safe }}.map(item => item.hour.slice(11,16)); // HH:MM
+    const hourlyCounts = {{ hourly_chart|safe }}.map(item => item.count);
+
+    new Chart(hourlyCtx, {
+        type: 'line',
+        data: {
+            labels: hourlyLabels,
+            datasets: [{
+                label: 'Requests per Hour',
+                data: hourlyCounts,
+                borderColor: '#FF7A00',
+                backgroundColor: 'rgba(255,122,0,0.2)',
+                fill: true,
+                tension: 0.2,
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // === Daily Traffic Chart ===
+    const dailyCtx = document.getElementById('dailyTrafficChart').getContext('2d');
+    const dailyLabels = {{ daily_chart|safe }}.map(item => item.day);
+    const dailyCounts = {{ daily_chart|safe }}.map(item => item.count);
+
+    new Chart(dailyCtx, {
+        type: 'bar',
+        data: {
+            labels: dailyLabels,
+            datasets: [{
+                label: 'Requests per Day',
+                data: dailyCounts,
+                backgroundColor: '#1A1F36'
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // === Status Codes Chart ===
+    const statusCtx = document.getElementById('statusDistributionChart').getContext('2d');
+    const statusLabels = {{ status_codes|safe }}.map(item => item.status_code);
+    const statusCounts = {{ status_codes|safe }}.map(item => item.count);
+
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                label: 'Status Codes',
+                data: statusCounts,
+                backgroundColor: ['#FF7A00','#1A1F36','#FFF4E6','#FF7A00','#1A1F36']
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // === Error Trends Chart ===
+    const errorTrendsCtx = document.getElementById('errorTrendsChart').getContext('2d');
+    const errorTrendLabels = {{ daily_errors_chart|safe }}.map(item => item.day);
+    const errorTrendCounts = {{ daily_errors_chart|safe }}.map(item => item.count);
+
+    new Chart(errorTrendsCtx, {
+        type: 'line',
+        data: {
+            labels: errorTrendLabels,
+            datasets: [{
+                label: 'Errors Trend',
+                data: errorTrendCounts,
+                borderColor: '#FF0000',
+                backgroundColor: 'rgba(255,0,0,0.2)',
+                fill: true,
+                tension: 0.2
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // === Error Spike Chart ===
+    const errorSpikeCtx = document.getElementById('errorSpikeChart').getContext('2d');
+    new Chart(errorSpikeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Previous Window', 'Current Window'],
+            datasets: [{
+                label: 'Error Count',
+                data: [{{ previous_errors }}, {{ current_errors }}],
+                backgroundColor: ['#1A1F36','#FF7A00']
+            }]
+        },
+        options: { responsive: true }
+    });
+
+});
+</script>
+{% endblock %}
