@@ -194,62 +194,174 @@
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- Navbar -->
-    <header class="header">
-        <div class="header-inner container">
-            <a href="{% url 'home' %}" class="brand">
-                <div class="brand-logo"></div>
-                <div>
-                    <span class="brand-title">LogSight</span>
-                    <span class="brand-sub">Data Pulse</span>
-                </div>
+<!-- Navbar -->
+<header class="header">
+    <div class="header-inner container">
+        <a href="{% url 'home' %}" class="brand">
+            <div class="brand-logo"></div>
+            <div>
+                <span class="brand-title">NetLog</span>  <!-- Changed from LogSight -->
+                <span class="brand-sub">Network Log Analyzer</span>  <!-- Updated tagline -->
+            </div>
+        </a>
+        
+        <!-- Mobile menu toggle button -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Navigation Links - Dynamic based on auth status -->
+        <nav class="nav-links" id="mainNav">
+            <a href="{% url 'home' %}">
+                <i class="fas fa-home me-1"></i>Home
+            </a>
+            <a href="#features">
+                <i class="fas fa-star me-1"></i>Features
+            </a>
+            <a href="#pricing">
+                <i class="fas fa-tag me-1"></i>Pricing
             </a>
             
-            <!-- Mobile menu toggle button -->
-            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation menu">
-                <i class="fas fa-bars"></i>
-            </button>
-            
-            <!-- Navigation Links - Dynamic based on auth status -->
-            <nav class="nav-links" id="mainNav">
-                <a href="{% url 'home' %}">
-                    <i class="fas fa-home me-1"></i>Home
+            {% if user.is_authenticated %}
+                <!-- Authenticated User Links -->
+                <a href="{% url 'dashboard' %}">
+                    <i class="fas fa-chart-bar me-1"></i>Dashboard
                 </a>
-                <a href="#">
-                    <i class="fas fa-star me-1"></i>Features
+                <a href="{% url 'logs:upload_log' %}">
+                    <i class="fas fa-upload me-1"></i>Upload Log
                 </a>
-                <a href="#">
-                    <i class="fas fa-tag me-1"></i>Pricing
+                <a href="{% url 'reports:report_list' %}">
+                    <i class="fas fa-file-alt me-1"></i>Reports
                 </a>
                 
-                {% if user.is_authenticated %}
-                    <!-- Authenticated User Links -->
-                    <a href="#">
-                        <i class="fas fa-chart-bar me-1"></i>Dashboard
-                    </a>
-                    <a href="#">
-                        <i class="fas fa-upload me-1"></i>Upload Log
-                    </a>
-                    <div class="user-avatar">
+                <!-- User Dropdown (Optional) -->
+                <div class="dropdown user-dropdown">
+                    <button class="user-avatar dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
                         <div class="avatar">{{ user.username|first|upper }}</div>
                         <span class="d-none d-md-inline">{{ user.username }}</span>
                         <i class="fas fa-chevron-down small"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="{% url 'logs:upload_history' %}">
+                            <i class="fas fa-history me-2"></i>Upload History
+                        </a>
+                        <a class="dropdown-item" href="{% url 'reports:generate_report' %}">
+                            <i class="fas fa-plus-circle me-2"></i>Generate Report
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-user-cog me-2"></i>Profile Settings
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a>
                     </div>
-                    <a href="{% url 'logout' %}" class="btn btn-outline">
-                        <i class="fas fa-sign-out-alt me-1"></i>Logout
-                    </a>
-                {% else %}
-                    <!-- Guest User Links -->
-                    <a href="{% url 'login' %}">
-                        <i class="fas fa-sign-in-alt me-1"></i>Login
-                    </a>
-                    <a href="{% url 'register' %}" class="btn-cta">
-                        <i class="fas fa-rocket me-1"></i>Get Started Free
-                    </a>
-                {% endif %}
-            </nav>
-        </div>
-    </header>
+                </div>
+                
+                <!-- Simple Logout (Alternative to dropdown) -->
+                <!-- 
+                <a href="{% url 'logout' %}" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+                -->
+            {% else %}
+                <!-- Guest User Links -->
+                <a href="{% url 'login' %}">
+                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                </a>
+                <a href="{% url 'register' %}" class="btn-cta">
+                    <i class="fas fa-rocket me-1"></i>Get Started Free
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+
+<!-- Add Bootstrap JS for dropdown if not already included -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+/* Dropdown Styles */
+.user-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.user-dropdown .user-avatar {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.user-dropdown .user-avatar:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 4px;
+}
+
+.user-dropdown .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.user-dropdown .dropdown-menu {
+    min-width: 200px;
+    border: none;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    padding: 8px 0;
+    margin-top: 8px;
+}
+
+.user-dropdown .dropdown-item {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.user-dropdown .dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #1A1F36;
+}
+
+.user-dropdown .dropdown-divider {
+    margin: 6px 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .user-dropdown .user-avatar span {
+        display: none;
+    }
+    
+    .user-dropdown .dropdown-menu {
+        position: fixed !important;
+        top: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 90vw;
+        max-width: 300px;
+    }
+}
+</style>
+
+
 
     <!-- Flash Messages Container (Fixed Position) -->
     <div class="flash-messages-container" id="flashContainer">

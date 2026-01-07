@@ -718,23 +718,52 @@
     
     <div class="section-container">
         <div class="hero-content">
-            <h1 class="hero-title">Transform Logs Into Actionable Insights</h1>
+            <h1 class="hero-title">
+                {% if user.is_authenticated %}
+                Welcome Back, {{ user.username }}!
+                {% else %}
+                Transform Logs Into Actionable Insights
+                {% endif %}
+            </h1>
             <p class="hero-subtitle">
+                {% if user.is_authenticated %}
+                Ready to analyze your network logs? Continue where you left off or upload new logs to get started.
+                {% else %}
                 LogSight is your intelligent log analysis platform that turns complex network data 
                 into clear, actionable intelligence. No setup required, instant results.
+                {% endif %}
             </p>
             <div class="hero-cta">
+                {% if user.is_authenticated %}
+                <!-- Logged in user sees dashboard and upload options -->
+                <a href="{% url 'dashboard' %}" class="btn-cta btn-lg">
+                    <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                </a>
+                <a href="#" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
+                    <i class="fas fa-upload me-2"></i> Upload Logs
+                </a>
+                {% else %}
+                <!-- Guest user sees sign up options -->
                 <a href="{% url 'register' %}" class="btn-cta btn-lg">
                     <i class="fas fa-rocket me-2"></i> Start Free Trial
                 </a>
                 <a href="#features" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
                     <i class="fas fa-play-circle me-2"></i> Watch Demo
                 </a>
+                {% endif %}
             </div>
             <div class="mt-4">
+                {% if user.is_authenticated %}
                 <p class="small" style="color: rgba(255,255,255,0.7);">
-                    <i class="fas fa-check-circle me-1"></i> No credit card required • 14-day free trial
+                    <i class="fas fa-user-check me-1"></i> Logged in as {{ user.email }} • 
+                    <a href="{% url 'logout' %}" style="color: rgba(255,255,255,0.7); text-decoration: underline;">Log out</a>
                 </p>
+                {% else %}
+                <p class="small" style="color: rgba(255,255,255,0.7);">
+                    <i class="fas fa-check-circle me-1"></i> No credit card required • 14-day free trial • 
+                    <a href="{% url 'login' %}" style="color: rgba(255,255,255,0.7); text-decoration: underline;">Already have an account?</a>
+                </p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -1086,18 +1115,39 @@
 <section class="pricing-cta-section">
     <div class="section-container">
         <div class="pricing-cta-content">
-            <h2>Ready to Transform Your Log Analysis?</h2>
+            <h2>
+                {% if user.is_authenticated %}
+                Ready to Analyze Your Logs?
+                {% else %}
+                Ready to Transform Your Log Analysis?
+                {% endif %}
+            </h2>
             <p class="mb-4">
+                {% if user.is_authenticated %}
+                Jump back into your dashboard to view recent analyses or start a new log upload.
+                {% else %}
                 Join thousands of teams who trust LogSight for their log analysis needs. 
                 Start with a free 14-day trial — no credit card required.
+                {% endif %}
             </p>
             <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
+                {% if user.is_authenticated %}
+                <!-- Logged in user CTA -->
+                <a href="{% url 'dashboard' %}" class="btn-cta btn-lg">
+                    <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                </a>
+                <a href="#" class="btn btn-outline btn-lg">
+                    <i class="fas fa-chart-line me-2"></i> View Analytics
+                </a>
+                {% else %}
+                <!-- Guest user CTA -->
                 <a href="{% url 'register' %}" class="btn-cta btn-lg">
                     <i class="fas fa-rocket me-2"></i> Start Free Trial
                 </a>
                 <a href="#" class="btn btn-outline btn-lg">
                     <i class="fas fa-crown me-2"></i> View Pricing
                 </a>
+                {% endif %}
             </div>
             <p class="small mt-3" style="color: var(--ls-muted);">
                 <i class="fas fa-shield-alt me-1"></i> Enterprise-grade security • 

@@ -1,0 +1,143 @@
+{% extends "base_user.html" %}
+{% load static %}
+
+{% block title %}Preview Report - NetLog{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Preview Header -->
+    <div class="bg-light border-bottom py-3 px-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h4 mb-1">Preview: {{ report.title }}</h1>
+                <p class="text-muted small mb-0">
+                    {{ report.get_format_display }} Report • Generated {{ report.generated_at|date:"Y-m-d H:i" }}
+                </p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary">
+                    <i class="fas fa-download me-2"></i>Download
+                </a>
+                <a href="{% url 'reports:report_detail' report.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Details
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Content -->
+    <div class="container-fluid py-4 px-0">
+        {% if report.format == 'html' and report.file %}
+            <!-- Embedded HTML Report -->
+            <iframe src="{% url 'reports:download_report' report.id %}" 
+                    style="width: 100%; height: calc(100vh - 120px); border: none;"
+                    title="Report Preview">
+            </iframe>
+        {% else %}
+            <!-- Preview Not Available -->
+            <div class="container py-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-file-alt fa-4x text-muted"></i>
+                        </div>
+                        <h3 class="mb-3">Preview Not Available</h3>
+                        <p class="text-muted mb-4">
+                            Preview is only available for HTML reports. 
+                            For {{ report.get_format_display }} reports, please download the file to view its contents.
+                        </p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-download me-2"></i>Download Report
+                            </a>
+                            <a href="{% url 'reports:report_detail' report.id %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Preview Controls -->
+{% if report.format == 'html' and report.file %}
+<div class="position-fixed bottom-0 end-0 m-4">
+    <div class="btn-group shadow">
+        <button type="button" class="btn btn-light" onclick="zoomOut()" title="Zoom Out">
+            <i class="fas fa-search-minus"></i>
+        </button>
+        <button type="button" class="btn btn-light" onclick="resetZoom()" title="Reset Zoom">
+            <i class="fas fa-search"></i>
+        </button>
+        <button type="button" class="btn btn-light" onclick="zoomIn()" title="Zoom In">
+            <i class="fas fa-search-plus"></i>
+        </button>
+        <button type="button" class="btn btn-light" onclick="toggleFullscreen()" title="Fullscreen">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+let currentZoom = 1;
+const zoomStep = 0.1;
+const iframe = document.querySelector('iframe');
+
+function zoomIn() {
+    currentZoom += zoomStep;
+    iframe.style.transform = `scale(${currentZoom})`;
+    iframe.style.transformOrigin = 'top left';
+}
+
+function zoomOut() {
+    currentZoom = Math.max(0.5, currentZoom - zoomStep);
+    iframe.style.transform = `scale(${currentZoom})`;
+    iframe.style.transformOrigin = 'top left';
+}
+
+function resetZoom() {
+    currentZoom = 1;
+    iframe.style.transform = 'scale(1)';
+    iframe.style.transformOrigin = 'top left';
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        iframe.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey) {
+        switch(e.key) {
+            case '+':
+                e.preventDefault();
+                zoomIn();
+                break;
+            case '-':
+                e.preventDefault();
+                zoomOut();
+                break;
+            case '0':
+                e.preventDefault();
+                resetZoom();
+                break;
+            case 'f':
+                e.preventDefault();
+                toggleFullscreen();
+                break;
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.title }} - NetLog</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1A1F36;
+            --secondary-color: #FF7A00;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #2a3a5e 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 4px solid var(--secondary-color);
+        }
+        
+        .report-header h1 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .report-header .subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .metadata-card {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--light-bg);
+            font-weight: 600;
+        }
+        
+        .section-title i {
+            color: var(--secondary-color);
+            margin-right: 10px;
+        }
+        
+        .metric-card {
+            border: none;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            height: 100%;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .highlight-box {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--warning-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        
+        .recommendation-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid var(--success-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        
+        .warning-box {
+            background-color: #ffebee;
+            border-left: 4px solid var(--danger-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        
+        .table-custom {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .table-custom thead {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .badge-custom {
+            padding: 0.5em 1em;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .footer {
+            background-color: var(--light-bg);
+            padding: 2rem 0;
+            margin-top: 3rem;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #666;
+        }
+        
+        .page-break {
+            page-break-before: always;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px dashed #dee2e6;
+        }
+        
+        /* Color for metrics */
+        .metric-requests { color: #007bff; }
+        .metric-ips { color: #28a745; }
+        .metric-error { color: #dc3545; }
+        .metric-avg { color: #6f42c1; }
+        
+        /* Print styles */
+        @media print {
+            .no-print { display: none; }
+            body { font-size: 12pt; }
+            .metric-card { break-inside: avoid; }
+            .page-break { page-break-before: always; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Report Header -->
+    <div class="report-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1>{{ report.title }}</h1>
+                    {% if report.description %}
+                    <p class="subtitle">{{ report.description }}</p>
+                    {% endif %}
+                    <p class="subtitle mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Generated on {{ generated_at }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="bg-white text-dark rounded-pill py-2 px-4 d-inline-block">
+                        <i class="fas fa-file-alt me-2 text-primary"></i>
+                        <strong>HTML Report</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Metadata -->
+        <div class="metadata-card">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-file-upload me-2"></i>Source Log</h5>
+                    <p class="mb-2"><strong>Filename:</strong> {{ report.upload.filename }}</p>
+                    <p class="mb-2"><strong>Log Type:</strong> {{ report.upload.get_log_type_display }}</p>
+                    <p class="mb-0"><strong>Uploaded:</strong> {{ report.upload.uploaded_at|date:"Y-m-d H:i" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-cog me-2"></i>Report Configuration</h5>
+                    <p class="mb-2"><strong>Report Type:</strong> {{ report.get_report_type_display }}</p>
+                    <p class="mb-2"><strong>Generated:</strong> {{ generated_at }}</p>
+                    <p class="mb-0"><strong>Analysis Period:</strong> {{ report.analysis.time_period_days|default:"0"|floatformat:1 }} days</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        {% if include_summary %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-bar"></i>Executive Summary
+                </h3>
+            </div>
+            
+            <!-- Metrics -->
+            <div class="col-md-3 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value metric-requests">
+                        {{ report.analysis.total_requests|default:"0"|intcomma }}
+                    </div>
+                    <div class="metric-label">Total Requests</div>
+                    <small class="text-muted mt-2">All log entries processed</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value metric-ips">
+                        {{ report.analysis.unique_ips|default:"0"|intcomma }}
+                    </div>
+                    <div class="metric-label">Unique IPs</div>
+                    <small class="text-muted mt-2">Distinct IP addresses</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value metric-error">
+                        {{ report.analysis.error_rate|default:"0"|floatformat:1 }}%
+                    </div>
+                    <div class="metric-label">Error Rate</div>
+                    <small class="text-muted mt-2">4xx + 5xx responses</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-4">
+                <div class="metric-card">
+                    <div class="metric-value metric-avg">
+                        {{ report.analysis.avg_requests_per_day|default:"0"|floatformat:1 }}
+                    </div>
+                    <div class="metric-label">Avg Daily</div>
+                    <small class="text-muted mt-2">Requests per day</small>
+                </div>
+            </div>
+            
+            <!-- Key Insight -->
+            <div class="col-12">
+                <div class="highlight-box">
+                    <h5><i class="fas fa-lightbulb me-2"></i>Key Insight</h5>
+                    <p class="mb-0">
+                        {% if report.analysis.error_rate > 10 %}
+                        ⚠️ <strong>High error rate detected ({{ report.analysis.error_rate|default:"0"|floatformat:1 }}%).</strong> 
+                        Consider investigating 4xx (client errors) and 5xx (server errors) status codes to identify potential issues.
+                        {% elif report.analysis.total_requests > 10000 %}
+                        📈 <strong>High traffic volume detected.</strong> 
+                        Your application processed {{ report.analysis.total_requests|default:"0"|intcomma }} requests in 
+                        {{ report.analysis.time_period_days|default:"0"|floatformat:1 }} days. Consider scaling infrastructure if this is an ongoing trend.
+                        {% else %}
+                        ✅ <strong>Normal traffic patterns detected.</strong> 
+                        Log analysis shows stable operations with {{ report.analysis.error_rate|default:"0"|floatformat:1 }}% error rate, 
+                        which is within acceptable limits.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Traffic Analysis -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3 class="section-title">
+                    <i class="fas fa-traffic-light"></i>Traffic Analysis
+                </h3>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-line me-2"></i>Traffic Overview</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Time Period Analyzed</th>
+                            <td>{{ report.analysis.time_period_days|default:"0"|floatformat:1 }} days</td>
+                        </tr>
+                        <tr>
+                            <th>Average Requests per Day</th>
+                            <td>{{ report.analysis.avg_requests_per_day|default:"0"|floatformat:1 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Peak Hour</th>
+                            <td>
+                                {% with hourly=report.analysis.hourly_distribution %}
+                                    {% if hourly %}
+                                        {% with max_hour=hourly|max %}
+                                            {% with peak_index=hourly.index(max_hour) %}
+                                                {{ peak_index }}:00 ({{ max_hour }} requests)
+                                            {% endwith %}
+                                        {% endwith %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Busiest Day</th>
+                            <td>
+                                {% with daily=report.analysis.daily_distribution %}
+                                    {% if daily %}
+                                        {% with max_day=daily|max %}
+                                            {% for day, count in daily.items %}
+                                                {% if count == max_day %}
+                                                    {{ day }} ({{ count }} requests)
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endwith %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Error Analysis</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Total Errors</th>
+                            <td>
+                                {% with errors=report.analysis.status_codes %}
+                                    {{ errors.4xx|default:0|add:errors.5xx|default:0 }}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Error Rate</th>
+                            <td>{{ report.analysis.error_rate|default:"0"|floatformat:1 }}%</td>
+                        </tr>
+                        <tr>
+                            <th>Client Errors (4xx)</th>
+                            <td>{{ report.analysis.status_codes.4xx|default:0 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Server Errors (5xx)</th>
+                            <td>{{ report.analysis.status_codes.5xx|default:0 }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top IP Addresses -->
+        {% if include_top_data %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3 class="section-title">
+                    <i class="fas fa-network-wired"></i>Top IP Addresses
+                </h3>
+            </div>
+            
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>IP Address</th>
+                                <th>Requests</th>
+                                <th>Percentage</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ip, count in report.analysis.top_ips.items|slice:":15" %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><code>{{ ip }}</code></td>
+                                <td>{{ count|intcomma }}</td>
+                                <td>
+                                    {% with total=report.analysis.total_requests|default:1 %}
+                                        {{ count|divisibleby:total|mul:100|floatformat:1 }}%
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% if ip in report.analysis.suspicious_ips %}
+                                    <span class="badge bg-danger badge-custom">Suspicious</span>
+                                    {% else %}
+                                    <span class="badge bg-success badge-custom">Normal</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {% for suspicious in report.analysis.suspicious_ips %}
+                                            {% if suspicious.ip == ip %}
+                                                {{ suspicious.reason }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if report.analysis.suspicious_ips %}
+                <div class="warning-box">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Security Alert</h5>
+                    <p class="mb-0">
+                        {{ report.analysis.suspicious_ips|length }} potentially suspicious IP address(es) detected. 
+                        Review these IPs for potential security threats or abnormal behavior patterns.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Status Code Distribution -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3 class="section-title">
+                    <i class="fas fa-code-branch"></i>Status Code Distribution
+                </h3>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom">
+                        <thead>
+                            <tr>
+                                <th>Status Code</th>
+                                <th>Category</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for code, count in report.analysis.status_codes.items %}
+                            <tr>
+                                <td><strong>{{ code }}</strong></td>
+                                <td>
+                                    {% if code == '2xx' %}
+                                    <span class="badge bg-success badge-custom">Success</span>
+                                    {% elif code == '3xx' %}
+                                    <span class="badge bg-primary badge-custom">Redirection</span>
+                                    {% elif code == '4xx' %}
+                                    <span class="badge bg-warning badge-custom">Client Error</span>
+                                    {% elif code == '5xx' %}
+                                    <span class="badge bg-danger badge-custom">Server Error</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ count|intcomma }}</td>
+                                <td>
+                                    {% with total=report.analysis.total_requests|default:1 %}
+                                        {{ count|divisibleby:total|mul:100|floatformat:1 }}%
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <small>
+                                        {% if code == '2xx' %}Successful requests{% endif %}
+                                        {% if code == '3xx' %}Redirection responses{% endif %}
+                                        {% if code == '4xx' %}Client-side errors{% endif %}
+                                        {% if code == '5xx' %}Server-side errors{% endif %}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Distribution Summary</h5>
+                    <div class="mt-4">
+                        {% for code, count in report.analysis.status_codes.items %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>
+                                    {% if code == '2xx' %}✅ Success{% endif %}
+                                    {% if code == '3xx' %}↪️ Redirection{% endif %}
+                                    {% if code == '4xx' %}⚠️ Client Errors{% endif %}
+                                    {% if code == '5xx' %}❌ Server Errors{% endif %}
+                                </span>
+                                <span>
+                                    {% with total=report.analysis.total_requests|default:1 %}
+                                        {{ count|divisibleby:total|mul:100|floatformat:1 }}%
+                                    {% endwith %}
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                {% with total=report.analysis.total_requests|default:1 %}
+                                <div class="progress-bar 
+                                    {% if code == '2xx' %}bg-success{% endif %}
+                                    {% if code == '3xx' %}bg-primary{% endif %}
+                                    {% if code == '4xx' %}bg-warning{% endif %}
+                                    {% if code == '5xx' %}bg-danger{% endif %}" 
+                                    style="width: {{ count|divisibleby:total|mul:100 }}%">
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        {% if include_recommendations %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3 class="section-title">
+                    <i class="fas fa-lightbulb"></i>Recommendations & Next Steps
+                </h3>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="recommendation-box">
+                    <h5><i class="fas fa-chart-line me-2"></i>Performance</h5>
+                    <ul class="mb-0">
+                        <li>Monitor error rates weekly to detect trends early</li>
+                        <li>Set up alerts for error rates above 5%</li>
+                        <li>Review peak traffic hours for capacity planning</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="recommendation-box">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Security</h5>
+                    <ul class="mb-0">
+                        {% if report.analysis.suspicious_ips %}
+                        <li>Investigate {{ report.analysis.suspicious_ips|length }} flagged IP addresses</li>
+                        {% endif %}
+                        <li>Implement rate limiting for high-frequency IPs</li>
+                        <li>Review authentication logs for failed attempts</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mt-3">
+                <div class="recommendation-box">
+                    <h5><i class="fas fa-tools me-2"></i>Maintenance</h5>
+                    <ul class="mb-0">
+                        <li>Regularly update web server software</li>
+                        <li>Review and optimize database queries</li>
+                        <li>Implement log rotation to manage file sizes</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mt-3">
+                <div class="recommendation-box">
+                    <h5><i class="fas fa-rocket me-2"></i>Optimization</h5>
+                    <ul class="mb-0">
+                        <li>Cache static assets to reduce server load</li>
+                        <li>Implement CDN for global traffic</li>
+                        <li>Optimize images and assets for faster loading</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Sample Data -->
+        <div class="row">
+            <div class="col-12">
+                <h3 class="section-title">
+                    <i class="fas fa-list-alt"></i>Sample Log Entries
+                </h3>
+                <p class="text-muted mb-3">Last 20 log entries from the analyzed file</p>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>IP Address</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                                <th>URL</th>
+                                <th>User Agent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in report.entries|slice:":20" %}
+                            <tr>
+                                <td><small>{{ entry.timestamp|date:"Y-m-d H:i" }}</small></td>
+                                <td><code>{{ entry.ip_address|truncatechars:15 }}</code></td>
+                                <td>
+                                    <span class="badge 
+                                        {% if entry.method == 'GET' %}bg-primary{% endif %}
+                                        {% if entry.method == 'POST' %}bg-success{% endif %}
+                                        {% if entry.method == 'PUT' %}bg-warning{% endif %}
+                                        {% if entry.method == 'DELETE' %}bg-danger{% endif %}
+                                        {% if not entry.method %}bg-secondary{% endif %}">
+                                        {{ entry.method|default:"N/A" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if entry.status_code >= 500 %}bg-danger{% endif %}
+                                        {% if entry.status_code >= 400 and entry.status_code < 500 %}bg-warning{% endif %}
+                                        {% if entry.status_code >= 300 and entry.status_code < 400 %}bg-info{% endif %}
+                                        {% if entry.status_code >= 200 and entry.status_code < 300 %}bg-success{% endif %}
+                                        {% if not entry.status_code %}bg-secondary{% endif %}">
+                                        {{ entry.status_code|default:"N/A" }}
+                                    </span>
+                                </td>
+                                <td><small>{{ entry.url|truncatechars:30|default:"N/A" }}</small></td>
+                                <td><small>{{ entry.user_agent|truncatechars:20|default:"N/A" }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>NetLog</h5>
+                    <p class="small">Network Log Analyzer - Transforming raw logs into actionable insights</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="small mb-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Report generated on {{ generated_at }}
+                    </p>
+                    <p class="small text-muted">
+                        This is an automatically generated report. For the most up-to-date analysis, 
+                        visit your NetLog dashboard.
+                    </p>
+                </div>
+            </div>
+            <hr class="my-3">
+            <p class="small text-muted mb-0">
+                © {% now "Y" %} NetLog. This report contains confidential log data. Distribution is restricted.
+            </p>
+        </div>
+    </div>
+
+    <!-- Print Button -->
+    <div class="no-print position-fixed bottom-0 end-0 m-4">
+        <button onclick="window.print()" class="btn btn-primary shadow-lg">
+            <i class="fas fa-print me-2"></i>Print Report
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add thousand separators to numbers
+        document.addEventListener('DOMContentLoaded', function() {
+            const intcommaElements = document.querySelectorAll('[data-intcomma]');
+            intcommaElements.forEach(el => {
+                const num = parseInt(el.textContent);
+                if (!isNaN(num)) {
+                    el.textContent = num.toLocaleString();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -44,6 +44,7 @@ venv.bak/
 *.swo
 *~
 
+
 # OS
 .DS_Store
 .DS_Store?
@@ -67,3 +68,13 @@ test_*.db
 # Temporary files
 *.tmp
 *.temp
+
+# Database
+*.sqlite3
+*.db
+
+# Django migrations (ignore generated files, keep package)
+**/migrations/*.py
+!**/migrations/__init__.py
+**/migrations/*.pyc
+**/migrations/__pycache__/

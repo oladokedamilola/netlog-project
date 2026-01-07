@@ -1,0 +1,229 @@
+{% extends "base_user.html" %}
+{% load static %}
+
+{% block title %}{{ report.title }} - NetLog{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Report Header -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="h2 mb-1">{{ report.title }}</h1>
+                    <p class="text-muted mb-0">
+                        Generated {{ report.generated_at|timesince }} ago • 
+                        {{ report.get_report_type_display }} • 
+                        {{ report.get_format_display }}
+                    </p>
+                    {% if report.description %}
+                    <p class="mt-2">{{ report.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary" type="button" id="reportActions" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'reports:download_report' report.id %}">
+                            <i class="fas fa-download me-2"></i>Download
+                        </a></li>
+                        {% if report.format == 'html' %}
+                        <li><a class="dropdown-item" href="{% url 'reports:preview_report' report.id %}">
+                            <i class="fas fa-eye me-2"></i>Preview
+                        </a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url 'analytics:analytics_view' report.upload.id %}">
+                            <i class="fas fa-chart-bar me-2"></i>View Analytics
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{% url 'reports:delete_report' report.id %}">
+                            <i class="fas fa-trash me-2"></i>Delete
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Report Info Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="text-primary mb-2">
+                                <i class="fas fa-file fa-2x"></i>
+                            </div>
+                            <h6 class="card-title mb-1">Format</h6>
+                            <p class="card-text h5">{{ report.get_format_display }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="text-success mb-2">
+                                <i class="fas fa-database fa-2x"></i>
+                            </div>
+                            <h6 class="card-title mb-1">File Size</h6>
+                            <p class="card-text h5">
+                                {% if report.file_size > 1048576 %}
+                                    {{ report.file_size|filesizeformat }}
+                                {% else %}
+                                    {{ report.file_size }} bytes
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="text-warning mb-2">
+                                <i class="fas fa-download fa-2x"></i>
+                            </div>
+                            <h6 class="card-title mb-1">Downloads</h6>
+                            <p class="card-text h5">{{ report.download_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="text-info mb-2">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                            <h6 class="card-title mb-1">Generation Time</h6>
+                            <p class="card-text h5">{{ report.generation_time|floatformat:2 }}s</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Source Log Information -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">📁 Source Log File</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th width="40%">Filename:</th>
+                                    <td>{{ report.upload.filename }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Log Type:</th>
+                                    <td>{{ report.upload.get_log_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Uploaded:</th>
+                                    <td>{{ report.upload.uploaded_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th width="40%">Report Type:</th>
+                                    <td>{{ report.get_report_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Generated:</th>
+                                    <td>{{ report.generated_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% if report.is_downloaded %}
+                                <tr>
+                                    <th>Last Downloaded:</th>
+                                    <td>{{ report.downloaded_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'analytics:analytics_view' report.upload.id %}" class="btn btn-outline-primary btn-sm me-2">
+                            <i class="fas fa-chart-bar me-1"></i>View Analytics
+                        </a>
+                        <a href="{% url 'logs:upload_history' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-history me-1"></i>View Upload History
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Data Preview (if available) -->
+            {% if report.report_data %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📊 Report Summary</h5>
+                    <span class="badge bg-primary">{{ report.get_report_type_display }}</span>
+                </div>
+                <div class="card-body">
+                    {% if report.report_data.analysis_summary %}
+                        {% with summary=report.report_data.analysis_summary %}
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 text-center">
+                                    <div class="h4 text-primary mb-1">{{ summary.total_requests|default:"0" }}</div>
+                                    <small class="text-muted">Total Requests</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 text-center">
+                                    <div class="h4 text-success mb-1">{{ summary.unique_ips|default:"0" }}</div>
+                                    <small class="text-muted">Unique IPs</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 text-center">
+                                    <div class="h4 text-warning mb-1">{{ summary.error_rate|default:"0"|floatformat:1 }}%</div>
+                                    <small class="text-muted">Error Rate</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 text-center">
+                                    <div class="h4 text-info mb-1">{{ summary.avg_requests_per_day|default:"0"|floatformat:1 }}</div>
+                                    <small class="text-muted">Avg Daily</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% else %}
+                        <p class="text-muted mb-0">No summary data available. Please download the report to view full details.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="mb-3">Ready to download your report?</h5>
+                    <p class="text-muted mb-4">Your {{ report.get_format_display }} report is ready. Click the button below to download it to your device.</p>
+                    
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-download me-2"></i>Download Report
+                        </a>
+                        
+                        {% if report.format == 'html' %}
+                        <a href="{% url 'reports:preview_report' report.id %}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-eye me-2"></i>Preview in Browser
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'reports:generate_report' %}" class="text-decoration-none me-3">
+                            <i class="fas fa-plus me-1"></i>Create Another Report
+                        </a>
+                        <a href="{% url 'reports:report_list' %}" class="text-decoration-none">
+                            <i class="fas fa-list me-1"></i>View All Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

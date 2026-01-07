@@ -1,15 +1,11 @@
+# analytics/urls.py
 from django.urls import path
-from . import api
-from .views import analytics_dashboard
-
+from . import views
 
 urlpatterns = [
-    path("<int:upload_id>/", analytics_dashboard, name="analysis_dashboard"),
+    # Single analytics page for each upload
+    path('<int:upload_id>/', views.analytics_view, name='analytics_view'),
     
-    path('top-ips/', api.TopIPsView.as_view(), name='top_ips'),
-    path('status-codes/', api.StatusCodesView.as_view(), name='status_codes'),
-    path('traffic/hourly/', api.TrafficPeaksHourlyView.as_view(), name='traffic_hourly'),
-    path('traffic/daily/', api.TrafficPeaksDailyView.as_view(), name='traffic_daily'),
-    path('errors/spikes/', api.ErrorSpikesView.as_view(), name='error_spikes'),
-    path('endpoints/top/', api.TopEndpointsView.as_view(), name='top_endpoints'),
+    # Optional: API endpoint for AJAX updates if needed
+    path('<int:upload_id>/chart-data/', views.chart_data_api, name='chart_data_api'),
 ]

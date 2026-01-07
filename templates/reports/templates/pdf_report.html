@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.title }} - NetLog</title>
+    <style>
+        /* CSS is injected by WeasyPrint - this is just for template structure */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            font-size: 12px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #1A1F36;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #1A1F36;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+        
+        .header .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .metadata {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-size: 11px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background-color: #f8f9fa;
+            padding: 8px 12px;
+            border-left: 4px solid #FF7A00;
+            margin-bottom: 15px;
+            color: #1A1F36;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            text-align: center;
+            background-color: #fff;
+        }
+        
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FF7A00;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10px;
+        }
+        
+        th {
+            background-color: #1A1F36;
+            color: white;
+            text-align: left;
+            padding: 8px;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .highlight {
+            background-color: #fff8e1;
+            padding: 12px;
+            border-left: 4px solid #ffc107;
+            margin: 12px 0;
+            font-size: 11px;
+        }
+        
+        .recommendation {
+            background-color: #e8f5e9;
+            padding: 12px;
+            border-left: 4px solid #4caf50;
+            margin: 12px 0;
+            font-size: 11px;
+        }
+        
+        .warning {
+            background-color: #ffebee;
+            padding: 12px;
+            border-left: 4px solid #f44336;
+            margin: 12px 0;
+            font-size: 11px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 9px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        
+        .badge-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>{{ report.title }}</h1>
+        {% if report.description %}
+        <p class="subtitle">{{ report.description }}</p>
+        {% endif %}
+        <p class="subtitle">Generated on {{ generated_at }}</p>
+    </div>
+
+    <!-- Metadata -->
+    <div class="metadata">
+        <table width="100%">
+            <tr>
+                <td width="50%">
+                    <strong>Log File:</strong> {{ report.upload.filename }}<br>
+                    <strong>Log Type:</strong> {{ report.upload.get_log_type_display }}<br>
+                    <strong>Uploaded:</strong> {{ report.upload.uploaded_at|date:"Y-m-d H:i" }}
+                </td>
+                <td width="50%">
+                    <strong>Report Type:</strong> {{ report.get_report_type_display }}<br>
+                    <strong>Report Format:</strong> PDF<br>
+                    <strong>Generated:</strong> {{ generated_at }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Executive Summary -->
+    {% if include_summary %}
+    <div class="section">
+        <div class="section-title">📊 Executive Summary</div>
+        
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-value">{{ report.analysis.total_requests|default:"0" }}</div>
+                <div class="metric-label">Total Requests</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.analysis.unique_ips|default:"0" }}</div>
+                <div class="metric-label">Unique IPs</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.analysis.error_rate|default:"0"|floatformat:1 }}%</div>
+                <div class="metric-label">Error Rate</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.analysis.avg_requests_per_day|default:"0"|floatformat:1 }}</div>
+                <div class="metric-label">Avg Daily Requests</div>
+            </div>
+        </div>
+
+        <div class="highlight">
+            <strong>Key Insight:</strong> 
+            {% if report.analysis.error_rate > 10 %}
+            High error rate detected ({{ report.analysis.error_rate|default:"0"|floatformat:1 }}%). 
+            Consider investigating 4xx and 5xx status codes.
+            {% elif report.analysis.total_requests > 10000 %}
+            High traffic volume detected. Consider scaling infrastructure if this is ongoing.
+            {% else %}
+            Log analysis shows normal traffic patterns with {{ report.analysis.error_rate|default:"0"|floatformat:1 }}% error rate.
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Traffic Analysis -->
+    <div class="section">
+        <div class="section-title">🚦 Traffic Analysis</div>
+        
+        <table>
+            <tr>
+                <th>Time Period</th>
+                <th>Days Analyzed</th>
+                <th>Avg Requests/Day</th>
+                <th>Peak Hour</th>
+            </tr>
+            <tr>
+                <td>{{ report.analysis.time_period_days|default:"0"|floatformat:1 }} days</td>
+                <td>{{ report.analysis.time_period_days|default:"0"|floatformat:0 }}</td>
+                <td>{{ report.analysis.avg_requests_per_day|default:"0"|floatformat:1 }}</td>
+                <td>
+                    {% with hourly=report.analysis.hourly_distribution %}
+                        {% if hourly %}
+                            Hour {{ hourly.index(max(hourly)) }}:00 ({{ max(hourly) }} requests)
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    {% endwith %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Top IP Addresses -->
+    {% if include_top_data %}
+    <div class="section">
+        <div class="section-title">📍 Top IP Addresses</div>
+        
+        <table>
+            <tr>
+                <th>IP Address</th>
+                <th>Requests</th>
+                <th>Percentage</th>
+                <th>Status</th>
+            </tr>
+            {% for ip, count in report.analysis.top_ips.items|slice:":10" %}
+            <tr>
+                <td>{{ ip }}</td>
+                <td>{{ count }}</td>
+                <td>{{ count|divisibleby:report.analysis.total_requests|default:1|mul:100|floatformat:1 }}%</td>
+                <td>
+                    {% if ip in report.analysis.suspicious_ips %}
+                    <span class="badge badge-danger">Suspicious</span>
+                    {% else %}
+                    <span class="badge badge-success">Normal</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+        {% if report.analysis.suspicious_ips %}
+        <div class="warning">
+            <strong>Security Alert:</strong> {{ report.analysis.suspicious_ips|length }} suspicious IP(s) detected.
+            Review the security section for details.
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Status Code Distribution -->
+    <div class="section">
+        <div class="section-title">📋 Status Code Distribution</div>
+        
+        <table>
+            <tr>
+                <th>Status Code</th>
+                <th>Count</th>
+                <th>Percentage</th>
+                <th>Category</th>
+            </tr>
+            {% for code, count in report.analysis.status_codes.items %}
+            <tr>
+                <td>{{ code }}</td>
+                <td>{{ count }}</td>
+                <td>{{ count|divisibleby:report.analysis.total_requests|default:1|mul:100|floatformat:1 }}%</td>
+                <td>
+                    {% if code == '2xx' %}
+                    <span class="badge badge-success">Success</span>
+                    {% elif code == '3xx' %}
+                    <span class="badge badge-primary">Redirection</span>
+                    {% elif code == '4xx' %}
+                    <span class="badge badge-warning">Client Error</span>
+                    {% elif code == '5xx' %}
+                    <span class="badge badge-danger">Server Error</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Top Endpoints -->
+    {% if include_top_data %}
+    <div class="section">
+        <div class="section-title">🔗 Top Endpoints</div>
+        
+        <table>
+            <tr>
+                <th>Endpoint</th>
+                <th>Requests</th>
+                <th>Errors</th>
+                <th>Error Rate</th>
+            </tr>
+            {% for endpoint, count in report.analysis.top_endpoints.items|slice:":10" %}
+            <tr>
+                <td>{{ endpoint|truncatechars:50 }}</td>
+                <td>{{ count }}</td>
+                <td>
+                    {% with error_count=0 %}
+                        {{ error_count }}
+                    {% endwith %}
+                </td>
+                <td>
+                    {% with error_count=0 %}
+                        {{ error_count|divisibleby:count|default:1|mul:100|floatformat:1 }}%
+                    {% endwith %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Security Findings -->
+    {% if report.analysis.suspicious_ips %}
+    <div class="section page-break">
+        <div class="section-title">🛡️ Security Findings</div>
+        
+        <div class="warning">
+            <strong>⚠️ Security Alert:</strong> {{ report.analysis.suspicious_ips|length }} potentially suspicious IP address(es) detected.
+        </div>
+        
+        <table>
+            <tr>
+                <th>IP Address</th>
+                <th>Reason</th>
+                <th>Requests</th>
+                <th>Risk Level</th>
+            </tr>
+            {% for suspicious in report.analysis.suspicious_ips|slice:":5" %}
+            <tr>
+                <td>{{ suspicious.ip }}</td>
+                <td>{{ suspicious.reason }}</td>
+                <td>{{ suspicious.total_requests|default:"N/A" }}</td>
+                <td>
+                    {% if suspicious.error_rate > 70 or suspicious.access_count > 20 %}
+                    <span class="badge badge-danger">High</span>
+                    {% elif suspicious.error_rate > 30 %}
+                    <span class="badge badge-warning">Medium</span>
+                    {% else %}
+                    <span class="badge badge-primary">Low</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations -->
+    {% if include_recommendations %}
+    <div class="section">
+        <div class="section-title">💡 Recommendations</div>
+        
+        <div class="recommendation">
+            <strong>1. Monitor Error Rates:</strong>
+            Current error rate is {{ report.analysis.error_rate|default:"0"|floatformat:1 }}%.
+            {% if report.analysis.error_rate > 5 %}
+            Consider investigating 4xx and 5xx errors as they indicate potential issues.
+            {% else %}
+            Error rate is within acceptable limits.
+            {% endif %}
+        </div>
+        
+        <div class="recommendation">
+            <strong>2. Review Suspicious Activity:</strong>
+            {% if report.analysis.suspicious_ips %}
+            {{ report.analysis.suspicious_ips|length }} IP(s) flagged for suspicious activity.
+            Consider blocking or monitoring these IPs.
+            {% else %}
+            No suspicious activity detected in this analysis period.
+            {% endif %}
+        </div>
+        
+        <div class="recommendation">
+            <strong>3. Traffic Patterns:</strong>
+            Peak traffic occurs at 
+            {% with hourly=report.analysis.hourly_distribution %}
+                {% if hourly %}
+                    {{ hourly.index(max(hourly)) }}:00
+                {% else %}
+                    N/A
+                {% endif %}
+            {% endwith %}.
+            Consider scaling resources during peak hours.
+        </div>
+        
+        <div class="recommendation">
+            <strong>4. Regular Analysis:</strong>
+            Set up regular log analysis (weekly/monthly) to monitor trends and detect anomalies early.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sample Log Entries -->
+    <div class="section">
+        <div class="section-title">📝 Sample Log Entries (Last 20)</div>
+        
+        <table>
+            <tr>
+                <th>Timestamp</th>
+                <th>IP Address</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>URL</th>
+            </tr>
+            {% for entry in report.entries|slice:":20" %}
+            <tr>
+                <td>{{ entry.timestamp|date:"Y-m-d H:i" }}</td>
+                <td>{{ entry.ip_address }}</td>
+                <td>{{ entry.method|default:"N/A" }}</td>
+                <td>
+                    {% if entry.status_code >= 400 %}
+                    <span class="badge badge-danger">{{ entry.status_code }}</span>
+                    {% elif entry.status_code >= 300 %}
+                    <span class="badge badge-warning">{{ entry.status_code }}</span>
+                    {% else %}
+                    <span class="badge badge-success">{{ entry.status_code }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ entry.url|truncatechars:30|default:"N/A" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>
+            <strong>NetLog - Network Log Analyzer</strong><br>
+            Report generated on {{ generated_at }}<br>
+            This is an automatically generated report. For detailed analysis, visit the NetLog dashboard.
+        </p>
+        <p style="font-size: 8px; color: #ccc;">
+            CONFIDENTIAL - This report contains sensitive log data. Handle with care.
+        </p>
+    </div>
+</body>
+</html>
