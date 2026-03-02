@@ -1,0 +1,543 @@
+{% extends 'base_user.html' %}
+{% load static %}
+
+{% block title %}Delete Account - NetLog{% endblock %}
+
+{% block content %}
+<div class="container mt-3 mt-md-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white" style="padding: clamp(1rem, 4vw, 1.25rem);">
+                    <h4 class="mb-0 d-flex align-items-center" style="font-size: clamp(1.1rem, 4vw, 1.5rem);">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Delete Account
+                    </h4>
+                </div>
+                <div class="card-body p-3 p-md-4 text-center">
+                    <div class="my-3 my-md-4">
+                        <i class="fas fa-trash-alt fa-3x fa-md-4x text-danger opacity-50"></i>
+                    </div>
+                    
+                    <h5 class="mb-3" style="color: var(--ls-navy); font-size: clamp(1rem, 4vw, 1.25rem);">Are you absolutely sure?</h5>
+                    
+                    <div class="alert alert-danger text-start mb-4" style="padding: clamp(0.75rem, 3vw, 1rem);">
+                        <p class="mb-2" style="font-size: clamp(0.9rem, 3vw, 1rem);"><strong>This action cannot be undone.</strong> This will permanently delete:</p>
+                        <ul class="mb-0 small" style="font-size: clamp(0.8rem, 2.5vw, 0.9rem);">
+                            <li class="mb-1">Your account and profile information</li>
+                            <li class="mb-1">All your uploaded log files</li>
+                            <li class="mb-1">All your generated reports</li>
+                            <li>All your saved settings and preferences</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" action="{% url 'profile_delete' %}" id="deleteForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="confirm" class="form-label fw-semibold" style="font-size: clamp(0.9rem, 3vw, 1rem);">
+                                Type <span class="text-danger">DELETE</span> to confirm
+                            </label>
+                            <input type="text" 
+                                   class="form-control text-center" 
+                                   id="confirm" 
+                                   name="confirm" 
+                                   placeholder="DELETE"
+                                   required
+                                   pattern="DELETE"
+                                   inputmode="text"
+                                   autocomplete="off"
+                                   style="border-color: var(--ls-danger); font-size: 16px; min-height: 44px; padding: 0.6rem;">
+                            <div class="invalid-feedback text-start" id="confirmFeedback">
+                                Please type "DELETE" exactly to confirm.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-semibold" style="font-size: clamp(0.9rem, 3vw, 1rem);">
+                                Enter your password
+                            </label>
+                            <div class="password-input-wrapper position-relative">
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       required
+                                       autocomplete="current-password"
+                                       style="border-color: var(--ls-danger); font-size: 16px; min-height: 44px; padding: 0.6rem; padding-right: 44px;">
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)" aria-label="Show password" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c757d; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback text-start" id="passwordFeedback">
+                                Password is required.
+                            </div>
+                        </div>
+                        
+                        <!-- Warning message for unmatched DELETE text -->
+                        <div class="warning-message mb-4" style="display: none;">
+                            <div class="alert alert-warning py-2" style="font-size: 0.9rem;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Please type DELETE exactly as shown
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 justify-content-center mt-3 mt-md-4">
+                            <a href="{% url 'profile' %}" class="btn btn-outline" style="min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0.6rem 1.2rem; font-size: 16px;">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="submitBtn" style="min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0.6rem 1.2rem; font-size: 16px;">
+                                <i class="fas fa-trash-alt me-2"></i>
+                                Delete Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Security note -->
+                <div class="card-footer bg-transparent text-center py-3" style="padding: clamp(0.75rem, 3vw, 1rem);">
+                    <small class="text-muted" style="font-size: clamp(0.7rem, 2.5vw, 0.8rem);">
+                        <i class="fas fa-shield-alt me-1" style="color: var(--ls-orange);"></i>
+                        For security, we'll email you a confirmation after deletion
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS Variables for responsive design */
+    :root {
+        --touch-target-size: 44px;
+        --mobile-padding: 1rem;
+    }
+
+    /* Global reset */
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Container adjustments */
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-right: var(--mobile-padding);
+        padding-left: var(--mobile-padding);
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    /* Card styling */
+    .card {
+        width: 100%;
+        margin: 0 auto;
+        border-radius: var(--radius-md);
+    }
+
+    /* Danger card border */
+    .card.border-danger {
+        border: 2px solid rgba(220, 53, 69, 0.2);
+    }
+
+    /* Header styling */
+    .card-header.bg-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%) !important;
+    }
+
+    /* Form controls */
+    .form-control {
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        border-color: var(--ls-danger);
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+        outline: none;
+    }
+
+    /* Invalid state */
+    .form-control.is-invalid {
+        border-color: var(--ls-danger);
+        background-image: none;
+    }
+
+    .form-control.is-invalid:focus {
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+
+    /* Password toggle button */
+    .password-toggle {
+        transition: color 0.2s ease;
+    }
+
+    .password-toggle:hover {
+        color: #495057;
+    }
+
+    .password-toggle:active {
+        opacity: 0.7;
+    }
+
+    /* Button styling */
+    .btn-outline {
+        border: 1px solid rgba(26,30,50,0.12);
+        color: var(--ls-navy);
+        background: transparent;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-danger);
+        background: rgba(220, 53, 69, 0.02);
+        transform: translateY(-2px);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+    }
+
+    /* Alert styling */
+    .alert-danger {
+        background-color: rgba(220, 53, 69, 0.05);
+        border-color: rgba(220, 53, 69, 0.2);
+        color: #58151c;
+    }
+
+    .alert-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border-color: rgba(255, 193, 7, 0.2);
+        color: #856404;
+    }
+
+    /* Invalid feedback */
+    .invalid-feedback {
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        color: var(--ls-danger);
+    }
+
+    /* Responsive breakpoints */
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1rem;
+        }
+
+        .fa-3x {
+            font-size: 2.5rem;
+        }
+
+        .d-flex.flex-column.flex-sm-row {
+            flex-direction: column;
+        }
+
+        .btn-outline, .btn-danger {
+            width: 100%;
+        }
+
+        .alert-danger ul {
+            padding-left: 1.2rem;
+        }
+
+        .alert-danger li {
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .container {
+            padding-right: 0.5rem;
+            padding-left: 0.5rem;
+        }
+
+        .card-body {
+            padding: 0.75rem;
+        }
+
+        .fa-3x {
+            font-size: 2rem;
+        }
+
+        h5 {
+            font-size: 1rem;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+        }
+
+        .alert-danger {
+            padding: 0.75rem;
+        }
+
+        .alert-danger p {
+            font-size: 0.85rem;
+        }
+
+        .alert-danger li {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .btn-outline:hover,
+        .btn-danger:hover,
+        .password-toggle:hover {
+            transform: none;
+        }
+
+        .btn-outline:active,
+        .btn-danger:active {
+            transform: scale(0.98);
+        }
+
+        .password-toggle:active {
+            opacity: 0.7;
+        }
+    }
+
+    /* Landscape mode optimizations */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .container.mt-3.mt-md-5 {
+            margin-top: 0.5rem !important;
+        }
+
+        .my-3.my-md-4 {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .fa-3x {
+            font-size: 2rem;
+        }
+
+        .card-body {
+            padding: 0.75rem;
+        }
+    }
+
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+        .card.border-danger {
+            border: 3px solid #dc3545;
+        }
+
+        .btn-danger {
+            border: 2px solid #fff;
+        }
+
+        .btn-outline {
+            border: 2px solid var(--ls-navy);
+        }
+
+        .form-control {
+            border: 2px solid #000;
+        }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .btn-outline,
+        .btn-danger,
+        .form-control,
+        .password-toggle {
+            transition: none;
+            animation: none;
+        }
+
+        .btn-outline:hover,
+        .btn-danger:hover {
+            transform: none;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('deleteForm');
+    const confirmInput = document.getElementById('confirm');
+    const passwordInput = document.getElementById('password');
+    const submitBtn = document.getElementById('submitBtn');
+    const warningMessage = document.querySelector('.warning-message');
+    const confirmFeedback = document.getElementById('confirmFeedback');
+    const passwordFeedback = document.getElementById('passwordFeedback');
+    
+    // Real-time validation for DELETE confirmation
+    if (confirmInput) {
+        confirmInput.addEventListener('input', function() {
+            const value = this.value;
+            const isValid = value === 'DELETE';
+            
+            if (value && !isValid) {
+                this.classList.add('is-invalid');
+                warningMessage.style.display = 'block';
+                confirmFeedback.style.display = 'block';
+            } else if (value && isValid) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                warningMessage.style.display = 'none';
+                confirmFeedback.style.display = 'none';
+            } else {
+                this.classList.remove('is-invalid', 'is-valid');
+                warningMessage.style.display = 'none';
+                confirmFeedback.style.display = 'none';
+            }
+            
+            // Check form validity
+            validateForm();
+        });
+    }
+    
+    // Password field validation
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            const value = this.value;
+            
+            if (!value) {
+                this.classList.add('is-invalid');
+                passwordFeedback.style.display = 'block';
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                passwordFeedback.style.display = 'none';
+            }
+            
+            // Check form validity
+            validateForm();
+        });
+    }
+    
+    // Form validation
+    function validateForm() {
+        const confirmValid = confirmInput && confirmInput.value === 'DELETE';
+        const passwordValid = passwordInput && passwordInput.value.trim() !== '';
+        
+        // Enable/disable submit button
+        if (submitBtn) {
+            submitBtn.disabled = !(confirmValid && passwordValid);
+        }
+    }
+    
+    // Form submission handling
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const confirmValid = confirmInput && confirmInput.value === 'DELETE';
+            const passwordValid = passwordInput && passwordInput.value.trim() !== '';
+            
+            if (!confirmValid || !passwordValid) {
+                e.preventDefault();
+                
+                // Show validation messages
+                if (!confirmValid) {
+                    confirmInput.classList.add('is-invalid');
+                    warningMessage.style.display = 'block';
+                    confirmFeedback.style.display = 'block';
+                }
+                
+                if (!passwordValid) {
+                    passwordInput.classList.add('is-invalid');
+                    passwordFeedback.style.display = 'block';
+                }
+                
+                // Scroll to first error
+                if (!confirmValid) {
+                    confirmInput.focus();
+                } else if (!passwordValid) {
+                    passwordInput.focus();
+                }
+                
+                return;
+            }
+            
+            // Add loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+            
+            // Optional: Show final confirmation modal
+            const showFinalWarning = confirm('This action is permanent and cannot be undone. Are you absolutely sure you want to delete your account?');
+            if (!showFinalWarning) {
+                e.preventDefault();
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Delete Account';
+                return;
+            }
+        });
+    }
+    
+    // Toggle password visibility
+    window.togglePasswordVisibility = function(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+            button.setAttribute('aria-label', 'Hide password');
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+            button.setAttribute('aria-label', 'Show password');
+        }
+    };
+    
+    // Touch device optimizations
+    if ('ontouchstart' in window) {
+        const buttons = document.querySelectorAll('.btn-outline, .btn-danger, .password-toggle');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.opacity = '0.7';
+            }, { passive: true });
+            
+            button.addEventListener('touchend', function() {
+                this.style.opacity = '1';
+            });
+            
+            button.addEventListener('touchcancel', function() {
+                this.style.opacity = '1';
+            });
+        });
+    }
+    
+    // Handle orientation change
+    window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+            // Trigger reflow if needed
+            if (warningMessage && warningMessage.style.display === 'block') {
+                warningMessage.style.display = 'none';
+                setTimeout(() => {
+                    warningMessage.style.display = 'block';
+                }, 10);
+            }
+        }, 200);
+    });
+    
+    // Initial validation
+    validateForm();
+    
+    // Add ESC key handler to clear forms
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (confirmInput) confirmInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+            validateForm();
+        }
+    });
+});
+</script>
+{% endblock %}

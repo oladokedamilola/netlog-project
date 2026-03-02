@@ -1,0 +1,83 @@
+{% extends "errors/base_error.html" %}
+{% load static %}
+
+{% block error_icon %}
+<div class="error-icon">
+    <i class="fas fa-exclamation-circle"></i>
+</div>
+{% endblock %}
+
+{% block error_code %}400{% endblock %}
+
+{% block error_name %}Bad Request{% endblock %}
+
+{% block error_description %}
+The request could not be understood by the server due to malformed syntax. Please check your input and try again.
+{% endblock %}
+
+{% block error_details %}
+<div class="error-details">
+    <i class="fas fa-search" style="color: var(--info-color); margin-right: 10px;"></i>
+    <strong>Possible Causes:</strong><br>
+    <ul style="margin-top: 5px; padding-left: 20px;">
+        <li>Invalid or malformed form data</li>
+        <li>Missing required parameters</li>
+        <li>File upload too large</li>
+        <li>Invalid file format</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="javascript:history.back()" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Go Back
+</a>
+<a href="/" class="btn btn-primary">
+    <i class="fas fa-home"></i> Go Home
+</a>
+{% endblock %}
+
+{% block help_section %}
+<div class="help-section">
+    <div class="help-title">
+        <i class="fas fa-lightbulb" style="color: var(--info-color); margin-right: 10px;"></i>
+        Tips to Fix This:
+    </div>
+    
+    <div class="help-grid">
+        <div class="help-item">
+            <i class="fas fa-undo-alt"></i>
+            <h4>Go Back</h4>
+            <p>Return to the previous page</p>
+        </div>
+        <div class="help-item">
+            <i class="fas fa-sync"></i>
+            <h4>Refresh Page</h4>
+            <p>Sometimes a refresh helps</p>
+        </div>
+        <div class="help-item">
+            <i class="fas fa-upload"></i>
+            <h4>Check File Size</h4>
+            <p>Ensure files are under 10MB</p>
+        </div>
+        <a href="/contact" class="help-item" style="text-decoration: none;">
+            <i class="fas fa-envelope"></i>
+            <h4>Contact Support</h4>
+            <p>Get help from our team</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-details {
+        background: linear-gradient(135deg, #e3f2fd, #ffffff);
+        border-left-color: var(--info-color);
+    }
+    
+    .help-item i {
+        color: var(--info-color);
+    }
+</style>
+{% endblock %}

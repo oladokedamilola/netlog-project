@@ -1,8 +1,7 @@
-<!--templates/home.html-->
 {% extends "base_public.html" %}
 {% load static %}
 
-{% block title %}LogSight - Network Log Analysis Made Simple{% endblock %}
+{% block title %}NetLog - Network Log Analysis Made Simple{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -13,30 +12,66 @@
         max-width: 100% !important;
     }
     
-    /* Hero Section with Background Image */
-    .hero-section {
+    /* Hero Carousel - Full width fix */
+    .hero-carousel {
         position: relative;
+        width: 100vw;
         min-height: 85vh;
-        display: flex;
-        align-items: center;
-        background: linear-gradient(rgba(26, 30, 50, 0.85), rgba(26, 30, 50, 0.95)),
-                    url('{% static "images/hero.jpeg" %}') center/cover no-repeat;
-        color: white;
-        padding: 6rem 0;
         overflow: hidden;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
     }
     
-    .hero-content {
+    .carousel-slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(rgba(26, 30, 50, 0.7), rgba(26, 30, 50, 0.85));
+        pointer-events: none;
+    }
+    
+    .carousel-slide.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    .carousel-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+    }
+    
+    .carousel-content {
         position: relative;
         z-index: 2;
         max-width: 800px;
         margin: 0 auto;
         text-align: center;
-        padding: 0 1rem;
+        padding: 0 1.5rem;
+        color: white;
+        transform: translateY(30px);
+        opacity: 0;
+        transition: transform 0.8s ease 0.2s, opacity 0.8s ease 0.2s;
+        width: 100%;
     }
     
-    .hero-title {
-        font-size: 3.5rem;
+    .active .carousel-content {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .carousel-title {
+        font-size: clamp(2rem, 8vw, 3.5rem);
         font-weight: 800;
         line-height: 1.1;
         margin-bottom: 1.5rem;
@@ -44,23 +79,391 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        word-break: break-word;
     }
     
-    .hero-subtitle {
-        font-size: 1.25rem;
-        color: rgba(255, 255, 255, 0.9);
+    .carousel-subtitle {
+        font-size: clamp(1rem, 4vw, 1.25rem);
+        color: rgba(255, 255, 255, 0.95);
         margin-bottom: 2rem;
         max-width: 600px;
         margin-left: auto;
         margin-right: auto;
+        text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+        padding: 0 0.5rem;
     }
     
-    .hero-cta {
+    .carousel-cta {
         display: flex;
         gap: 1rem;
         justify-content: center;
         flex-wrap: wrap;
         margin-top: 2rem;
+    }
+    
+    .carousel-cta a {
+        min-width: 200px;
+        text-align: center;
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    
+    /* Carousel Navigation */
+    .carousel-nav {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 1rem;
+        z-index: 10;
+    }
+    
+    .carousel-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.4);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 12px;
+    }
+    
+    .carousel-dot.active {
+        background: var(--ls-orange);
+        transform: scale(1.3);
+        box-shadow: 0 0 15px var(--ls-orange);
+    }
+    
+    .carousel-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: clamp(40px, 6vw, 50px);
+        height: clamp(40px, 6vw, 50px);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+        font-size: clamp(1rem, 4vw, 1.2rem);
+    }
+    
+    .carousel-arrow:hover {
+        background: rgba(255, 122, 0, 0.8);
+        border-color: transparent;
+    }
+    
+    .carousel-arrow.prev {
+        left: 1rem;
+    }
+    
+    .carousel-arrow.next {
+        right: 1rem;
+    }
+    
+    /* Stats Section - Responsive Grid */
+    .stats-section {
+        background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+        padding: 3rem 0;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.06);
+    }
+    
+    .stats-section .row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin: 0;
+        gap: 1.5rem 0;
+    }
+    
+    .stats-section .col-md-3 {
+        flex: 0 0 calc(25% - 0.75rem);
+        max-width: calc(25% - 0.75rem);
+        padding: 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem 0.5rem;
+        width: 100%;
+    }
+    
+    .stat-number {
+        font-size: clamp(1.75rem, 5vw, 2.5rem);
+        font-weight: 800;
+        color: var(--ls-orange);
+        margin-bottom: 0.25rem;
+        line-height: 1.2;
+        word-break: break-word;
+    }
+    
+    .stat-label {
+        color: var(--ls-muted);
+        font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        word-break: break-word;
+    }
+    
+    /* Features Section - Responsive Grid */
+    .features-section {
+        padding: clamp(3rem, 8vw, 5rem) 0;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(1rem, 3vw, 1.5rem);
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1.25rem, 4vw, 1.5rem);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(26, 30, 50, 0.06);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
+    }
+    
+    .feature-icon {
+        width: clamp(48px, 10vw, 56px);
+        height: clamp(48px, 10vw, 56px);
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        font-size: clamp(1.25rem, 4vw, 1.5rem);
+        color: var(--ls-orange);
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .feature-card h4 {
+        font-size: clamp(1rem, 3.5vw, 1.2rem);
+        margin-bottom: 0.75rem;
+        color: var(--ls-navy);
+        text-align: center;
+    }
+    
+    .feature-card p {
+        color: var(--ls-muted);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+        text-align: center;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        flex-grow: 1;
+    }
+    
+    .feature-card ul {
+        padding-left: 0;
+        text-align: left;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+    
+    .feature-card li {
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        font-size: clamp(0.8rem, 2.8vw, 0.9rem);
+    }
+    
+    .feature-card li i {
+        flex-shrink: 0;
+    }
+    
+    /* Log Types Section - Responsive Grid */
+    .log-types-section {
+        background: linear-gradient(135deg, #f8fafc 0%, #fff 100%);
+        padding: clamp(3rem, 8vw, 5rem) 0;
+    }
+    
+    .log-types-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(1rem, 3vw, 1.5rem);
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    .log-type-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1.25rem, 4vw, 1.5rem);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(26, 30, 50, 0.06);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        height: 100%;
+    }
+    
+    .log-type-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
+        border-color: var(--ls-orange);
+    }
+    
+    .log-type-card .log-icon {
+        width: clamp(48px, 10vw, 56px);
+        height: clamp(48px, 10vw, 56px);
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        font-size: clamp(1.25rem, 4vw, 1.5rem);
+        color: var(--ls-orange);
+    }
+    
+    .log-type-content h4 {
+        font-size: clamp(1rem, 3.5vw, 1.2rem);
+        margin-bottom: 0.5rem;
+        color: var(--ls-navy);
+    }
+    
+    .log-type-content p {
+        color: var(--ls-muted);
+        line-height: 1.5;
+        margin-bottom: 0;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+    }
+    
+    /* How It Works Section - Responsive */
+    .how-it-works-section {
+        padding: clamp(3rem, 8vw, 5rem) 0;
+    }
+    
+    .steps-row {
+        display: flex;
+        justify-content: center;
+        gap: clamp(1rem, 3vw, 2rem);
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    .step-card {
+        flex: 1;
+        text-align: center;
+        padding: clamp(1.5rem, 4vw, 2rem) clamp(1rem, 3vw, 1.5rem);
+        background: white;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(26, 30, 50, 0.06);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+    }
+    
+    .step-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(26, 30, 50, 0.08);
+        border-color: var(--ls-orange);
+    }
+    
+    .step-number {
+        width: clamp(40px, 8vw, 50px);
+        height: clamp(40px, 8vw, 50px);
+        border-radius: 50%;
+        background: var(--ls-orange);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(1.1rem, 4vw, 1.3rem);
+        font-weight: 700;
+        margin: 0 auto 1.25rem;
+        box-shadow: 0 8px 15px rgba(255, 122, 0, 0.25);
+    }
+    
+    .step-card h4 {
+        font-size: clamp(1rem, 3.5vw, 1.2rem);
+        margin-bottom: 0.75rem;
+        color: var(--ls-navy);
+        font-weight: 600;
+    }
+    
+    .step-card p {
+        color: var(--ls-muted);
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+    
+    /* Connector lines - hide on mobile */
+    .step-card:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 35px;
+        right: -1.5rem;
+        width: 2rem;
+        height: 2px;
+        background: linear-gradient(90deg, var(--ls-orange), rgba(255, 122, 0, 0.2));
+        z-index: 1;
+    }
+    
+    /* Final CTA Section */
+    .cta-section {
+        padding: clamp(3rem, 8vw, 5rem) 0;
+        background: linear-gradient(135deg, #fff 0%, var(--ls-cream) 100%);
+        text-align: center;
+    }
+    
+    .cta-content {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    .cta-content h2 {
+        font-size: clamp(1.75rem, 6vw, 2.2rem);
+        font-weight: 700;
+        color: var(--ls-navy);
+        margin-bottom: 1.5rem;
+    }
+    
+    .cta-content p {
+        color: var(--ls-muted);
+        font-size: clamp(1rem, 4vw, 1.1rem);
+        line-height: 1.6;
+    }
+    
+    .cta-content .btn-lg {
+        min-height: 48px;
+        min-width: 200px;
+        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
     
     /* Animated data pulse elements */
@@ -72,16 +475,16 @@
     }
     
     .data-pulse-1 {
-        width: 300px;
-        height: 300px;
+        width: min(300px, 50vw);
+        height: min(300px, 50vw);
         top: -100px;
         right: -100px;
         animation-delay: 0s;
     }
     
     .data-pulse-2 {
-        width: 200px;
-        height: 200px;
+        width: min(200px, 30vw);
+        height: min(200px, 30vw);
         bottom: -50px;
         left: -50px;
         animation-delay: 1s;
@@ -92,237 +495,6 @@
         50% { opacity: 0.6; transform: scale(1.1); }
     }
     
-    /* Stats Section */
-    .stats-section {
-        background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
-        padding: 4rem 0;
-        border-bottom: 1px solid rgba(26, 30, 50, 0.06);
-    }
-    
-    .stat-item {
-        text-align: center;
-        padding: 1.5rem;
-    }
-    
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: var(--ls-orange);
-        margin-bottom: 0.5rem;
-    }
-    
-    .stat-label {
-        color: var(--ls-muted);
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-    
-    /* Features Section */
-    .features-section {
-        padding: 6rem 0;
-    }
-    
-    .section-title {
-        text-align: center;
-        margin-bottom: 3rem;
-    }
-    
-    .section-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--ls-navy);
-        margin-bottom: 1rem;
-    }
-    
-    .section-title p {
-        color: var(--ls-muted);
-        font-size: 1.1rem;
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 0 1rem;
-    }
-    
-    .feature-card {
-        background: white;
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        height: 100%;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 1px solid rgba(26, 30, 50, 0.06);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
-    }
-    
-    .feature-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: var(--radius-md);
-        background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1.5rem;
-        font-size: 1.75rem;
-        color: var(--ls-orange);
-    }
-    
-    .feature-card h4 {
-        font-size: 1.25rem;
-        margin-bottom: 1rem;
-        color: var(--ls-navy);
-    }
-    
-    .feature-card p {
-        color: var(--ls-muted);
-        margin-bottom: 1.5rem;
-        line-height: 1.6;
-    }
-    
-    .feature-card ul {
-        padding-left: 0;
-    }
-    
-    .feature-card li {
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-    }
-    
-    /* Log Types Section */
-    .log-types-section {
-        background: linear-gradient(135deg, #f8fafc 0%, #fff 100%);
-        padding: 6rem 0;
-    }
-    
-    .log-type {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        background: white;
-        border-radius: var(--radius-md);
-        margin-bottom: 1rem;
-        border: 1px solid rgba(26, 30, 50, 0.06);
-        transition: transform 0.2s ease;
-    }
-    
-    .log-type:hover {
-        transform: translateX(5px);
-        border-color: var(--ls-orange);
-    }
-    
-    .log-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: var(--radius-md);
-        background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--ls-orange);
-        font-size: 1.25rem;
-    }
-    
-    /* How It Works Section */
-    .how-it-works-section {
-        padding: 6rem 0;
-    }
-    
-    .step-card {
-        text-align: center;
-        padding: 2rem;
-        position: relative;
-    }
-    
-    .step-number {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: var(--ls-orange);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0 auto 1.5rem;
-    }
-    
-    .step-connector {
-        position: absolute;
-        top: 30px;
-        left: 75%;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, var(--ls-orange), rgba(255, 122, 0, 0.2));
-        z-index: -1;
-    }
-    
-    @media (max-width: 768px) {
-        .step-connector {
-            display: none;
-        }
-    }
-    
-    /* Testimonials Section */
-    .testimonials-section {
-        background: linear-gradient(135deg, var(--ls-navy) 0%, #0b1220 100%);
-        padding: 6rem 0;
-        color: white;
-    }
-    
-    .testimonial-card {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        height: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-    }
-    
-    .testimonial-content {
-        font-style: italic;
-        margin-bottom: 1.5rem;
-        color: rgba(255, 255, 255, 0.9);
-        line-height: 1.6;
-    }
-    
-    .testimonial-author {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .author-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--ls-orange), #ff9a3d);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        color: white;
-    }
-    
-    /* Pricing CTA */
-    .pricing-cta-section {
-        padding: 6rem 0;
-        background: linear-gradient(135deg, #fff 0%, var(--ls-cream) 100%);
-        text-align: center;
-    }
-    
-    .pricing-cta-content {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 0 1rem;
-    }
-    
     /* Ensure proper spacing for all containers */
     .section-container {
         width: 100%;
@@ -331,379 +503,352 @@
         padding: 0 1rem;
     }
     
-    /* Responsive Design */
+    /* Section Title */
+    .section-title {
+        text-align: center;
+        margin-bottom: clamp(2rem, 6vw, 3rem);
+    }
+    
+    .section-title h2 {
+        font-size: clamp(1.75rem, 6vw, 2.5rem);
+        font-weight: 700;
+        color: var(--ls-navy);
+        margin-bottom: 1rem;
+        padding: 0 1rem;
+    }
+    
+    .section-title p {
+        color: var(--ls-muted);
+        font-size: clamp(0.95rem, 4vw, 1.1rem);
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    
+    /* Responsive Breakpoints */
+    @media (max-width: 992px) {
+        .carousel-arrow {
+            display: none;
+        }
+        
+        .features-grid,
+        .log-types-grid {
+            grid-template-columns: repeat(2, 1fr);
+            max-width: 800px;
+        }
+        
+        .steps-row {
+            gap: 1.5rem;
+        }
+        
+        .step-card {
+            padding: 1.5rem;
+        }
+        
+        .step-card:not(:last-child)::after {
+            width: 1.5rem;
+            right: -1rem;
+        }
+    }
+    
     @media (max-width: 768px) {
-        .hero-title {
-            font-size: 2.5rem;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.1rem;
-        }
-        
-        .section-title h2 {
-            font-size: 2rem;
-        }
-        
-        .hero-section {
-            padding: 4rem 0;
+        .hero-carousel {
             min-height: 70vh;
+        }
+        
+        .carousel-content {
+            padding: 0 1rem;
+        }
+        
+        .carousel-cta a {
+            min-width: 160px;
+            padding: 0.6rem 1rem;
+        }
+        
+        /* Stats section responsive */
+        .stats-section .col-md-3 {
+            flex: 0 0 calc(50% - 0.75rem);
+            max-width: calc(50% - 0.75rem);
+        }
+        
+        .stats-section .row {
+            justify-content: center;
+        }
+        
+        .features-grid,
+        .log-types-grid {
+            grid-template-columns: 1fr;
+            max-width: 500px;
+        }
+        
+        .steps-row {
+            flex-direction: column;
+            max-width: 400px;
+            gap: 1.5rem;
+        }
+        
+        .step-card:not(:last-child)::after {
+            display: none;
+        }
+        
+        .step-card {
+            width: 100%;
         }
         
         .features-section,
         .log-types-section,
         .how-it-works-section,
-        .testimonials-section,
-        .pricing-cta-section {
-            padding: 4rem 0;
+        .cta-section {
+            padding: 3rem 0;
         }
         
         .stat-number {
             font-size: 2rem;
         }
+        
+        .cta-content .d-flex {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem !important;
+        }
+        
+        .cta-content .btn-lg {
+            width: 100%;
+            max-width: 280px;
+        }
     }
     
     @media (max-width: 576px) {
-        .hero-title {
-            font-size: 2rem;
+        .hero-carousel {
+            min-height: 60vh;
         }
         
-        .hero-cta {
+        .carousel-title {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .carousel-subtitle {
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .carousel-cta {
             flex-direction: column;
             align-items: center;
+            gap: 0.75rem;
         }
         
-        .hero-cta a {
+        .carousel-cta a {
             width: 100%;
-            max-width: 300px;
-            text-align: center;
+            max-width: 240px;
+        }
+        
+        .carousel-nav {
+            bottom: 1rem;
+        }
+        
+        .carousel-dot {
+            width: 10px;
+            height: 10px;
+            min-width: 10px;
+        }
+        
+        .stats-section .col-md-3 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .stat-item {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .stat-number {
+            font-size: 1.75rem;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+        }
+        
+        .feature-card,
+        .log-type-card,
+        .step-card {
+            padding: 1.25rem;
+        }
+        
+        .feature-card ul {
+            max-width: 100%;
+        }
+        
+        .feature-card li {
+            font-size: 0.85rem;
+        }
+        
+        .cta-content h2 {
+            font-size: 1.6rem;
+        }
+        
+        .cta-content p {
+            font-size: 0.95rem;
+        }
+        
+        .section-title h2 {
+            font-size: 1.75rem;
+        }
+        
+        .section-title p {
+            font-size: 0.95rem;
         }
     }
-
-
-
-    /* Fix for centering content in all sections */
-
-/* Center content in features section */
-.features-section .row {
-    justify-content: center;
-}
-
-/* Center feature cards within their columns */
-.features-section .col-lg-4 {
-    display: flex;
-    justify-content: center;
-}
-
-/* Ensure feature cards have consistent width and are centered */
-.feature-card {
-    width: 100%;
-    max-width: 360px;
-    margin: 0 auto;
-}
-
-/* Center log types content */
-.log-types-section .row {
-    justify-content: center;
-}
-
-.log-types-section .col-lg-6 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Center log type items */
-.log-type {
-    width: 100%;
-    max-width: 500px;
-}
-
-/* Center how-it-works steps */
-.how-it-works-section .row {
-    justify-content: center;
-}
-
-.how-it-works-section .col-lg-3 {
-    display: flex;
-    justify-content: center;
-}
-
-/* Center testimonial cards */
-.testimonials-section .row {
-    justify-content: center;
-}
-
-.testimonials-section .col-lg-4 {
-    display: flex;
-    justify-content: center;
-}
-
-.testimonial-card {
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
-}
-
-/* Center stats items */
-.stats-section .row {
-    justify-content: center;
-}
-
-.stats-section .col-md-3 {
-    display: flex;
-    justify-content: center;
-}
-
-.stat-item {
-    width: 100%;
-    max-width: 200px;
-}
-
-/* Fix Bootstrap column alignment */
-.row {
-    display: flex;
-    flex-wrap: wrap;
-    margin-right: -0.5rem;
-    margin-left: -0.5rem;
-}
-
-.row > * {
-    padding-right: 0.5rem;
-    padding-left: 0.5rem;
-}
-
-/* Ensure all content in section containers is centered */
-.section-container > .row {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* Center the how-it-works connector lines */
-.step-connector {
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 120px);
-}
-
-/* Responsive adjustments for better centering */
-@media (max-width: 992px) {
-    .log-types-section .col-lg-6 {
-        width: 100%;
-        max-width: 500px;
-        margin: 0 auto;
+    
+    @media (max-width: 360px) {
+        .hero-carousel {
+            min-height: 50vh;
+        }
+        
+        .carousel-title {
+            font-size: 1.5rem;
+        }
+        
+        .carousel-subtitle {
+            font-size: 0.85rem;
+        }
+        
+        .carousel-cta a {
+            padding: 0.5rem;
+            min-width: 140px;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .feature-card h4 {
+            font-size: 1rem;
+        }
+        
+        .feature-card p {
+            font-size: 0.8rem;
+        }
+        
+        .feature-card li {
+            font-size: 0.75rem;
+        }
+        
+        .log-type-card .log-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .step-number {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+        
+        .cta-content h2 {
+            font-size: 1.4rem;
+        }
+        
+        .cta-content p {
+            font-size: 0.85rem;
+        }
     }
     
-    .features-section .col-lg-4 {
-        max-width: 400px;
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .feature-card:hover,
+        .log-type-card:hover,
+        .step-card:hover,
+        .carousel-arrow:hover {
+            transform: none;
+        }
+        
+        .feature-card:active,
+        .log-type-card:active,
+        .step-card:active {
+            transform: translateY(-3px);
+        }
+        
+        .carousel-arrow:active {
+            background: rgba(255, 122, 0, 0.8);
+        }
     }
     
-    .step-connector {
-        display: none;
-    }
-}
-
-@media (max-width: 768px) {
-    .feature-card {
-        max-width: 100%;
-    }
-    
-    .stat-item {
-        max-width: 150px;
-    }
-    
-    .log-type {
-        max-width: 100%;
-    }
-}
-
-/* Fix for mobile view - ensure everything stays centered */
-@media (max-width: 576px) {
-    .row {
-        margin-right: -0.25rem;
-        margin-left: -0.25rem;
+    /* Landscape mode optimizations */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .hero-carousel {
+            min-height: 100vh;
+        }
+        
+        .carousel-content {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        
+        .carousel-title {
+            margin-bottom: 0.75rem;
+        }
+        
+        .carousel-cta {
+            margin-top: 1rem;
+        }
     }
     
-    .row > * {
-        padding-right: 0.25rem;
-        padding-left: 0.25rem;
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+        .feature-card,
+        .log-type-card,
+        .step-card {
+            border: 2px solid var(--ls-navy);
+        }
+        
+        .carousel-arrow {
+            border: 2px solid white;
+        }
+        
+        .btn-cta {
+            border: 2px solid #000;
+        }
     }
     
-    .col-md-3, .col-lg-4, .col-lg-6 {
-        width: 100%;
-        max-width: 100%;
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .carousel-slide,
+        .carousel-content,
+        .feature-card,
+        .log-type-card,
+        .step-card,
+        .carousel-dot,
+        .carousel-arrow,
+        .data-pulse {
+            transition: none;
+            animation: none;
+            transform: none;
+        }
+        
+        .carousel-slide.active .carousel-content {
+            transform: none;
+        }
+        
+        .feature-card:hover,
+        .log-type-card:hover,
+        .step-card:hover {
+            transform: none;
+        }
     }
-}
-/* Fix hero section alignment */
-.hero-section .section-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-}
-
-.hero-content {
-    width: 100%;
-    max-width: 800px;
-}
-
-/* Features Section - 3 cards per row */
-.features-section .row {
-    justify-content: center;
-}
-
-.features-section .col-xl-4 {
-    display: flex;
-    justify-content: center;
-}
-
-.feature-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    height: 100%;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid rgba(26, 30, 50, 0.06);
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
-}
-
-.feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
-}
-
-.feature-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-md);
-    background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.75rem;
-    color: var(--ls-orange);
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.feature-card h4 {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    color: var(--ls-navy);
-    text-align: center;
-}
-
-.feature-card p {
-    color: var(--ls-muted);
-    margin-bottom: 1.5rem;
-    line-height: 1.6;
-    text-align: center;
-}
-
-.feature-card ul {
-    padding-left: 0;
-    text-align: left;
-    max-width: 300px;
-    margin: 0 auto;
-}
-
-.feature-card li {
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-}
-
-/* Log Types Section - 3 cards per row */
-.log-types-section .row {
-    justify-content: center;
-}
-
-.log-type-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    height: 100%;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid rgba(26, 30, 50, 0.06);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
-}
-
-.log-type-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(26, 30, 50, 0.1);
-    border-color: var(--ls-orange);
-}
-
-.log-type-card .log-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-md);
-    background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(26, 30, 50, 0.05));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.75rem;
-    color: var(--ls-orange);
-}
-
-.log-type-content h4 {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    color: var(--ls-navy);
-}
-
-.log-type-content p {
-    color: var(--ls-muted);
-    line-height: 1.6;
-    margin-bottom: 0;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-    .feature-card, .log-type-card {
-        max-width: 350px;
-    }
-}
-
-@media (max-width: 992px) {
-    .feature-card, .log-type-card {
-        max-width: 320px;
-    }
-    
-    .features-section .col-lg-6,
-    .log-types-section .col-lg-4 {
-        max-width: 50%;
-        flex: 0 0 50%;
-    }
-}
-
-@media (max-width: 768px) {
-    .feature-card, .log-type-card {
-        max-width: 100%;
-    }
-    
-    .features-section .col-md-6,
-    .log-types-section .col-md-6 {
-        max-width: 100%;
-        flex: 0 0 100%;
-    }
-    
-    .feature-card, .log-type-card {
-        padding: 1.5rem;
-    }
-}
 </style>
 {% endblock %}
 
@@ -711,448 +856,340 @@
 <!-- Remove the container div from base_public that's causing the shift -->
 <div style="width: 100%;">
 
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="data-pulse data-pulse-1"></div>
-    <div class="data-pulse data-pulse-2"></div>
-    
-    <div class="section-container">
-        <div class="hero-content">
-            <h1 class="hero-title">
-                {% if user.is_authenticated %}
-                Welcome Back, {{ user.username }}!
-                {% else %}
-                Transform Logs Into Actionable Insights
-                {% endif %}
-            </h1>
-            <p class="hero-subtitle">
-                {% if user.is_authenticated %}
-                Ready to analyze your network logs? Continue where you left off or upload new logs to get started.
-                {% else %}
-                LogSight is your intelligent log analysis platform that turns complex network data 
-                into clear, actionable intelligence. No setup required, instant results.
-                {% endif %}
+<!-- Hero Carousel - Full width -->
+<section class="hero-carousel" id="heroCarousel">
+    <!-- Slide 1: Log Analysis Made Simple -->
+    <div class="carousel-slide active" data-slide="1">
+        <video class="carousel-video" autoplay muted loop playsinline>
+            <source src="{% static 'clips/log-analysis.mp4' %}" type="video/mp4">
+            <source src="{% static 'clips/log-analysis.webm' %}" type="video/webm">
+            <!-- Fallback content -->
+            Your browser does not support the video tag.
+        </video>
+        <div class="carousel-content">
+            <h1 class="carousel-title">Turn Raw Logs into Clear Insights</h1>
+            <p class="carousel-subtitle">
+                NetLog automatically parses and analyzes Apache, Nginx, IIS, and custom log formats. 
+                Get meaningful visualizations without complex configurations.
             </p>
-            <div class="hero-cta">
-                {% if user.is_authenticated %}
-                <!-- Logged in user sees dashboard and upload options -->
-                <a href="{% url 'dashboard' %}" class="btn-cta btn-lg">
-                    <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
-                </a>
-                <a href="#" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
-                    <i class="fas fa-upload me-2"></i> Upload Logs
-                </a>
-                {% else %}
-                <!-- Guest user sees sign up options -->
+            <div class="carousel-cta">
                 <a href="{% url 'register' %}" class="btn-cta btn-lg">
-                    <i class="fas fa-rocket me-2"></i> Start Free Trial
+                    <i class="fas fa-rocket me-2"></i> Start Analyzing Free
                 </a>
                 <a href="#features" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
-                    <i class="fas fa-play-circle me-2"></i> Watch Demo
+                    <i class="fas fa-play-circle me-2"></i> See How It Works
                 </a>
-                {% endif %}
-            </div>
-            <div class="mt-4">
-                {% if user.is_authenticated %}
-                <p class="small" style="color: rgba(255,255,255,0.7);">
-                    <i class="fas fa-user-check me-1"></i> Logged in as {{ user.email }} • 
-                    <a href="{% url 'logout' %}" style="color: rgba(255,255,255,0.7); text-decoration: underline;">Log out</a>
-                </p>
-                {% else %}
-                <p class="small" style="color: rgba(255,255,255,0.7);">
-                    <i class="fas fa-check-circle me-1"></i> No credit card required • 14-day free trial • 
-                    <a href="{% url 'login' %}" style="color: rgba(255,255,255,0.7); text-decoration: underline;">Already have an account?</a>
-                </p>
-                {% endif %}
             </div>
         </div>
     </div>
+    
+    <!-- Slide 2: Security & Threat Detection -->
+    <div class="carousel-slide" data-slide="2">
+        <video class="carousel-video" autoplay muted loop playsinline>
+            <source src="{% static 'clips/security-detection.mp4' %}" type="video/mp4">
+            <source src="{% static 'clips/security-detection.webm' %}" type="video/webm">
+            <!-- Fallback content -->
+            Your browser does not support the video tag.
+        </video>
+        <div class="carousel-content">
+            <h1 class="carousel-title">Detect Security Threats Instantly</h1>
+            <p class="carousel-subtitle">
+                Identify suspicious IPs, brute force attempts, and potential intrusions. 
+                Our security-focused analysis helps protect your infrastructure 24/7.
+            </p>
+            <div class="carousel-cta">
+                <a href="{% url 'register' %}" class="btn-cta btn-lg">
+                    <i class="fas fa-shield-alt me-2"></i> Secure Your Network
+                </a>
+                <a href="#features" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
+                    <i class="fas fa-info-circle me-2"></i> Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 3: Visual Analytics & Reports -->
+    <div class="carousel-slide" data-slide="3">
+        <video class="carousel-video" autoplay muted loop playsinline>
+            <source src="{% static 'clips/visual-analytics.mp4' %}" type="video/mp4">
+            <source src="{% static 'clips/visual-analytics.webm' %}" type="video/webm">
+            <!-- Fallback content -->
+            Your browser does not support the video tag.
+        </video>
+        <div class="carousel-content">
+            <h1 class="carousel-title">Visualize Traffic Patterns & Errors</h1>
+            <p class="carousel-subtitle">
+                Interactive charts show traffic spikes, error rates, and top sources at a glance. 
+                Export professional reports in PDF, CSV, or HTML format.
+            </p>
+            <div class="carousel-cta">
+                <a href="{% url 'register' %}" class="btn-cta btn-lg">
+                    <i class="fas fa-chart-line me-2"></i> Explore Analytics
+                </a>
+                <a href="#features" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.3);">
+                    <i class="fas fa-download me-2"></i> View Sample Reports
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Carousel Navigation Dots -->
+    <div class="carousel-nav">
+        <div class="carousel-dot active" data-slide="1"></div>
+        <div class="carousel-dot" data-slide="2"></div>
+        <div class="carousel-dot" data-slide="3"></div>
+    </div>
+    
+    <!-- Carousel Arrows (hidden on tablet/mobile) -->
+    <div class="carousel-arrow prev" id="carouselPrev">
+        <i class="fas fa-chevron-left"></i>
+    </div>
+    <div class="carousel-arrow next" id="carouselNext">
+        <i class="fas fa-chevron-right"></i>
+    </div>
 </section>
 
-<!-- Stats Section -->
+<!-- Stats Section - Responsive Grid -->
 <section class="stats-section">
     <div class="section-container">
         <div class="row">
             <div class="col-md-3 col-6">
                 <div class="stat-item">
                     <div class="stat-number">10K+</div>
-                    <div class="stat-label">Logs Analyzed</div>
+                    <div class="stat-label">Logs Analyzed Daily</div>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="stat-item">
                     <div class="stat-number">99.9%</div>
-                    <div class="stat-label">Uptime</div>
+                    <div class="stat-label">Parsing Accuracy</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">3+</div>
+                    <div class="stat-label">Log Formats</div>
                 </div>
             </div>
             <div class="col-md-3 col-6">
                 <div class="stat-item">
                     <div class="stat-number">24/7</div>
-                    <div class="stat-label">Real-time Analysis</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-item">
-                    <div class="stat-number">50+</div>
-                    <div class="stat-label">Integrations</div>
+                    <div class="stat-label">Continuous Analysis</div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Features Section -->
+<!-- Features Section - Responsive Grid -->
 <section id="features" class="features-section">
     <div class="section-container">
         <div class="section-title">
-            <h2>Powerful Features for Modern Teams</h2>
-            <p>Everything you need to monitor, analyze, and optimize your network performance</p>
+            <h2>Powerful Log Analysis Features</h2>
+            <p>Everything you need to understand your network traffic and detect issues</p>
         </div>
         
-        <div class="row g-4">
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-upload"></i>
-                    </div>
-                    <h4>Smart Log Upload</h4>
-                    <p>
-                        Drag-and-drop support for Apache, Nginx, IIS, and custom formats. 
-                        Automatic parsing and structure detection.
-                    </p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success me-2"></i> Multiple file formats</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Bulk upload support</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Secure cloud storage</li>
-                    </ul>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-upload"></i>
                 </div>
+                <h4>Smart Log Upload</h4>
+                <p>
+                    Drag-and-drop support for Apache, Nginx, IIS, and custom formats. 
+                    Automatic format detection and parsing.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> Multiple file formats</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Bulk upload support</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Instant parsing</li>
+                </ul>
             </div>
             
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-network"></i>
-                    </div>
-                    <h4>Advanced Analytics</h4>
-                    <p>
-                        Interactive dashboards with real-time charts, anomaly detection, 
-                        and predictive insights powered by AI.
-                    </p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success me-2"></i> Real-time monitoring</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Anomaly detection</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Custom metrics</li>
-                    </ul>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-network"></i>
                 </div>
+                <h4>Traffic Analysis</h4>
+                <p>
+                    Visualize request patterns, identify peak traffic times, and track 
+                    status code distributions with interactive charts.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> Real-time visualization</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Traffic spike detection</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Geographic mapping</li>
+                </ul>
             </div>
             
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h4>Security Insights</h4>
-                    <p>
-                        Detect suspicious activity, failed login attempts, and potential 
-                        threats with our security-focused analysis.
-                    </p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success me-2"></i> Threat detection</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Compliance reports</li>
-                        <li><i class="fas fa-check text-success me-2"></i> IP reputation check</li>
-                    </ul>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
                 </div>
+                <h4>Security Monitoring</h4>
+                <p>
+                    Detect suspicious IPs, repeated failed attempts, and potential 
+                    SQL injection or path traversal attacks.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> Brute force detection</li>
+                    <li><i class="fas fa-check text-success me-2"></i> IP reputation lookup</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Anomaly alerts</li>
+                </ul>
             </div>
             
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-file-export"></i>
-                    </div>
-                    <h4>Export & Share</h4>
-                    <p>
-                        Generate professional PDF/CSV reports, share dashboards with team members, 
-                        and schedule automated exports.
-                    </p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success me-2"></i> PDF/CSV reports</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Team collaboration</li>
-                        <li><i class="fas fa-check text-success me-2"></i> API access</li>
-                    </ul>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-export"></i>
                 </div>
+                <h4>Export & Reporting</h4>
+                <p>
+                    Generate comprehensive reports in PDF, CSV, or HTML format. 
+                    Share findings with your team or clients.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> Professional PDF reports</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Raw data exports</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Scheduled reports</li>
+                </ul>
             </div>
             
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-bolt"></i>
-                    </div>
-                    <h4>Real-time Alerts</h4>
-                    <p>
-                        Get instant notifications via email, Slack, or webhook when anomalies 
-                        or critical events are detected.
-                    </p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success me-2"></i> Custom alert rules</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Multi-channel notifications</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Alert history</li>
-                    </ul>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-filter"></i>
                 </div>
+                <h4>Smart Filtering</h4>
+                <p>
+                    Filter and search through millions of log entries instantly. 
+                    Focus on specific IPs, time ranges, or status codes.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> Advanced search</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Custom filters</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Save frequent queries</li>
+                </ul>
             </div>
             
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-infinity"></i>
-                    </div>
-                    <h4>Scalable Infrastructure</h4>
-                    <p>
-                        Built for teams of all sizes. From small startups to enterprise 
-                        deployments with millions of daily logs.
-                    </p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success me-2"></i> Unlimited logs</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Team workspaces</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Enterprise grade</li>
-                    </ul>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-clock"></i>
                 </div>
+                <h4>Historical Analysis</h4>
+                <p>
+                    Compare trends over time, track error rate evolution, 
+                    and identify long-term patterns in your traffic.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> Time-series analysis</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Trend comparison</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Historical data retention</li>
+                </ul>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Log Types Section -->
+<!-- Log Types Section - Honest Version -->
 <section class="log-types-section">
     <div class="section-container">
         <div class="section-title">
             <h2>Supported Log Formats</h2>
-            <p>We support all major log formats and can handle custom parsing rules</p>
+            <p>NetLog currently supports these web server log formats</p>
         </div>
         
-        <div class="row g-4">
-            <!-- Row 1 -->
-            <div class="col-xl-4 col-lg-4 col-md-6">
-                <div class="log-type-card">
-                    <div class="log-icon">
-                        <i class="fab fa-linux"></i>
-                    </div>
-                    <div class="log-type-content">
-                        <h4>Apache & Nginx</h4>
-                        <p>Common, Combined, and Custom log formats with full field extraction</p>
-                    </div>
+        <div class="log-types-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 800px;">
+            <div class="log-type-card">
+                <div class="log-icon">
+                    <i class="fab fa-linux"></i>
+                </div>
+                <div class="log-type-content">
+                    <h4>Apache</h4>
+                    <p>Common and Combined log formats</p>
                 </div>
             </div>
             
-            <div class="col-xl-4 col-lg-4 col-md-6">
-                <div class="log-type-card">
-                    <div class="log-icon">
-                        <i class="fab fa-windows"></i>
-                    </div>
-                    <div class="log-type-content">
-                        <h4>IIS & Windows</h4>
-                        <p>W3C extended log format, IIS native logs, Windows Event logs</p>
-                    </div>
+            <div class="log-type-card">
+                <div class="log-icon">
+                    <i class="fab fa-linux"></i>
+                </div>
+                <div class="log-type-content">
+                    <h4>Nginx</h4>
+                    <p>Standard access log formats</p>
                 </div>
             </div>
             
-            <div class="col-xl-4 col-lg-4 col-md-6">
-                <div class="log-type-card">
-                    <div class="log-icon">
-                        <i class="fas fa-server"></i>
-                    </div>
-                    <div class="log-type-content">
-                        <h4>Syslog & JSON</h4>
-                        <p>RFC5424, RFC3164, custom JSON formats, and structured logging</p>
-                    </div>
+            <div class="log-type-card">
+                <div class="log-icon">
+                    <i class="fab fa-windows"></i>
+                </div>
+                <div class="log-type-content">
+                    <h4>IIS</h4>
+                    <p>W3C extended and native formats</p>
                 </div>
             </div>
-            
-            <!-- Row 2 -->
-            <div class="col-xl-4 col-lg-4 col-md-6">
-                <div class="log-type-card">
-                    <div class="log-icon">
-                        <i class="fas fa-code"></i>
-                    </div>
-                    <div class="log-type-content">
-                        <h4>Custom Formats</h4>
-                        <p>Define your own parsing rules with our flexible pattern builder</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-xl-4 col-lg-4 col-md-6">
-                <div class="log-type-card">
-                    <div class="log-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <div class="log-type-content">
-                        <h4>Cloud Services</h4>
-                        <p>AWS CloudTrail, CloudWatch, Azure Monitor, GCP Stackdriver</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-xl-4 col-lg-4 col-md-6">
-                <div class="log-type-card">
-                    <div class="log-icon">
-                        <i class="fas fa-fire"></i>
-                    </div>
-                    <div class="log-type-content">
-                        <h4>Security Logs</h4>
-                        <p>Firewall logs, IDS/IPS alerts, authentication logs, audit trails</p>
-                    </div>
-                </div>
-            </div>
+        </div>
+        
+        <!-- Roadmap note -->
+        <div class="text-center mt-4">
+            <p class="text-muted">
+                <i class="fas fa-code-branch me-1"></i>
+                More formats (JSON, Security Logs, Cloud Services) coming soon!
+            </p>
         </div>
     </div>
 </section>
 
-<!-- How It Works Section -->
+<!-- How It Works Section - Responsive -->
 <section class="how-it-works-section">
     <div class="section-container">
         <div class="section-title">
-            <h2>How LogSight Works</h2>
-            <p>Get from raw logs to actionable insights in four simple steps</p>
+            <h2>Simple Three-Step Process</h2>
+            <p>From upload to insights in minutes, not hours</p>
         </div>
         
-        <div class="row position-relative">
-            <div class="col-lg-3 col-md-6">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <h4>Upload Logs</h4>
-                    <p>Drag and drop your log files or connect directly to your servers</p>
-                </div>
-                <div class="step-connector d-none d-lg-block"></div>
+        <div class="steps-row">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h4>Upload Your Logs</h4>
+                <p>Drag and drop your log files or select them from your computer. We support all major formats.</p>
             </div>
             
-            <div class="col-lg-3 col-md-6">
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <h4>Auto Parse</h4>
-                    <p>Our AI automatically detects and parses your log format</p>
-                </div>
-                <div class="step-connector d-none d-lg-block"></div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h4>Automatic Parsing</h4>
+                <p>Our engine automatically detects the log format and extracts key fields like IPs, status codes, and timestamps.</p>
             </div>
             
-            <div class="col-lg-3 col-md-6">
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <h4>Analyze & Visualize</h4>
-                    <p>Interactive dashboards show key metrics and trends</p>
-                </div>
-                <div class="step-connector d-none d-lg-block"></div>
-            </div>
-            
-            <div class="col-lg-3 col-md-6">
-                <div class="step-card">
-                    <div class="step-number">4</div>
-                    <h4>Take Action</h4>
-                    <p>Export reports, set alerts, and make data-driven decisions</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Testimonials Section -->
-<section class="testimonials-section">
-    <div class="section-container">
-        <div class="section-title">
-            <h2 style="color: white;">Trusted by DevOps Teams Worldwide</h2>
-            <p style="color: rgba(255,255,255,0.8);">See what our customers have to say</p>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-lg-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "LogSight cut our log analysis time by 80%. What used to take hours now takes minutes. The anomaly detection feature alone has saved us from three major incidents."
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">SC</div>
-                        <div>
-                            <h6 class="mb-0">Sarah Chen</h6>
-                            <p class="small mb-0" style="color: rgba(255,255,255,0.7);">CTO, TechFlow Inc.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "The security insights have been invaluable for our compliance audits. We can now provide detailed reports in minutes instead of days."
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">MR</div>
-                        <div>
-                            <h6 class="mb-0">Michael Rodriguez</h6>
-                            <p class="small mb-0" style="color: rgba(255,255,255,0.7);">DevOps Lead, SecureBank</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "As a small startup, we needed enterprise-grade log analysis without the enterprise price tag. LogSight delivered exactly that."
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">AJ</div>
-                        <div>
-                            <h6 class="mb-0">Alex Johnson</h6>
-                            <p class="small mb-0" style="color: rgba(255,255,255,0.7);">Founder, StartupScale</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h4>Get Actionable Insights</h4>
+                <p>View interactive visualizations, filter data, and export reports. Understand your traffic patterns instantly.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Final CTA Section -->
-<section class="pricing-cta-section">
+<section class="cta-section">
     <div class="section-container">
-        <div class="pricing-cta-content">
-            <h2>
-                {% if user.is_authenticated %}
-                Ready to Analyze Your Logs?
-                {% else %}
-                Ready to Transform Your Log Analysis?
-                {% endif %}
-            </h2>
+        <div class="cta-content">
+            <h2>Start Understanding Your Network Traffic Today</h2>
             <p class="mb-4">
-                {% if user.is_authenticated %}
-                Jump back into your dashboard to view recent analyses or start a new log upload.
-                {% else %}
-                Join thousands of teams who trust LogSight for their log analysis needs. 
-                Start with a free 14-day trial — no credit card required.
-                {% endif %}
+                No complex setup. No configuration required. Just upload your logs and get 
+                meaningful insights about your web traffic, errors, and security events.
             </p>
             <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
-                {% if user.is_authenticated %}
-                <!-- Logged in user CTA -->
-                <a href="{% url 'dashboard' %}" class="btn-cta btn-lg">
-                    <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
-                </a>
-                <a href="#" class="btn btn-outline btn-lg">
-                    <i class="fas fa-chart-line me-2"></i> View Analytics
-                </a>
-                {% else %}
-                <!-- Guest user CTA -->
                 <a href="{% url 'register' %}" class="btn-cta btn-lg">
-                    <i class="fas fa-rocket me-2"></i> Start Free Trial
+                    <i class="fas fa-rocket me-2"></i> Get Started Free
                 </a>
-                <a href="#" class="btn btn-outline btn-lg">
-                    <i class="fas fa-crown me-2"></i> View Pricing
+                <a href="#features" class="btn btn-outline btn-lg">
+                    <i class="fas fa-info-circle me-2"></i> Explore Features
                 </a>
-                {% endif %}
             </div>
-            <p class="small mt-3" style="color: var(--ls-muted);">
-                <i class="fas fa-shield-alt me-1"></i> Enterprise-grade security • 
-                <i class="fas fa-headset me-1"></i> 24/7 support • 
-                <i class="fas fa-sync-alt me-1"></i> Cancel anytime
+            <p class="small mt-3" style="color: var(--ls-muted); font-size: clamp(0.7rem, 2.5vw, 0.85rem);">
+                <i class="fas fa-shield-alt me-1"></i> No credit card required • 
+                <i class="fas fa-clock me-1"></i> 14-day free trial • 
+                <i class="fas fa-headset me-1"></i> Free support
             </p>
         </div>
     </div>
@@ -1164,7 +1201,99 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate stats counter
+        // Carousel functionality
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.carousel-dot');
+        const prevBtn = document.getElementById('carouselPrev');
+        const nextBtn = document.getElementById('carouselNext');
+        let currentSlide = 1;
+        const totalSlides = slides.length;
+        let autoSlideInterval;
+        
+        function showSlide(index) {
+            // Remove active class from all slides and dots
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            // Add active class to current slide and dot
+            slides[index - 1].classList.add('active');
+            dots[index - 1].classList.add('active');
+            
+            currentSlide = index;
+        }
+        
+        function nextSlide() {
+            let next = currentSlide + 1;
+            if (next > totalSlides) {
+                next = 1;
+            }
+            showSlide(next);
+        }
+        
+        function prevSlide() {
+            let prev = currentSlide - 1;
+            if (prev < 1) {
+                prev = totalSlides;
+            }
+            showSlide(prev);
+        }
+        
+        // Auto advance slides every 7 seconds
+        function startAutoSlide() {
+            autoSlideInterval = setInterval(nextSlide, 7000);
+        }
+        
+        function stopAutoSlide() {
+            clearInterval(autoSlideInterval);
+        }
+        
+        // Event listeners for navigation (only if buttons exist)
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                stopAutoSlide();
+                prevSlide();
+                startAutoSlide();
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                stopAutoSlide();
+                nextSlide();
+                startAutoSlide();
+            });
+        }
+        
+        // Dot navigation
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                stopAutoSlide();
+                showSlide(index + 1);
+                startAutoSlide();
+            });
+            
+            // Touch optimization
+            dot.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                stopAutoSlide();
+                showSlide(index + 1);
+                startAutoSlide();
+            }, { passive: false });
+        });
+        
+        // Pause auto-slide on hover/touch
+        const carousel = document.getElementById('heroCarousel');
+        if (carousel) {
+            carousel.addEventListener('mouseenter', stopAutoSlide);
+            carousel.addEventListener('mouseleave', startAutoSlide);
+            carousel.addEventListener('touchstart', stopAutoSlide, { passive: true });
+            carousel.addEventListener('touchend', startAutoSlide, { passive: true });
+        }
+        
+        // Start auto-slide
+        startAutoSlide();
+        
+        // Animate stats counter (simplified for mobile)
         const statElements = document.querySelectorAll('.stat-number');
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -1176,25 +1305,25 @@
                     if (isNaN(targetValue)) return;
                     
                     let currentValue = 0;
-                    const increment = targetValue / 50;
+                    const increment = Math.ceil(targetValue / 50);
                     const timer = setInterval(() => {
                         currentValue += increment;
                         if (currentValue >= targetValue) {
-                            stat.textContent = text; // Keep original text format
+                            stat.textContent = text;
                             clearInterval(timer);
                         } else {
-                            stat.textContent = Math.floor(currentValue);
+                            stat.textContent = currentValue;
                         }
-                    }, 30);
+                    }, 20);
                     observer.unobserve(stat);
                 }
             });
-        }, { threshold: 0.5 });
+        }, { threshold: 0.3 });
         
         statElements.forEach(stat => observer.observe(stat));
         
         // Add animation to feature cards on scroll
-        const featureCards = document.querySelectorAll('.feature-card');
+        const featureCards = document.querySelectorAll('.feature-card, .log-type-card');
         const cardObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1211,7 +1340,7 @@
             cardObserver.observe(card);
         });
         
-        // Smooth scroll for anchor links
+        // Smooth scroll for anchor links with offset for mobile
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 const href = this.getAttribute('href');
@@ -1219,14 +1348,47 @@
                     e.preventDefault();
                     const target = document.querySelector(href);
                     if (target) {
+                        const offset = window.innerWidth < 768 ? 60 : 80;
                         window.scrollTo({
-                            top: target.offsetTop - 80,
+                            top: target.offsetTop - offset,
                             behavior: 'smooth'
                         });
                     }
                 }
             });
         });
+        
+        // Handle orientation change
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                // Trigger reflow for carousel
+                const activeSlide = document.querySelector('.carousel-slide.active');
+                if (activeSlide) {
+                    activeSlide.style.opacity = '0.99';
+                    setTimeout(() => {
+                        activeSlide.style.opacity = '1';
+                    }, 10);
+                }
+            }, 200);
+        });
+        
+        // Touch device optimizations
+        if ('ontouchstart' in window) {
+            const buttons = document.querySelectorAll('.btn-cta, .btn-outline');
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function() {
+                    this.style.opacity = '0.8';
+                }, { passive: true });
+                
+                button.addEventListener('touchend', function() {
+                    this.style.opacity = '1';
+                });
+                
+                button.addEventListener('touchcancel', function() {
+                    this.style.opacity = '1';
+                });
+            });
+        }
     });
 </script>
 {% endblock %}

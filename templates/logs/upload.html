@@ -1,25 +1,996 @@
 {% extends "base_user.html" %}
+{% load static %}
+
+{% block title %}Upload Log - NetLog{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm p-4">
-        <h4 class="mb-3">Upload Log File</h4>
+<div class="upload-container">
+    <!-- Page Header -->
+    <div class="upload-header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <i class="fas fa-cloud-upload-alt me-2" style="color: var(--ls-orange);"></i>
+                Upload Log File
+            </h1>
+            <p class="header-subtitle">Select your log type and file to begin analysis</p>
+        </div>
+    </div>
 
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="mb-3">
-                <label class="form-label">Log Type</label>
-                {{ form.log_type }}
+    <!-- Upload Form -->
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
+        
+        <!-- Log Type Selection - Card Style -->
+        <div class="log-type-section">
+            <label class="section-label">Choose Log Format</label>
+            <div class="log-type-grid" id="logTypeGrid">
+                <!-- Apache Card -->
+                <div class="log-type-card" data-type="apache">
+                    <div class="card-selector">
+                        <div class="radio-indicator"></div>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fab fa-linux"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Apache</h3>
+                        <p>Common and Combined log formats</p>
+                    </div>
+                    <div class="card-features">
+                        <span class="feature-badge">
+                            <i class="fas fa-check"></i> Access Logs
+                        </span>
+                        <span class="feature-badge">
+                            <i class="fas fa-check"></i> Error Logs
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Nginx Card -->
+                <div class="log-type-card" data-type="nginx">
+                    <div class="card-selector">
+                        <div class="radio-indicator"></div>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fab fa-nginx"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Nginx</h3>
+                        <p>Main and Custom log formats</p>
+                    </div>
+                    <div class="card-features">
+                        <span class="feature-badge">
+                            <i class="fas fa-check"></i> Access Logs
+                        </span>
+                        <span class="feature-badge">
+                            <i class="fas fa-check"></i> Error Logs
+                        </span>
+                    </div>
+                </div>
+
+                <!-- IIS Card -->
+                <div class="log-type-card" data-type="iis">
+                    <div class="card-selector">
+                        <div class="radio-indicator"></div>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fab fa-windows"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>IIS</h3>
+                        <p>W3C Extended and Native formats</p>
+                    </div>
+                    <div class="card-features">
+                        <span class="feature-badge">
+                            <i class="fas fa-check"></i> W3C Format
+                        </span>
+                        <span class="feature-badge">
+                            <i class="fas fa-check"></i> IIS Native
+                        </span>
+                    </div>
+                </div>
             </div>
+            <input type="hidden" name="log_type" id="selectedLogType" value="">
+        </div>
 
-            <div class="mb-3">
-                <label class="form-label">Select File</label>
-                {{ form.file }}
+        <!-- File Upload Area -->
+        <div class="file-upload-section">
+            <label class="section-label">Select Log File</label>
+            <div class="file-upload-area" id="fileUploadArea">
+                <input type="file" name="file" id="fileInput" accept=".log,.txt,.csv,.json,.gz" hidden>
+                <div class="upload-content">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 class="upload-title">Drag & drop your log file here</h3>
+                    <p class="upload-subtitle">or click to browse</p>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="file-details">
+                            <i class="fas fa-file-lines"></i>
+                            <span id="fileName"></span>
+                            <span class="file-size" id="fileSize"></span>
+                        </div>
+                        <button type="button" class="btn-remove-file" id="removeFile">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <button type="button" class="btn-browse" id="browseBtn">
+                        <i class="fas fa-folder-open me-2"></i>
+                        Browse Files
+                    </button>
+                    <p class="upload-hint">Supported formats: .log, .txt, .csv, .json, .gz (max 100MB)</p>
+                </div>
             </div>
+        </div>
 
-            <button class="btn btn-primary">Upload</button>
-        </form>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-primary btn-upload" id="submitBtn" disabled>
+                <i class="fas fa-cloud-upload-alt me-2"></i>
+                Upload & Analyze
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline">
+                <i class="fas fa-times me-2"></i>
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Loading/Processing Modal -->
+<div class="modal fade" id="processingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content processing-modal">
+            <div class="modal-body">
+                <!-- Animated Logo -->
+                <div class="processing-logo">
+                    <div class="brand-logo processing-brand-logo"></div>
+                </div>
+
+                <!-- Status Messages -->
+                <h3 class="processing-title" id="processingTitle">Analyzing Your Log File</h3>
+                <p class="processing-subtitle" id="processingSubtitle">Please wait while we process your data</p>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-bar-custom" id="progressBar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-percentage" id="progressPercentage">0%</div>
+                </div>
+
+                <!-- Step Indicators -->
+                <div class="step-indicators">
+                    <div class="step-item" id="stepUpload">
+                        <div class="step-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <span class="step-label">Uploading</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="step-item" id="stepParse">
+                        <div class="step-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <span class="step-label">Parsing</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="step-item" id="stepAnalyze">
+                        <div class="step-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span class="step-label">Analyzing</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="step-item" id="stepComplete">
+                        <div class="step-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span class="step-label">Complete</span>
+                    </div>
+                </div>
+
+                <!-- Current Action -->
+                <div class="current-action" id="currentAction">
+                    Preparing upload...
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Upload Container */
+    .upload-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem 0.5rem;
+    }
+
+    /* Header */
+    .upload-header {
+        margin-bottom: 2rem;
+    }
+
+    .header-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-subtitle {
+        color: var(--ls-muted);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    /* Section Label */
+    .section-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+    }
+
+    /* Log Type Grid - Fixed Centering */
+    .log-type-section {
+        margin-bottom: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .log-type-grid {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .log-type-card {
+        background: white;
+        border: 2px solid rgba(26, 30, 50, 0.06);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        flex: 0 0 280px;
+        max-width: 280px;
+    }
+
+    @media (min-width: 768px) and (max-width: 992px) {
+        .log-type-card {
+            flex: 0 0 calc(50% - 1rem);
+            max-width: calc(50% - 1rem);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .log-type-card {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+
+    .log-type-card:hover {
+        border-color: var(--ls-orange);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 122, 0, 0.12);
+    }
+
+    .log-type-card.selected {
+        border-color: var(--ls-orange);
+        background: linear-gradient(135deg, rgba(255, 122, 0, 0.02), rgba(255, 122, 0, 0.05));
+    }
+
+    .log-type-card.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .card-selector {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .radio-indicator {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(26, 30, 50, 0.2);
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .selected .radio-indicator {
+        border-color: var(--ls-orange);
+        background: var(--ls-orange);
+        box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+    }
+
+    .card-icon {
+        font-size: 2rem;
+        color: var(--ls-orange);
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .card-content {
+        text-align: center;
+    }
+
+    .card-content h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .card-content p {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+        margin: 0 0 0.75rem 0;
+    }
+
+    .card-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .feature-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        background: var(--ls-cream);
+        border-radius: 20px;
+        color: var(--ls-navy);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .feature-badge i {
+        font-size: 0.6rem;
+        color: var(--ls-orange);
+    }
+
+    /* File Upload Area */
+    .file-upload-section {
+        margin-bottom: 2rem;
+    }
+
+    .file-upload-area {
+        background: white;
+        border: 2px dashed rgba(26, 30, 50, 0.12);
+        border-radius: var(--radius-lg);
+        padding: 2.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .file-upload-area:hover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    .file-upload-area.dragover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.05);
+        transform: scale(1.02);
+    }
+
+    .upload-icon {
+        font-size: 3.5rem;
+        color: var(--ls-orange);
+        margin-bottom: 1rem;
+        opacity: 0.7;
+    }
+
+    .upload-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-subtitle {
+        color: var(--ls-muted);
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-browse {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 1rem;
+    }
+
+    .btn-browse:hover {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    }
+
+    .upload-hint {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+        margin: 0;
+    }
+
+    /* File Info */
+    .file-info {
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        animation: slideIn 0.3s ease;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .file-details {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .file-details i {
+        color: var(--ls-orange);
+        font-size: 1.1rem;
+    }
+
+    .file-details span {
+        font-size: 0.9rem;
+        color: var(--ls-navy);
+        font-weight: 500;
+    }
+
+    .file-size {
+        color: var(--ls-muted);
+        font-size: 0.8rem;
+    }
+
+    .btn-remove-file {
+        background: none;
+        border: none;
+        color: var(--ls-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-remove-file:hover {
+        color: var(--ls-danger);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        color: var(--ls-navy);
+        padding: 0.75rem 2rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    /* Processing Modal */
+    .processing-modal {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .processing-logo {
+        margin-bottom: 1.5rem;
+    }
+
+    .processing-brand-logo {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    .processing-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+    }
+
+    .processing-subtitle {
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-bar-custom {
+        flex: 1;
+        height: 8px;
+        background: rgba(26, 30, 50, 0.08);
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--ls-orange), #ff9a3d);
+        border-radius: 20px;
+        transition: width 0.3s ease;
+        width: 0%;
+    }
+
+    .progress-percentage {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ls-orange);
+        min-width: 45px;
+    }
+
+    /* Step Indicators */
+    .step-indicators {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+        padding: 0 0.5rem;
+    }
+
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        opacity: 0.4;
+        transition: all 0.3s ease;
+    }
+
+    .step-item.active {
+        opacity: 1;
+    }
+
+    .step-item.completed .step-icon {
+        background: var(--ls-success);
+        color: white;
+    }
+
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--ls-cream);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-navy);
+        transition: all 0.3s ease;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+    }
+
+    .step-connector {
+        width: 40px;
+        height: 2px;
+        background: rgba(26, 30, 50, 0.08);
+        margin: 0 0.5rem;
+    }
+
+    .current-action {
+        font-size: 0.9rem;
+        color: var(--ls-muted);
+        padding: 1rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .log-type-grid {
+            justify-content: center;
+        }
+        
+        .step-connector {
+            width: 20px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .file-upload-area {
+            padding: 1.5rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .action-buttons button,
+        .action-buttons a {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .step-indicators {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .step-connector {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Log Type Selection
+    const logTypeCards = document.querySelectorAll('.log-type-card');
+    const selectedLogTypeInput = document.getElementById('selectedLogType');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // File Upload Elements
+    const fileInput = document.getElementById('fileInput');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const browseBtn = document.getElementById('browseBtn');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFile');
+    
+    // Modal Elements
+    const processingModal = new bootstrap.Modal(document.getElementById('processingModal'));
+    const progressFill = document.getElementById('progressFill');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const currentAction = document.getElementById('currentAction');
+    const processingTitle = document.getElementById('processingTitle');
+    const processingSubtitle = document.getElementById('processingSubtitle');
+    
+    // Step Elements
+    const stepUpload = document.getElementById('stepUpload');
+    const stepParse = document.getElementById('stepParse');
+    const stepAnalyze = document.getElementById('stepAnalyze');
+    const stepComplete = document.getElementById('stepComplete');
+    
+    let selectedFile = null;
+    let selectedType = null;
+    
+    // Log Type Selection Handler
+    logTypeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const type = this.dataset.type;
+            
+            // If clicking the same card and it's selected, deselect it
+            if (this.classList.contains('selected')) {
+                this.classList.remove('selected');
+                selectedType = null;
+                selectedLogTypeInput.value = '';
+            } else {
+                // Deselect all other cards
+                logTypeCards.forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // Select this card
+                this.classList.add('selected');
+                selectedType = type;
+                selectedLogTypeInput.value = type;
+            }
+            
+            updateSubmitButton();
+        });
+    });
+    
+    // File Upload Handlers
+    fileUploadArea.addEventListener('click', function() {
+        if (!selectedFile) {
+            fileInput.click();
+        }
+    });
+    
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', function() {
+        this.classList.remove('dragover');
+    });
+    
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            handleFileSelect(file);
+        }
+    });
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files[0]) {
+            handleFileSelect(this.files[0]);
+        }
+    });
+    
+    browseBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fileInput.click();
+    });
+    
+    removeFileBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        clearFileSelection();
+    });
+    
+    function handleFileSelect(file) {
+        // Validate file size (100MB max)
+        const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+        if (file.size > maxSize) {
+            alert('File size exceeds 100MB limit. Please choose a smaller file.');
+            return;
+        }
+        
+        selectedFile = file;
+        
+        // Update UI
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'flex';
+        
+        // Hide browse button and adjust UI
+        browseBtn.style.display = 'none';
+        document.querySelector('.upload-title').style.display = 'none';
+        document.querySelector('.upload-subtitle').style.display = 'none';
+        
+        updateSubmitButton();
+    }
+    
+    function clearFileSelection() {
+        selectedFile = null;
+        fileInput.value = '';
+        fileInfo.style.display = 'none';
+        browseBtn.style.display = 'inline-block';
+        document.querySelector('.upload-title').style.display = 'block';
+        document.querySelector('.upload-subtitle').style.display = 'block';
+        
+        updateSubmitButton();
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    
+    function updateSubmitButton() {
+        if (selectedType && selectedFile) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+    
+    // Form Submission Handler - ACTUAL IMPLEMENTATION
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!selectedType || !selectedFile) {
+            return;
+        }
+        
+        // Show processing modal
+        processingModal.show();
+        
+        // Reset progress
+        resetProgress();
+        
+        // Create FormData object
+        const formData = new FormData();
+        formData.append('log_type', selectedType);
+        formData.append('file', selectedFile);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Create and configure XMLHttpRequest for file upload with progress tracking
+        const xhr = new XMLHttpRequest();
+        
+        // Track upload progress
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 25); // Upload is 25% of total process
+                progressFill.style.width = percentComplete + '%';
+                progressPercentage.textContent = percentComplete + '%';
+                
+                // Update step indicator when upload is complete
+                if (percentComplete === 25) {
+                    stepUpload.classList.remove('active');
+                    stepUpload.classList.add('completed');
+                    stepParse.classList.add('active');
+                    currentAction.textContent = 'Parsing log format...';
+                }
+            }
+        });
+        
+        // Handle response
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    
+                    if (response.status === 'success') {
+                        // Update progress to parsing complete (50%)
+                        progressFill.style.width = '50%';
+                        progressPercentage.textContent = '50%';
+                        
+                        stepParse.classList.remove('active');
+                        stepParse.classList.add('completed');
+                        stepAnalyze.classList.add('active');
+                        currentAction.textContent = 'Analyzing log data...';
+                        
+                        // Short delay before showing completion (simulates analysis)
+                        setTimeout(() => {
+                            // Move to complete step
+                            stepAnalyze.classList.remove('active');
+                            stepAnalyze.classList.add('completed');
+                            stepComplete.classList.add('active');
+                            
+                            progressFill.style.width = '100%';
+                            progressPercentage.textContent = '100%';
+                            
+                            processingTitle.textContent = 'Analysis Complete!';
+                            processingSubtitle.textContent = 'Redirecting to results...';
+                            currentAction.textContent = 'Redirecting to analytics page...';
+                            
+                            // Redirect to the analytics page
+                            setTimeout(() => {
+                                window.location.href = response.redirect_url;
+                            }, 1000);
+                            
+                        }, 800); // Small delay for better UX
+                        
+                    } else {
+                        // Handle error response
+                        processingModal.hide();
+                        alert(response.message || 'Upload failed. Please try again.');
+                    }
+                    
+                } catch (e) {
+                    console.error('Error parsing response:', e);
+                    processingModal.hide();
+                    alert('An error occurred while processing your request.');
+                }
+                
+            } else {
+                // Handle HTTP error
+                let errorMessage = 'Upload failed. Please try again.';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMessage = response.message || errorMessage;
+                } catch (e) {
+                    // Ignore parsing error
+                }
+                
+                processingModal.hide();
+                alert(errorMessage);
+            }
+        };
+        
+        xhr.onerror = function() {
+            processingModal.hide();
+            alert('Network error occurred. Please try again.');
+        };
+        
+        // Open and send the request
+        xhr.open('POST', window.location.href, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.send(formData);
+    });
+    
+    function resetProgress() {
+        progressFill.style.width = '0%';
+        progressPercentage.textContent = '0%';
+        
+        // Reset steps
+        [stepUpload, stepParse, stepAnalyze, stepComplete].forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+        stepUpload.classList.add('active');
+        
+        currentAction.textContent = 'Uploading file...';
+        processingTitle.textContent = 'Analyzing Your Log File';
+        processingSubtitle.textContent = 'Please wait while we process your data';
+    }
+});
+</script>
 {% endblock %}

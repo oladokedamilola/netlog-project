@@ -1,0 +1,491 @@
+{% extends 'base_public.html' %}
+
+{% block title %}Too Many Attempts - NetLog{% endblock %}
+
+{% block content %}
+<div class="container mt-3 mt-md-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card card-accent" style="border-top: 4px solid var(--ls-warning);">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--ls-navy) 0%, #0b1220 100%); color: white; border-radius: var(--radius-md) var(--radius-md) 0 0; padding: clamp(1rem, 4vw, 1.25rem);">
+                    <h4 class="mb-0 d-flex align-items-center" style="font-size: clamp(1.1rem, 4vw, 1.5rem);">
+                        <i class="fas fa-exclamation-triangle me-2" style="color: var(--ls-warning);"></i>
+                        Too Many Attempts
+                    </h4>
+                </div>
+                <div class="card-body p-3 p-md-4 text-center">
+                    
+                    <!-- Animated GIF from external URL -->
+                    <div class="my-3 my-md-4 position-relative">
+                        <img src="https://cdn.dribbble.com/users/2469324/screenshots/6528918/clock_dribbble.gif" 
+                             alt="Timeout animation" 
+                             style="max-width: min(160px, 40vw); border-radius: var(--radius-md); box-shadow: 0 10px 30px rgba(0,0,0,0.1);"
+                             class="img-fluid">
+                        
+                        <!-- Overlay countdown ring (optional) - hidden on mobile -->
+                        <div class="position-absolute top-50 start-50 translate-middle d-none d-md-block">
+                            <div class="spinner-grow text-warning" role="status" style="width: 3rem; height: 3rem; opacity: 0.5;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mb-3" style="color: var(--ls-navy); font-weight: 600; font-size: clamp(1rem, 4vw, 1.25rem);">Rate Limit Exceeded</h5>
+                    
+                    <div class="mb-3 mb-md-4 p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-sm);">
+                        <p class="mb-0" style="color: var(--ls-muted); font-size: clamp(0.85rem, 3vw, 0.95rem);">
+                            <i class="fas fa-info-circle me-2" style="color: var(--ls-warning);"></i>
+                            You've made too many <strong style="color: var(--ls-navy);">{{ action_display|lower }}</strong> attempts. 
+                            For security reasons, we've temporarily blocked this action.
+                        </p>
+                    </div>
+                    
+                    <!-- Timer Display -->
+                    <div class="countdown-timer mb-3 mb-md-4 p-3" style="background: linear-gradient(135deg, var(--ls-navy) 0%, #0b1220 100%); border-radius: var(--radius-md); color: white;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="text-start">
+                                <small class="opacity-75" style="font-size: clamp(0.7rem, 2.5vw, 0.8rem);">Time remaining</small>
+                                <div class="display-6 fw-bold" style="color: var(--ls-warning); font-size: clamp(1.5rem, 6vw, 2.5rem);" id="countdown">
+                                    {% if minutes_remaining > 0 %}
+                                        {{ minutes_remaining }}:00
+                                    {% else %}
+                                        0:59
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <small class="opacity-75" style="font-size: clamp(0.7rem, 2.5vw, 0.8rem);">Attempts</small>
+                                <div class="h3 mb-0" style="font-size: clamp(1.25rem, 5vw, 1.75rem);">{{ attempts }}/3</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress bar -->
+                        <div class="progress mt-3" style="height: 6px; background-color: rgba(255,255,255,0.2);">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ attempts|floatformat:0 }}%; background-color: var(--ls-warning);"
+                                 aria-valuenow="{{ attempts }}" aria-valuemin="0" aria-valuemax="3">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Block Details -->
+                    <div class="row g-2 mb-3 mb-md-4">
+                        <div class="col-6">
+                            <div class="p-2 p-md-3" style="background-color: var(--ls-cream); border-radius: var(--radius-sm);">
+                                <small class="text-muted d-block" style="font-size: clamp(0.65rem, 2.2vw, 0.75rem);">Blocked until</small>
+                                <strong style="color: var(--ls-navy); font-size: clamp(0.8rem, 3vw, 1rem);">{{ blocked_until|time:"g:i A" }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 p-md-3" style="background-color: var(--ls-cream); border-radius: var(--radius-sm);">
+                                <small class="text-muted d-block" style="font-size: clamp(0.65rem, 2.2vw, 0.75rem);">Resets in</small>
+                                <strong style="color: var(--ls-navy); font-size: clamp(0.8rem, 3vw, 1rem);">
+                                    {% if minutes_remaining > 0 %}
+                                        {{ minutes_remaining }} min
+                                    {% else %}
+                                        &lt; 1 min
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Help Section -->
+                    <div class="mb-3 mb-md-4 p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-md); border-left: 4px solid var(--ls-orange);">
+                        <h6 class="alert-heading d-flex align-items-center mb-2" style="color: var(--ls-navy); font-size: clamp(0.9rem, 3vw, 1rem);">
+                            <i class="fas fa-lightbulb me-2" style="color: var(--ls-orange);"></i>
+                            What can I do?
+                        </h6>
+                        <ul class="list-unstyled small mb-0">
+                            <li class="mb-2 d-flex align-items-start">
+                                <i class="fas fa-clock me-2 mt-1" style="color: var(--ls-orange); font-size: 0.8rem; flex-shrink: 0;"></i>
+                                <span style="color: var(--ls-muted); font-size: clamp(0.75rem, 2.5vw, 0.85rem);">Wait for the block period to expire</span>
+                            </li>
+                            <li class="mb-2 d-flex align-items-start">
+                                <i class="fas fa-envelope me-2 mt-1" style="color: var(--ls-orange); font-size: 0.8rem; flex-shrink: 0;"></i>
+                                <span style="color: var(--ls-muted); font-size: clamp(0.75rem, 2.5vw, 0.85rem);">Check your email for any previous verification/reset emails</span>
+                            </li>
+                            <li class="d-flex align-items-start">
+                                <i class="fas fa-headset me-2 mt-1" style="color: var(--ls-orange); font-size: 0.8rem; flex-shrink: 0;"></i>
+                                <span style="color: var(--ls-muted); font-size: clamp(0.75rem, 2.5vw, 0.85rem);">Contact support if you need immediate assistance</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 justify-content-center mt-3 mt-md-4">
+                        <a href="{% url 'login' %}" class="btn btn-primary" style="background: var(--ls-navy); border: none; padding: 0.6rem 1.2rem; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">
+                            <i class="fas fa-sign-in-alt me-2"></i>Go to Login
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-outline" style="border: 1px solid rgba(26,30,50,0.08); padding: 0.6rem 1.2rem; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </a>
+                    </div>
+                    
+                    <!-- Support Link -->
+                    <div class="mt-3 mt-md-4">
+                        <small style="color: var(--ls-muted); font-size: clamp(0.7rem, 2.5vw, 0.8rem);">
+                            Need help? 
+                            <a href="#" style="color: var(--ls-orange); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center;">
+                                Contact Support
+                                <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS Variables for responsive design */
+    :root {
+        --touch-target-size: 44px;
+        --mobile-padding: 1rem;
+    }
+
+    /* Global reset */
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Container adjustments */
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-right: var(--mobile-padding);
+        padding-left: var(--mobile-padding);
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    /* Card styling */
+    .card {
+        width: 100%;
+        margin: 0 auto;
+        border-radius: var(--radius-md);
+    }
+
+    /* Countdown animation */
+    .countdown-timer {
+        transition: all 0.3s ease;
+    }
+    
+    .countdown-timer:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(26,30,50,0.15);
+    }
+    
+    /* Pulsing effect for urgent timers */
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.6;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+    
+    .countdown-timer .display-6 {
+        animation: pulse 2s infinite;
+    }
+    
+    /* GIF container animation */
+    .position-relative img {
+        transition: transform 0.3s ease;
+    }
+    
+    .position-relative img:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Spinner overlay animation */
+    .spinner-grow {
+        animation: spinner-grow 1.5s infinite ease-in-out;
+    }
+    
+    /* Button hover effects */
+    .btn-primary {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        background: #0e1626 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(26,30,50,0.2);
+    }
+    
+    .btn-outline {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline:hover {
+        background-color: rgba(26,30,50,0.02);
+        border-color: var(--ls-orange) !important;
+        transform: translateY(-2px);
+    }
+    
+    /* Responsive breakpoints */
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1rem;
+        }
+        
+        .position-absolute.d-none.d-md-block {
+            display: none !important;
+        }
+        
+        .btn-primary, .btn-outline {
+            width: 100%;
+            padding: 0.75rem !important;
+        }
+        
+        .countdown-timer .d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+        
+        .countdown-timer .text-end {
+            text-align: left !important;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        
+        .row.g-2.mb-3.mb-md-4 {
+            margin-bottom: 1rem !important;
+        }
+        
+        .col-6 .p-2.p-md-3 {
+            padding: 0.75rem !important;
+        }
+    }
+    
+    @media (max-width: 360px) {
+        .container {
+            padding-right: 0.5rem;
+            padding-left: 0.5rem;
+        }
+        
+        .card-body {
+            padding: 0.75rem;
+        }
+        
+        .countdown-timer .display-6 {
+            font-size: 1.75rem;
+        }
+        
+        .countdown-timer .h3 {
+            font-size: 1.25rem;
+        }
+        
+        .d-flex.flex-column.flex-sm-row {
+            flex-direction: column;
+        }
+        
+        .btn-primary, .btn-outline {
+            width: 100%;
+        }
+    }
+    
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .btn-primary:hover,
+        .btn-outline:hover,
+        .countdown-timer:hover,
+        .position-relative img:hover {
+            transform: none;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-outline:active {
+            transform: scale(0.98);
+        }
+    }
+    
+    /* Landscape mode optimizations */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .container.mt-3.mt-md-5 {
+            margin-top: 0.5rem !important;
+        }
+        
+        .my-3.my-md-4 {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .position-relative img {
+            max-width: 120px;
+        }
+        
+        .card-body {
+            padding: 0.75rem;
+        }
+        
+        .countdown-timer .display-6 {
+            font-size: 1.5rem;
+        }
+    }
+    
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+        .btn-primary {
+            border: 2px solid #fff;
+        }
+        
+        .btn-outline {
+            border: 2px solid var(--ls-navy);
+        }
+        
+        .countdown-timer {
+            border: 2px solid var(--ls-warning);
+        }
+        
+        .card {
+            border: 2px solid var(--ls-warning);
+        }
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .btn-primary,
+        .btn-outline,
+        .countdown-timer,
+        .position-relative img,
+        .countdown-timer .display-6,
+        .spinner-grow {
+            transition: none;
+            animation: none;
+            transform: none;
+        }
+        
+        .countdown-timer:hover,
+        .btn-primary:hover,
+        .btn-outline:hover {
+            transform: none;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the minutes remaining from the template
+    let minutesRemaining = parseInt('{{ minutes_remaining }}') || 0;
+    let secondsRemaining = minutesRemaining > 0 ? 0 : 59;
+    
+    const countdownElement = document.getElementById('countdown');
+    const timerContainer = document.querySelector('.countdown-timer');
+    
+    // Function to update countdown
+    function updateCountdown() {
+        if (minutesRemaining > 0 || secondsRemaining > 0) {
+            if (secondsRemaining === 0) {
+                if (minutesRemaining > 0) {
+                    minutesRemaining--;
+                    secondsRemaining = 59;
+                }
+            } else {
+                secondsRemaining--;
+            }
+            
+            // Update display
+            if (minutesRemaining > 0 || secondsRemaining > 0) {
+                countdownElement.textContent = `${minutesRemaining}:${secondsRemaining.toString().padStart(2, '0')}`;
+                
+                // Change color when less than 1 minute remaining
+                if (minutesRemaining === 0 && secondsRemaining <= 30) {
+                    countdownElement.style.color = 'var(--ls-danger)';
+                    timerContainer.style.animation = 'pulse 1s infinite';
+                }
+            } else {
+                // Timer expired - refresh page or show message
+                countdownElement.textContent = '0:00';
+                countdownElement.style.color = 'var(--ls-danger)';
+                
+                // Optional: Auto-refresh when timer expires
+                // setTimeout(() => location.reload(), 3000);
+            }
+        }
+    }
+    
+    // Start countdown if there's time remaining
+    if (minutesRemaining > 0 || secondsRemaining > 0) {
+        setInterval(updateCountdown, 1000);
+    }
+    
+    // Add hover effect to show remaining attempts in detail
+    const attemptsDisplay = document.querySelector('.countdown-timer .h3');
+    if (attemptsDisplay) {
+        attemptsDisplay.addEventListener('mouseenter', function() {
+            this.textContent = '{{ attempts }}/3 used';
+        });
+        
+        attemptsDisplay.addEventListener('mouseleave', function() {
+            this.textContent = '{{ attempts }}/3';
+        });
+        
+        // Touch device support
+        if ('ontouchstart' in window) {
+            attemptsDisplay.addEventListener('touchstart', function() {
+                this.textContent = '{{ attempts }}/3 used';
+            });
+            
+            attemptsDisplay.addEventListener('touchend', function() {
+                setTimeout(() => {
+                    this.textContent = '{{ attempts }}/3';
+                }, 1000);
+            });
+        }
+    }
+    
+    // Touch device optimizations
+    if ('ontouchstart' in window) {
+        const buttons = document.querySelectorAll('.btn-primary, .btn-outline, a');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.opacity = '0.7';
+            }, { passive: true });
+            
+            button.addEventListener('touchend', function() {
+                this.style.opacity = '1';
+            });
+            
+            button.addEventListener('touchcancel', function() {
+                this.style.opacity = '1';
+            });
+        });
+    }
+    
+    // Log rate limit event for analytics (optional)
+    console.log('Rate limit exceeded for action: {{ action_display }}');
+    
+    // Handle orientation change
+    window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+            // Recalculate any dynamic heights if needed
+            const countdown = document.getElementById('countdown');
+            if (countdown) {
+                // Trigger reflow if needed
+                countdown.style.display = 'none';
+                setTimeout(() => {
+                    countdown.style.display = 'block';
+                }, 10);
+            }
+        }, 200);
+    });
+});
+</script>
+{% endblock %}

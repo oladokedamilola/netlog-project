@@ -1,0 +1,82 @@
+{% extends "errors/base_error.html" %}
+{% load static %}
+
+{% block error_icon %}
+<div class="error-icon">
+    <i class="fas fa-lock"></i>
+</div>
+{% endblock %}
+
+{% block error_code %}403{% endblock %}
+
+{% block error_name %}Access Forbidden{% endblock %}
+
+{% block error_description %}
+You don't have permission to access this page. This area is restricted to authorized users only.
+{% endblock %}
+
+{% block error_details %}
+<div class="error-details">
+    <i class="fas fa-shield-alt" style="color: var(--danger-color); margin-right: 10px;"></i>
+    <strong>Security Notice:</strong> Unauthorized access attempts are logged.<br>
+    {% if user.is_authenticated %}
+    <small>You are logged in as <strong>{{ user.username }}</strong> but don't have required permissions.</small>
+    {% else %}
+    <small>You need to <a href="/login?next={{ request.path }}" style="color: var(--primary-color);">log in</a> with an authorized account.</small>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="javascript:history.back()" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Go Back
+</a>
+<a href="/" class="btn btn-primary">
+    <i class="fas fa-home"></i> Go Home
+</a>
+{% if not user.is_authenticated %}
+<a href="/login?next={{ request.path }}" class="btn btn-outline">
+    <i class="fas fa-sign-in-alt"></i> Log In
+</a>
+{% endif %}
+{% endblock %}
+
+{% block help_section %}
+<div class="help-section">
+    <div class="help-title">
+        <i class="fas fa-key" style="color: var(--danger-color); margin-right: 10px;"></i>
+        Need Access? Here's What You Can Do:
+    </div>
+    
+    <div class="help-grid">
+        <div class="help-item">
+            <i class="fas fa-user-shield"></i>
+            <h4>Check Permissions</h4>
+            <p>Contact your admin for access</p>
+        </div>
+        <div class="help-item">
+            <i class="fas fa-envelope"></i>
+            <h4>Request Access</h4>
+            <p>Send an access request email</p>
+        </div>
+        <a href="/contact" class="help-item" style="text-decoration: none;">
+            <i class="fas fa-headset"></i>
+            <h4>Contact Support</h4>
+            <p>Get help from our team</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-details {
+        background: linear-gradient(135deg, #fff5f5, #ffffff);
+        border-left-color: var(--danger-color);
+    }
+    
+    .help-item i {
+        color: var(--danger-color);
+    }
+</style>
+{% endblock %}

@@ -1,16 +1,874 @@
 {% extends "base_user.html" %}
-{% block title %}Upload Detail - LogSight{% endblock %}
+{% load static %}
+
+{% block title %}Upload Details - NetLog{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h2>Upload Details</h2>
-    <div class="card shadow-sm p-3 mb-4">
-        <p><strong>File Name:</strong> {{ upload.file.name }}</p>
-        <p><strong>Type:</strong> {{ upload.log_type }}</p>
-        <p><strong>Uploaded At:</strong> {{ upload.created_at|date:"Y-m-d H:i" }}</p>
-        <p><strong>Parsed Entries:</strong> {{ upload.entries_count }}</p>
-        <p><strong>Status:</strong> {{ upload.status }}</p>
-        <a href="{% url 'analytics_dashboard' upload.id %}" class="btn btn-warning mt-2">View Analytics</a>
+<div class="detail-container">
+    <!-- Page Header -->
+    <div class="detail-header">
+        <div class="header-content">
+            <div class="breadcrumb-nav">
+                <a href="{% url 'dashboard' %}" class="breadcrumb-link">Dashboard</a>
+                <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                <a href="{% url 'logs:upload_history' %}" class="breadcrumb-link">Upload History</a>
+                <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                <span class="breadcrumb-current">Upload Details</span>
+            </div>
+            <h1 class="header-title">
+                <i class="fas fa-file-lines me-2" style="color: var(--ls-orange);"></i>
+                Upload Details
+            </h1>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'analytics_view' upload.id %}" class="btn btn-primary">
+                <i class="fas fa-chart-line me-2"></i>
+                View Analytics
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="detail-grid">
+        <!-- Left Column - File Information -->
+        <div class="file-info-card">
+            <div class="card-header-custom">
+                <i class="fas fa-info-circle" style="color: var(--ls-orange);"></i>
+                <h3>File Information</h3>
+            </div>
+            
+            <div class="file-preview">
+                <div class="file-icon-large">
+                    <i class="fas fa-file-lines"></i>
+                </div>
+                <div class="file-name-large">{{ upload.file.name|slice:"17:" }}</div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-tag"></i>
+                        Log Type
+                    </div>
+                    <div class="info-value">
+                        <span class="log-type-badge {{ upload.log_type }}">
+                            {% if upload.log_type == 'apache' %}
+                                <i class="fab fa-linux me-1"></i> Apache
+                            {% elif upload.log_type == 'nginx' %}
+                                <i class="fab fa-nginx me-1"></i> Nginx
+                            {% elif upload.log_type == 'iis' %}
+                                <i class="fab fa-windows me-1"></i> IIS
+                            {% else %}
+                                <i class="fas fa-code me-1"></i> {{ upload.log_type|title }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-calendar"></i>
+                        Uploaded At
+                    </div>
+                    <div class="info-value">
+                        <span class="datetime">{{ upload.uploaded_at|date:"F j, Y" }}</span>
+                        <span class="time">{{ upload.uploaded_at|date:"g:i A" }}</span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-database"></i>
+                        File Size
+                    </div>
+                    <div class="info-value">{{ upload.file.size|filesizeformat }}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-check-circle"></i>
+                        Status
+                    </div>
+                    <div class="info-value">
+                        <span class="status-badge {{ upload.status|lower }}">
+                            <i class="fas fa-circle me-1"></i>
+                            {{ upload.status|title }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Statistics -->
+        <div class="stats-card">
+            <div class="card-header-custom">
+                <i class="fas fa-chart-pie" style="color: var(--ls-orange);"></i>
+                <h3>Parsing Statistics</h3>
+            </div>
+
+            <div class="stats-grid-large">
+                <div class="stat-block">
+                    <div class="stat-icon">
+                        <i class="fas fa-list-ul"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value-large">{{ total_entries|default:"0" }}</div>
+                        <div class="stat-label-large">Total Entries</div>
+                    </div>
+                </div>
+
+                <div class="stat-block">
+                    <div class="stat-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value-large">{{ unique_ips|default:"0" }}</div>
+                        <div class="stat-label-large">Unique IPs</div>
+                    </div>
+                </div>
+
+                <div class="stat-block">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value-large">{{ time_range }}</div>
+                        <div class="stat-label-large">Time Range</div>
+                    </div>
+                </div>
+
+                <div class="stat-block">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value-large">{{ status_breakdown|length|default:"0" }}</div>
+                        <div class="stat-label-large">Status Codes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Preview -->
+            <div class="quick-stats">
+                <div class="quick-stat-item">
+                    <span class="quick-stat-label">Success (2xx)</span>
+                    <div class="quick-stat-bar">
+                        <div class="quick-stat-fill success" style="width: {{ success_rate|default:'0' }}%"></div>
+                    </div>
+                    <span class="quick-stat-value">{{ success_count|default:'0' }}</span>
+                </div>
+                <div class="quick-stat-item">
+                    <span class="quick-stat-label">Redirects (3xx)</span>
+                    <div class="quick-stat-bar">
+                        <div class="quick-stat-fill warning" style="width: {{ redirect_rate|default:'0' }}%"></div>
+                    </div>
+                    <span class="quick-stat-value">{{ redirect_count|default:'0' }}</span>
+                </div>
+                <div class="quick-stat-item">
+                    <span class="quick-stat-label">Errors (4xx-5xx)</span>
+                    <div class="quick-stat-bar">
+                        <div class="quick-stat-fill error" style="width: {{ error_rate|default:'0' }}%"></div>
+                    </div>
+                    <span class="quick-stat-value">{{ error_count|default:'0' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview-section">
+        <div class="section-header">
+            <div class="section-title">
+                <i class="fas fa-eye me-2" style="color: var(--ls-orange);"></i>
+                <h3>Log Preview</h3>
+            </div>
+            <div class="section-actions">
+                <span class="preview-count">Showing first 10 entries</span>
+            </div>
+        </div>
+
+        <div class="preview-table-container">
+            {% if preview_entries %}
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>IP Address</th>
+                            <th>Method</th>
+                            <th>URL</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in preview_entries %}
+                            <tr>
+                                <td>
+                                    <span class="timestamp">{{ entry.timestamp|date:"H:i:s" }}</span>
+                                    <span class="date">{{ entry.timestamp|date:"m/d" }}</span>
+                                </td>
+                                <td>
+                                    <span class="ip-address">{{ entry.ip_address }}</span>
+                                </td>
+                                <td>
+                                    <span class="method-badge {{ entry.method|lower }}">{{ entry.method }}</span>
+                                </td>
+                                <td>
+                                    <div class="url-cell" title="{{ entry.url }}">
+                                        {{ entry.url|truncatechars:40 }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if entry.status_code %}
+                                        {% with code_class=entry.status_code|stringformat:"s"|slice:":1" %}
+                                            <span class="status-code {{ code_class }}xx">
+                                                {{ entry.status_code }}
+                                            </span>
+                                        {% endwith %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-preview">
+                    <i class="fas fa-file-lines"></i>
+                    <p>No preview available</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Footer -->
+    <div class="action-footer">
+        <div class="footer-actions">
+            <a href="{% url 'logs:upload_history' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to History
+            </a>
+            <div class="footer-right">
+                <a href="{% url 'reports:generate_report' %}?upload={{ upload.id }}" class="btn btn-outline">
+                    <i class="fas fa-file-pdf me-2"></i>
+                    Generate Report
+                </a>
+                <a href="{% url 'analytics_view' upload.id %}" class="btn btn-primary">
+                    <i class="fas fa-chart-line me-2"></i>
+                    View Full Analytics
+                </a>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Detail Container */
+    .detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem 0.5rem;
+    }
+
+    /* Header */
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .breadcrumb-link {
+        color: var(--ls-muted);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .breadcrumb-link:hover {
+        color: var(--ls-orange);
+    }
+
+    .breadcrumb-separator {
+        color: var(--ls-muted);
+        font-size: 0.7rem;
+    }
+
+    .breadcrumb-current {
+        color: var(--ls-navy);
+        font-weight: 500;
+    }
+
+    .header-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-primary:hover {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+        color: white;
+    }
+
+    /* Main Grid */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Cards */
+    .file-info-card,
+    .stats-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .card-header-custom {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .card-header-custom i {
+        font-size: 1.2rem;
+    }
+
+    .card-header-custom h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    /* File Preview */
+    .file-preview {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    .file-icon-large {
+        font-size: 3rem;
+        color: var(--ls-orange);
+    }
+
+    .file-name-large {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        word-break: break-word;
+    }
+
+    /* Info Grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .info-item {
+        padding: 0.75rem;
+        background: rgba(255, 122, 0, 0.02);
+        border-radius: var(--radius-md);
+    }
+
+    .info-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-label i {
+        font-size: 0.8rem;
+        color: var(--ls-orange);
+    }
+
+    .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+    }
+
+    /* Log Type Badge */
+    .log-type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .log-type-badge.apache {
+        background: rgba(255, 122, 0, 0.1);
+        color: var(--ls-orange);
+    }
+
+    .log-type-badge.nginx {
+        background: rgba(0, 150, 0, 0.1);
+        color: #009900;
+    }
+
+    .log-type-badge.iis {
+        background: rgba(0, 100, 200, 0.1);
+        color: #0066cc;
+    }
+
+    .log-type-badge.custom {
+        background: rgba(128, 0, 128, 0.1);
+        color: purple;
+    }
+
+    .datetime {
+        display: block;
+        font-weight: 600;
+    }
+
+    .time {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .status-badge.completed {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ls-success);
+    }
+
+    .status-badge.processing {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--ls-warning);
+    }
+
+    .status-badge.failed {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--ls-danger);
+    }
+
+    .status-badge.pending {
+        background: rgba(107, 114, 128, 0.1);
+        color: var(--ls-muted);
+    }
+
+    /* Stats Grid Large */
+    .stats-grid-large {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-block {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        background: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1.2rem;
+    }
+
+    .stat-details {
+        flex: 1;
+    }
+
+    .stat-value-large {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ls-navy);
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label-large {
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Quick Stats */
+    .quick-stats {
+        padding-top: 1rem;
+        border-top: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .quick-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .quick-stat-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .quick-stat-label {
+        min-width: 80px;
+        font-size: 0.85rem;
+        color: var(--ls-muted);
+    }
+
+    .quick-stat-bar {
+        flex: 1;
+        height: 6px;
+        background: rgba(26, 30, 50, 0.06);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .quick-stat-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .quick-stat-fill.success {
+        background: var(--ls-success);
+    }
+
+    .quick-stat-fill.warning {
+        background: var(--ls-warning);
+    }
+
+    .quick-stat-fill.error {
+        background: var(--ls-danger);
+    }
+
+    .quick-stat-value {
+        min-width: 40px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        text-align: right;
+    }
+
+    /* Preview Section */
+    .preview-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .preview-count {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+    }
+
+    /* Preview Table */
+    .preview-table-container {
+        overflow-x: auto;
+        border-radius: var(--radius-md);
+    }
+
+    .preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .preview-table th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        background: var(--ls-cream);
+        color: var(--ls-navy);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .preview-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        color: var(--ls-navy);
+    }
+
+    .preview-table tr:hover td {
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    .timestamp {
+        font-weight: 500;
+        display: block;
+    }
+
+    .date {
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+    }
+
+    .ip-address {
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+
+    .method-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .method-badge.get {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ls-success);
+    }
+
+    .method-badge.post {
+        background: rgba(255, 122, 0, 0.1);
+        color: var(--ls-orange);
+    }
+
+    .method-badge.put {
+        background: rgba(0, 100, 200, 0.1);
+        color: #0066cc;
+    }
+
+    .method-badge.delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--ls-danger);
+    }
+
+    .url-cell {
+        max-width: 250px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--ls-muted);
+    }
+
+    .status-code {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .status-code.2xx {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ls-success);
+    }
+
+    .status-code.3xx {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--ls-warning);
+    }
+
+    .status-code.4xx {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--ls-danger);
+    }
+
+    .status-code.5xx {
+        background: rgba(239, 68, 68, 0.15);
+        color: #b91c1c;
+    }
+
+    /* Empty Preview */
+    .empty-preview {
+        text-align: center;
+        padding: 3rem;
+        color: var(--ls-muted);
+    }
+
+    .empty-preview i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    /* Action Footer */
+    .action-footer {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .footer-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .footer-right {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        color: var(--ls-navy);
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.02);
+        color: var(--ls-orange);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .footer-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .footer-right {
+            flex-direction: column;
+        }
+
+        .btn-outline,
+        .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid-large {
+            grid-template-columns: 1fr;
+        }
+
+        .file-preview {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .url-cell {
+            max-width: 150px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-title {
+            font-size: 1.5rem;
+        }
+
+        .breadcrumb-nav {
+            font-size: 0.75rem;
+        }
+
+        .quick-stat-item {
+            flex-wrap: wrap;
+        }
+
+        .quick-stat-label {
+            min-width: 100%;
+            margin-bottom: 0.25rem;
+        }
+    }
+</style>
 {% endblock %}

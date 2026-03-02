@@ -1,0 +1,1514 @@
+{% extends "base_user.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Analytics Dashboard - NetLog{% endblock %}
+
+{% block content %}
+<div class="analytics-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <i class="fas fa-chart-line me-2" style="color: var(--ls-orange);"></i>
+                Analytics Dashboard
+            </h1>
+            <p class="header-subtitle">Comprehensive overview of your log analysis data</p>
+        </div>
+        <div class="header-controls">
+            <div class="date-range-selector">
+                <select id="dateRange" class="range-select">
+                    <option value="7" {% if date_range == '7' %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if date_range == '30' %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if date_range == '90' %}selected{% endif %}>Last 90 days</option>
+                    <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Custom range</option>
+                </select>
+                <div id="customRangeContainer" class="custom-range" style="display: {% if date_range == 'custom' %}flex{% else %}none{% endif %};">
+                    <input type="date" id="startDate" class="range-input" value="{{ start_date }}">
+                    <span>to</span>
+                    <input type="date" id="endDate" class="range-input" value="{{ end_date }}">
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn-refresh" id="refreshBtn" title="Refresh data">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn-export" id="exportBtn" title="Export summary">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(255, 122, 0, 0.1);">
+                <i class="fas fa-file-lines" style="color: var(--ls-orange);"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ total_requests|intcomma }}</div>
+                <div class="metric-label">Total Requests</div>
+                <div class="metric-trend">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Across {{ total_uploads }} uploads</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(0, 100, 200, 0.1);">
+                <i class="fas fa-globe" style="color: #0066cc;"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ unique_ips|intcomma }}</div>
+                <div class="metric-label">Unique IPs</div>
+                <div class="metric-trend">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Geolocated</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(22, 163, 74, 0.1);">
+                <i class="fas fa-check-circle" style="color: #16a34a;"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ error_rate|floatformat:1 }}%</div>
+                <div class="metric-label">Error Rate</div>
+                <div class="metric-trend {% if error_rate > 10 %}trend-danger{% elif error_rate > 5 %}trend-warning{% else %}trend-success{% endif %}">
+                    <i class="fas fa-arrow-{% if error_rate > 5 %}up{% else %}down{% endif %}"></i>
+                    <span>{{ total_errors|intcomma }} errors</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(107, 114, 128, 0.1);">
+                <i class="fas fa-clock" style="color: var(--ls-muted);"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ peak_hours.0.0 }}:00</div>
+                <div class="metric-label">Peak Hour</div>
+                <div class="metric-trend">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>{{ peak_hours.0.1|intcomma }} requests</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Charts Grid -->
+    <div class="charts-grid">
+        <!-- Traffic Overview Chart -->
+        <div class="chart-card full-width">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-line me-2" style="color: var(--ls-orange);"></i>
+                    Traffic Overview
+                </h3>
+                <div class="chart-controls">
+                    <button class="chart-toggle active" data-chart="daily">Daily</button>
+                    <button class="chart-toggle" data-chart="hourly">Hourly</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="trafficChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Status Code Distribution -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-pie me-2" style="color: var(--ls-orange);"></i>
+                    Status Codes
+                </h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Endpoints -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-link me-2" style="color: var(--ls-orange);"></i>
+                    Top Endpoints
+                </h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="endpointsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two-Column Layout -->
+    <div class="two-column-layout">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Top IPs Table -->
+            <div class="data-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-network-wired me-2" style="color: var(--ls-orange);"></i>
+                        Top IP Addresses
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Requests</th>
+                                    <th>% of Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ip in top_ips %}
+                                <tr>
+                                    <td class="ip-cell">
+                                        <span class="ip-address">{{ ip.ip_address }}</span>
+                                    </td>
+                                    <td class="number-cell">{{ ip.count|intcomma }}</td>
+                                    <td class="percentage-cell">
+                                        <div class="percentage-bar">
+                                            <span class="percentage-value">{{ ip.percentage|floatformat:1 }}%</span>
+                                            <div class="percentage-bar-fill" style="width: {% widthratio ip.count total_requests 100 %}%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suspicious IPs -->
+            {% if suspicious_ips %}
+            <div class="data-card">
+                <div class="card-header">
+                    <h3 class="card-title text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Suspicious IPs Detected
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="suspicious-list">
+                        {% for ip in suspicious_ips %}
+                        <div class="suspicious-item">
+                            <div class="suspicious-ip">
+                                <i class="fas fa-shield-alt me-2 text-danger"></i>
+                                <span>{{ ip.ip|default:ip }}</span>
+                            </div>
+                            <div class="suspicious-reason">
+                                {% if ip.reason %}
+                                    {{ ip.reason }}
+                                {% else %}
+                                    Unusual activity detected
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Recent Uploads -->
+            <div class="data-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-history me-2" style="color: var(--ls-orange);"></i>
+                        Recent Uploads
+                    </h3>
+                    <a href="{% url 'logs:upload_history' %}" class="view-all">View all</a>
+                </div>
+                <div class="card-body">
+                    <div class="uploads-list">
+                        {% for upload in recent_uploads %}
+                        <div class="upload-item">
+                            <div class="upload-info">
+                                <div class="upload-name">{{ upload.file.name|slice:"17:"|truncatechars:25 }}</div>
+                                <div class="upload-meta">
+                                    <span class="upload-type">{{ upload.get_log_type_display }}</span>
+                                    <span class="upload-date">{{ upload.uploaded_at|date:"M d" }}</span>
+                                </div>
+                            </div>
+                            <div class="upload-stats">
+                                <span class="stat-badge" title="Entries">
+                                    <i class="fas fa-file-lines"></i>
+                                    {{ upload.entries_count|intcomma }}
+                                </span>
+                                {% if upload.error_count > 0 %}
+                                <span class="stat-badge error" title="Errors">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ upload.error_count }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No uploads in this period</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Peak Hours -->
+            <div class="data-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-clock me-2" style="color: var(--ls-orange);"></i>
+                        Busiest Hours
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="hours-list">
+                        {% for hour, count in peak_hours %}
+                        <div class="hour-item">
+                            <span class="hour-label">{{ hour }}:00</span>
+                            <div class="hour-bar-container">
+                                <div class="hour-bar-fill" style="width: {% widthratio count total_requests 100 %}%"></div>
+                            </div>
+                            <span class="hour-count">{{ count|intcomma }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="actions-card">
+                <div class="actions-grid">
+                    <a href="{% url 'logs:upload_log' %}" class="action-item">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Upload Logs</span>
+                    </a>
+                    <a href="{% url 'reports:generate_report' %}" class="action-item">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Generate Report</span>
+                    </a>
+                    <a href="#" class="action-item">
+                        <i class="fas fa-download"></i>
+                        <span>Export Data</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations Section -->
+    {% if recommendations %}
+    <div class="recommendations-section">
+        <h3 class="section-title">
+            <i class="fas fa-lightbulb me-2" style="color: var(--ls-orange);"></i>
+            Insights & Recommendations
+        </h3>
+        <div class="recommendations-grid">
+            {% for rec in recommendations %}
+            <div class="recommendation-card {{ rec.type }}">
+                <div class="recommendation-icon">
+                    <i class="fas {{ rec.icon }}"></i>
+                </div>
+                <div class="recommendation-content">
+                    <h4>{{ rec.title }}</h4>
+                    <p>{{ rec.message }}</p>
+                    <a href="{{ rec.link }}" class="recommendation-action">{{ rec.action }} <i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* CSS Variables */
+    :root {
+        --touch-target-size: 44px;
+        --mobile-padding: 1rem;
+        --card-spacing: 1rem;
+    }
+
+    /* Analytics Dashboard Styles */
+    .analytics-dashboard {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: clamp(0.75rem, 3vw, 1rem) clamp(0.5rem, 2vw, 1rem);
+    }
+
+    /* Header */
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .header-title {
+        font-size: clamp(1.25rem, 5vw, 1.75rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+    }
+
+    .header-subtitle {
+        color: var(--ls-muted);
+        margin: 0;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+    }
+
+    .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .date-range-selector {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: white;
+        padding: 0.25rem;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .range-select {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        color: var(--ls-navy);
+        font-size: 16px; /* Prevents zoom on mobile */
+        cursor: pointer;
+        flex: 1;
+        min-height: var(--touch-target-size);
+    }
+
+    .custom-range {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .range-input {
+        padding: 0.4rem;
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        border-radius: var(--radius-sm);
+        font-size: 16px; /* Prevents zoom on mobile */
+        min-height: var(--touch-target-size);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-refresh, .btn-export {
+        width: var(--touch-target-size);
+        height: var(--touch-target-size);
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        background: white;
+        color: var(--ls-navy);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-refresh:hover, .btn-export:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+
+    .btn-refresh i, .btn-export i {
+        font-size: 1rem;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(1rem, 2vw, 1.5rem);
+        margin-bottom: 2rem;
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1rem, 3vw, 1.5rem);
+        display: flex;
+        align-items: center;
+        gap: clamp(0.75rem, 2vw, 1rem);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        transition: all 0.2s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 122, 0, 0.08);
+    }
+
+    .metric-icon {
+        width: clamp(48px, 8vw, 56px);
+        height: clamp(48px, 8vw, 56px);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(1.25rem, 4vw, 1.5rem);
+        flex-shrink: 0;
+    }
+
+    .metric-content {
+        flex: 1;
+        min-width: 0; /* Prevents overflow */
+    }
+
+    .metric-value {
+        font-size: clamp(1.25rem, 5vw, 1.75rem);
+        font-weight: 700;
+        color: var(--ls-navy);
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+        word-break: break-word;
+    }
+
+    .metric-label {
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .metric-trend {
+        font-size: clamp(0.7rem, 2.2vw, 0.75rem);
+        color: var(--ls-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+
+    .metric-trend span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .metric-trend.trend-success { color: var(--ls-success); }
+    .metric-trend.trend-warning { color: var(--ls-warning); }
+    .metric-trend.trend-danger { color: var(--ls-danger); }
+
+    /* Charts Grid */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(1rem, 2vw, 1.5rem);
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1rem, 3vw, 1.5rem);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .chart-card.full-width {
+        grid-column: span 2;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .chart-title {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .chart-controls {
+        display: flex;
+        gap: 0.25rem;
+        background: var(--ls-cream);
+        padding: 0.25rem;
+        border-radius: var(--radius-md);
+    }
+
+    .chart-toggle {
+        padding: 0.3rem 0.8rem;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 36px;
+    }
+
+    .chart-toggle.active {
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        color: var(--ls-orange);
+    }
+
+    .chart-container {
+        height: clamp(250px, 50vw, 300px);
+        position: relative;
+    }
+
+    /* Two Column Layout */
+    .two-column-layout {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: clamp(1rem, 2vw, 1.5rem);
+        margin-bottom: 2rem;
+    }
+
+    /* Data Cards */
+    .data-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+        padding: clamp(1rem, 3vw, 1.25rem);
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .card-title {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .view-all {
+        color: var(--ls-orange);
+        text-decoration: none;
+        font-size: 0.85rem;
+        min-height: var(--touch-target-size);
+        display: inline-flex;
+        align-items: center;
+        padding: 0 0.5rem;
+    }
+
+    .view-all:hover {
+        text-decoration: underline;
+    }
+
+    .card-body {
+        padding: clamp(1rem, 3vw, 1.25rem);
+    }
+
+    /* Tables */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -1px; /* Prevents border cut-off */
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 300px;
+    }
+
+    .data-table th {
+        text-align: left;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        word-break: break-word;
+    }
+
+    .ip-cell {
+        max-width: 120px;
+    }
+
+    .ip-address {
+        font-family: monospace;
+        font-size: 0.9rem;
+        word-break: break-all;
+    }
+
+    .number-cell {
+        white-space: nowrap;
+    }
+
+    .percentage-cell {
+        min-width: 100px;
+    }
+
+    .percentage-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+    .percentage-value {
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .percentage-bar-fill {
+        height: 4px;
+        background: var(--ls-orange);
+        border-radius: 10px;
+        flex: 1;
+    }
+
+    /* Suspicious IPs */
+    .suspicious-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .suspicious-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: rgba(239, 68, 68, 0.05);
+        border-radius: var(--radius-md);
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .suspicious-ip {
+        font-family: monospace;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        word-break: break-all;
+    }
+
+    .suspicious-reason {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+        text-align: right;
+        word-break: break-word;
+    }
+
+    /* Uploads List */
+    .uploads-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .upload-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .upload-info {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .upload-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        word-break: break-word;
+        font-size: 0.9rem;
+    }
+
+    .upload-meta {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        flex-wrap: wrap;
+    }
+
+    .upload-stats {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: white;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        color: var(--ls-navy);
+        white-space: nowrap;
+    }
+
+    .stat-badge.error {
+        color: var(--ls-danger);
+    }
+
+    /* Hours List */
+    .hours-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hour-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .hour-label {
+        min-width: 60px;
+        font-size: 0.85rem;
+        color: var(--ls-muted);
+    }
+
+    .hour-bar-container {
+        flex: 1;
+        min-width: 100px;
+        height: 8px;
+        background: var(--ls-cream);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .hour-bar-fill {
+        height: 100%;
+        background: var(--ls-orange);
+        border-radius: 10px;
+    }
+
+    .hour-count {
+        min-width: 50px;
+        font-size: 0.8rem;
+        color: var(--ls-navy);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    /* Actions Card */
+    .actions-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .action-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        color: var(--ls-navy);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        min-height: var(--touch-target-size);
+    }
+
+    .action-item:hover {
+        background: rgba(255, 122, 0, 0.1);
+        color: var(--ls-orange);
+    }
+
+    .action-item i {
+        font-size: 1.5rem;
+    }
+
+    .action-item span {
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    /* Recommendations Section */
+    .recommendations-section {
+        margin-top: 2rem;
+    }
+
+    .section-title {
+        font-size: clamp(1rem, 4vw, 1.1rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 1.25rem;
+    }
+
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .recommendation-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: white;
+        border-radius: var(--radius-md);
+        border-left: 4px solid transparent;
+    }
+
+    .recommendation-card.warning {
+        border-left-color: var(--ls-warning);
+        background: rgba(245, 158, 11, 0.05);
+    }
+
+    .recommendation-card.danger {
+        border-left-color: var(--ls-danger);
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .recommendation-card.info {
+        border-left-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.05);
+    }
+
+    .recommendation-icon {
+        flex-shrink: 0;
+    }
+
+    .recommendation-icon i {
+        font-size: 1.25rem;
+    }
+
+    .recommendation-card.warning .recommendation-icon i { color: var(--ls-warning); }
+    .recommendation-card.danger .recommendation-icon i { color: var(--ls-danger); }
+    .recommendation-card.info .recommendation-icon i { color: var(--ls-orange); }
+
+    .recommendation-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .recommendation-content h4 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+        word-break: break-word;
+    }
+
+    .recommendation-content p {
+        font-size: 0.85rem;
+        color: var(--ls-muted);
+        margin: 0 0 0.75rem 0;
+        word-break: break-word;
+    }
+
+    .recommendation-action {
+        font-size: 0.8rem;
+        color: var(--ls-orange);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--touch-target-size);
+    }
+
+    .recommendation-action:hover {
+        text-decoration: underline;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 1100px) {
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-card.full-width {
+            grid-column: span 1;
+        }
+
+        .two-column-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .recommendations-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .header-controls {
+            flex-direction: column;
+        }
+
+        .date-range-selector {
+            flex-direction: column;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .custom-range {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0.5rem;
+        }
+
+        .custom-range span {
+            text-align: center;
+        }
+
+        .action-buttons {
+            justify-content: stretch;
+        }
+
+        .btn-refresh, .btn-export {
+            flex: 1;
+        }
+
+        .metrics-grid {
+            gap: 0.75rem;
+        }
+
+        .chart-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .chart-controls {
+            width: 100%;
+        }
+
+        .chart-toggle {
+            flex: 1;
+        }
+
+        .suspicious-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .suspicious-reason {
+            text-align: left;
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-item {
+            flex-direction: row;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .metric-card {
+            padding: 1rem;
+        }
+
+        .upload-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .upload-stats {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .hour-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .hour-label {
+            min-width: auto;
+        }
+
+        .hour-bar-container {
+            width: 100%;
+        }
+
+        .hour-count {
+            text-align: left;
+            min-width: auto;
+        }
+
+        .recommendation-card {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .table-container {
+            margin: 0 -0.5rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.7rem;
+        }
+
+        .percentage-value {
+            font-size: 0.7rem;
+        }
+    }
+
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .metric-card:hover,
+        .action-item:hover,
+        .btn-refresh:hover,
+        .btn-export:hover {
+            transform: none;
+        }
+
+        .action-item:active {
+            transform: scale(0.98);
+        }
+    }
+
+    /* Landscape mode optimizations */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .chart-container {
+            height: 200px;
+        }
+
+        .metrics-grid {
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+        .metric-card,
+        .chart-card,
+        .data-card {
+            border-width: 2px;
+        }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .metric-card,
+        .action-item,
+        .btn-refresh,
+        .btn-export {
+            transition: none;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+        .header-controls,
+        .actions-card,
+        .btn-refresh,
+        .btn-export {
+            display: none;
+        }
+    }
+</style>
+
+<!-- Mobile Meta Viewport (ensure in base template) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+
+    // Initialize charts with error handling
+    function initCharts() {
+        try {
+            const ctx1 = document.getElementById('trafficChart')?.getContext('2d');
+            const ctx2 = document.getElementById('statusChart')?.getContext('2d');
+            const ctx3 = document.getElementById('endpointsChart')?.getContext('2d');
+
+            if (!ctx1 || !ctx2 || !ctx3) {
+                console.error('Chart contexts not found');
+                return;
+            }
+
+            // Traffic Chart
+            const trafficChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: {{ daily_labels|safe }},
+                    datasets: [{
+                        label: 'Requests',
+                        data: {{ daily_values|safe }},
+                        borderColor: '#FF7A00',
+                        backgroundColor: 'rgba(255, 122, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: window.innerWidth < 768 ? 2 : 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(26, 30, 50, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000) {
+                                        return value / 1000 + 'k';
+                                    }
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Status Chart
+            const statusChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['2xx Success', '3xx Redirect', '4xx Client Error', '5xx Server Error'],
+                    datasets: [{
+                        data: [
+                            {{ status_codes.2xx }},
+                            {{ status_codes.3xx }},
+                            {{ status_codes.4xx }},
+                            {{ status_codes.5xx }}
+                        ],
+                        backgroundColor: ['#16a34a', '#f59e0b', '#FF7A00', '#dc3545'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: window.innerWidth < 768 ? 'bottom' : 'right',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            // Endpoints Chart
+            const endpointsData = {
+                labels: [
+                    {% for endpoint in top_endpoints %}
+                        "{{ endpoint.url|truncatechars:20 }}",
+                    {% endfor %}
+                ],
+                values: [
+                    {% for endpoint in top_endpoints %}
+                        {{ endpoint.count }},
+                    {% endfor %}
+                ]
+            };
+
+            const endpointsChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: endpointsData.labels,
+                    datasets: [{
+                        label: 'Requests',
+                        data: endpointsData.values,
+                        backgroundColor: '#1A1F36',
+                        borderRadius: 4,
+                        barPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let value = context.parsed.y;
+                                    if (value >= 1000) {
+                                        return (value / 1000).toFixed(1) + 'k requests';
+                                    }
+                                    return value + ' requests';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(26, 30, 50, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000) {
+                                        return value / 1000 + 'k';
+                                    }
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Store charts for later use
+            window.charts = { trafficChart, statusChart, endpointsChart };
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+        }
+    }
+
+    initCharts();
+
+    // Date range handling
+    const dateRange = document.getElementById('dateRange');
+    const customRange = document.getElementById('customRangeContainer');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+
+    if (dateRange) {
+        dateRange.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customRange.style.display = 'flex';
+            } else {
+                customRange.style.display = 'none';
+                updateData(this.value);
+            }
+        });
+    }
+
+    function updateData(range) {
+        // Show loading state
+        showLoadingState();
+        
+        // Reload page with new range
+        window.location.href = `?range=${range}`;
+    }
+
+    function showLoadingState() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+    }
+
+    // Refresh button
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            showLoadingState();
+            location.reload();
+        });
+    }
+
+    // Export button
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            alert('Export functionality coming soon!');
+        });
+    }
+
+    // Chart toggle (Daily/Hourly)
+    const toggles = document.querySelectorAll('.chart-toggle');
+    toggles.forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            toggles.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const type = this.dataset.chart;
+            const range = dateRange ? dateRange.value : '7';
+            
+            // Show loading state on chart
+            const chartContainer = document.querySelector('.chart-card.full-width .chart-container');
+            if (chartContainer) {
+                chartContainer.style.opacity = '0.5';
+            }
+            
+            // Update chart data via API
+            fetch(`/analytics/api/chart-data/?type=${type}&range=${range}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (window.charts?.trafficChart) {
+                        window.charts.trafficChart.data.labels = data.labels;
+                        window.charts.trafficChart.data.datasets[0].data = data.datasets[0].data;
+                        window.charts.trafficChart.update();
+                    }
+                    if (chartContainer) {
+                        chartContainer.style.opacity = '1';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating chart:', error);
+                    if (chartContainer) {
+                        chartContainer.style.opacity = '1';
+                    }
+                });
+        });
+    });
+
+    // Handle window resize for charts
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            if (window.charts) {
+                Object.values(window.charts).forEach(chart => {
+                    if (chart) {
+                        chart.resize();
+                    }
+                });
+            }
+        }, 250);
+    });
+
+    // Handle mobile touch events
+    if ('ontouchstart' in window) {
+        const interactiveElements = document.querySelectorAll('.action-item, .btn-refresh, .btn-export, .chart-toggle');
+        interactiveElements.forEach(el => {
+            el.addEventListener('touchstart', function() {
+                this.style.opacity = '0.7';
+            }, { passive: true });
+            
+            el.addEventListener('touchend', function() {
+                this.style.opacity = '1';
+            });
+            
+            el.addEventListener('touchcancel', function() {
+                this.style.opacity = '1';
+            });
+        });
+    }
+
+    // Handle horizontal scroll on tables
+    const tableContainers = document.querySelectorAll('.table-container');
+    tableContainers.forEach(container => {
+        container.addEventListener('touchstart', function(e) {
+            this.style.cursor = 'grabbing';
+        }, { passive: true });
+        
+        container.addEventListener('touchend', function() {
+            this.style.cursor = 'grab';
+        });
+    });
+});
+</script>
+{% endblock %}

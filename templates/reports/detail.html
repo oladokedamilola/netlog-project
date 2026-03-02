@@ -1,229 +1,1210 @@
 {% extends "base_user.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}{{ report.title }} - NetLog{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            <!-- Report Header -->
-            <div class="d-flex justify-content-between align-items-start mb-4">
-                <div>
-                    <h1 class="h2 mb-1">{{ report.title }}</h1>
-                    <p class="text-muted mb-0">
-                        Generated {{ report.generated_at|timesince }} ago • 
-                        {{ report.get_report_type_display }} • 
-                        {{ report.get_format_display }}
-                    </p>
-                    {% if report.description %}
-                    <p class="mt-2">{{ report.description }}</p>
-                    {% endif %}
+<div class="report-detail-container">
+    <!-- Navigation Breadcrumb -->
+    <div class="breadcrumb-nav">
+        <a href="{% url 'dashboard' %}" class="breadcrumb-link">Dashboard</a>
+        <i class="fas fa-chevron-right breadcrumb-separator"></i>
+        <a href="{% url 'reports:report_list' %}" class="breadcrumb-link">Reports</a>
+        <i class="fas fa-chevron-right breadcrumb-separator"></i>
+        <span class="breadcrumb-current">Report Details</span>
+    </div>
+
+    <!-- Header Section -->
+    <div class="report-header">
+        <div class="header-content">
+            <div class="report-title-section">
+                <h1 class="report-title">{{ report.title }}</h1>
+                <div class="report-meta-badges">
+                    <span class="format-badge {{ report.format }}">
+                        <i class="fas {% if report.format == 'pdf' %}fa-file-pdf{% elif report.format == 'csv' %}fa-file-csv{% elif report.format == 'html' %}fa-file-code{% else %}fa-file-code{% endif %} me-1"></i>
+                        {{ report.get_format_display|upper }}
+                    </span>
+                    <span class="type-badge {{ report.report_type }}">
+                        <i class="fas {% if report.report_type == 'summary' %}fa-list-ul{% elif report.report_type == 'detailed' %}fa-chart-bar{% elif report.report_type == 'security' %}fa-shield-alt{% else %}fa-network-wired{% endif %} me-1"></i>
+                        {{ report.get_report_type_display }}
+                    </span>
+                    <span class="time-badge">
+                        <i class="far fa-clock me-1"></i>
+                        {{ report.generated_at|timesince }} ago
+                    </span>
                 </div>
-                <div class="dropdown">
-                    <button class="btn btn-outline-secondary" type="button" id="reportActions" data-bs-toggle="dropdown">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'reports:download_report' report.id %}">
-                            <i class="fas fa-download me-2"></i>Download
-                        </a></li>
-                        {% if report.format == 'html' %}
-                        <li><a class="dropdown-item" href="{% url 'reports:preview_report' report.id %}">
-                            <i class="fas fa-eye me-2"></i>Preview
-                        </a></li>
-                        {% endif %}
-                        <li><a class="dropdown-item" href="{% url 'analytics:analytics_view' report.upload.id %}">
-                            <i class="fas fa-chart-bar me-2"></i>View Analytics
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="{% url 'reports:delete_report' report.id %}">
-                            <i class="fas fa-trash me-2"></i>Delete
-                        </a></li>
-                    </ul>
-                </div>
+                {% if report.description %}
+                <p class="report-description">{{ report.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="action-buttons">
+                <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary">
+                    <i class="fas fa-download me-2"></i>
+                    Download
+                </a>
+                {% if report.format == 'html' %}
+                <a href="{% url 'reports:preview_report' report.id %}" class="btn btn-outline">
+                    <i class="fas fa-eye me-2"></i>
+                    Preview
+                </a>
+                {% endif %}
+                <button class="btn btn-icon" id="moreActionsBtn" title="More actions">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+            </div>
+            
+            <!-- Dropdown Menu -->
+            <div class="dropdown-menu-custom" id="moreActionsMenu">
+                <a href="{% url 'analytics_view' report.upload.id %}" class="dropdown-item">
+                    <i class="fas fa-chart-line"></i>
+                    View Analytics
+                </a>
+                <a href="{% url 'reports:generate_report' %}?upload={{ report.upload.id }}" class="dropdown-item">
+                    <i class="fas fa-plus-circle"></i>
+                    Generate Similar Report
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item text-danger" id="deleteReportBtn">
+                    <i class="fas fa-trash-alt"></i>
+                    Delete Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-file-lines"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ report.file_size|filesizeformat }}</div>
+                <div class="stat-label">File Size</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-download"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ report.download_count|intcomma }}</div>
+                <div class="stat-label">Downloads</div>
+                {% if report.downloaded_at %}
+                <div class="stat-tip">Last: {{ report.downloaded_at|date:"M d, Y" }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ report.generation_time|floatformat:2 }}s</div>
+                <div class="stat-label">Generation Time</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ report.generated_at|date:"M d, Y" }}</div>
+                <div class="stat-label">Generated On</div>
+                <div class="stat-tip">{{ report.generated_at|time:"g:i A" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="detail-grid">
+        <!-- Left Column - Source Information -->
+        <div class="source-info-card">
+            <div class="card-header-custom">
+                <i class="fas fa-database" style="color: var(--ls-orange);"></i>
+                <h3>Source Information</h3>
             </div>
 
-            <!-- Report Info Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3 mb-3">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="text-primary mb-2">
-                                <i class="fas fa-file fa-2x"></i>
-                            </div>
-                            <h6 class="card-title mb-1">Format</h6>
-                            <p class="card-text h5">{{ report.get_format_display }}</p>
-                        </div>
-                    </div>
+            <div class="source-file-info">
+                <div class="file-icon-large">
+                    <i class="fas fa-file-lines"></i>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="text-success mb-2">
-                                <i class="fas fa-database fa-2x"></i>
-                            </div>
-                            <h6 class="card-title mb-1">File Size</h6>
-                            <p class="card-text h5">
-                                {% if report.file_size > 1048576 %}
-                                    {{ report.file_size|filesizeformat }}
-                                {% else %}
-                                    {{ report.file_size }} bytes
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="text-warning mb-2">
-                                <i class="fas fa-download fa-2x"></i>
-                            </div>
-                            <h6 class="card-title mb-1">Downloads</h6>
-                            <p class="card-text h5">{{ report.download_count }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="text-info mb-2">
-                                <i class="fas fa-clock fa-2x"></i>
-                            </div>
-                            <h6 class="card-title mb-1">Generation Time</h6>
-                            <p class="card-text h5">{{ report.generation_time|floatformat:2 }}s</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Source Log Information -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">📁 Source Log File</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <th width="40%">Filename:</th>
-                                    <td>{{ report.upload.filename }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Log Type:</th>
-                                    <td>{{ report.upload.get_log_type_display }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Uploaded:</th>
-                                    <td>{{ report.upload.uploaded_at|date:"Y-m-d H:i" }}</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <th width="40%">Report Type:</th>
-                                    <td>{{ report.get_report_type_display }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Generated:</th>
-                                    <td>{{ report.generated_at|date:"Y-m-d H:i" }}</td>
-                                </tr>
-                                {% if report.is_downloaded %}
-                                <tr>
-                                    <th>Last Downloaded:</th>
-                                    <td>{{ report.downloaded_at|date:"Y-m-d H:i" }}</td>
-                                </tr>
-                                {% endif %}
-                            </table>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="{% url 'analytics:analytics_view' report.upload.id %}" class="btn btn-outline-primary btn-sm me-2">
-                            <i class="fas fa-chart-bar me-1"></i>View Analytics
-                        </a>
-                        <a href="{% url 'logs:upload_history' %}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-history me-1"></i>View Upload History
-                        </a>
+                <div class="file-details">
+                    <div class="file-name">{{ report.upload.file.name|slice:"17:" }}</div>
+                    <div class="file-meta">
+                        <span class="log-type-badge {{ report.upload.log_type }}">
+                            {{ report.upload.get_log_type_display }}
+                        </span>
+                        <span class="upload-date">
+                            <i class="far fa-calendar-alt me-1"></i>
+                            {{ report.upload.uploaded_at|date:"M d, Y" }}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Report Data Preview (if available) -->
-            {% if report.report_data %}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">📊 Report Summary</h5>
-                    <span class="badge bg-primary">{{ report.get_report_type_display }}</span>
+            <div class="source-stats">
+                <div class="source-stat-item">
+                    <span class="stat-name">Total Entries</span>
+                    <span class="stat-number">{{ report.upload.entries.count|intcomma }}</span>
                 </div>
-                <div class="card-body">
-                    {% if report.report_data.analysis_summary %}
-                        {% with summary=report.report_data.analysis_summary %}
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 text-center">
-                                    <div class="h4 text-primary mb-1">{{ summary.total_requests|default:"0" }}</div>
-                                    <small class="text-muted">Total Requests</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 text-center">
-                                    <div class="h4 text-success mb-1">{{ summary.unique_ips|default:"0" }}</div>
-                                    <small class="text-muted">Unique IPs</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 text-center">
-                                    <div class="h4 text-warning mb-1">{{ summary.error_rate|default:"0"|floatformat:1 }}%</div>
-                                    <small class="text-muted">Error Rate</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="border rounded p-3 text-center">
-                                    <div class="h4 text-info mb-1">{{ summary.avg_requests_per_day|default:"0"|floatformat:1 }}</div>
-                                    <small class="text-muted">Avg Daily</small>
-                                </div>
-                            </div>
-                        </div>
+                <div class="source-stat-item">
+                    <span class="stat-name">Time Range</span>
+                    <span class="stat-number">
+                        {% with first=report.upload.entries.first last=report.upload.entries.last %}
+                            {% if first and last %}
+                                {{ first.timestamp|date:"M d, Y" }} - {{ last.timestamp|date:"M d, Y" }}
+                            {% else %}
+                                N/A
+                            {% endif %}
                         {% endwith %}
-                    {% else %}
-                        <p class="text-muted mb-0">No summary data available. Please download the report to view full details.</p>
-                    {% endif %}
+                    </span>
                 </div>
             </div>
-            {% endif %}
 
-            <!-- Actions -->
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h5 class="mb-3">Ready to download your report?</h5>
-                    <p class="text-muted mb-4">Your {{ report.get_format_display }} report is ready. Click the button below to download it to your device.</p>
-                    
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-download me-2"></i>Download Report
-                        </a>
-                        
-                        {% if report.format == 'html' %}
-                        <a href="{% url 'reports:preview_report' report.id %}" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-eye me-2"></i>Preview in Browser
-                        </a>
-                        {% endif %}
+            <div class="action-links">
+                <a href="{% url 'analytics_view' report.upload.id %}" class="action-link">
+                    <i class="fas fa-chart-line"></i>
+                    View Full Analytics
+                </a>
+                <a href="{% url 'logs:upload_detail' report.upload.id %}" class="action-link">
+                    <i class="fas fa-info-circle"></i>
+                    Upload Details
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Column - Report Summary (FIXED) -->
+        <div class="summary-card">
+            <div class="card-header-custom">
+                <i class="fas fa-chart-pie" style="color: var(--ls-orange);"></i>
+                <h3>Report Summary</h3>
+            </div>
+
+            {% if summary_data.total_requests > 0 %}
+                <div class="summary-stats">
+                    <div class="summary-stat-item">
+                        <div class="summary-stat-label">Total Requests</div>
+                        <div class="summary-stat-value">{{ summary_data.total_requests|intcomma }}</div>
                     </div>
-                    
-                    <div class="mt-4">
-                        <a href="{% url 'reports:generate_report' %}" class="text-decoration-none me-3">
-                            <i class="fas fa-plus me-1"></i>Create Another Report
-                        </a>
-                        <a href="{% url 'reports:report_list' %}" class="text-decoration-none">
-                            <i class="fas fa-list me-1"></i>View All Reports
-                        </a>
+                    <div class="summary-stat-item">
+                        <div class="summary-stat-label">Unique IPs</div>
+                        <div class="summary-stat-value">{{ summary_data.unique_ips|intcomma }}</div>
                     </div>
+                    <div class="summary-stat-item">
+                        <div class="summary-stat-label">Error Rate</div>
+                        <div class="summary-stat-value {% if summary_data.error_rate > 10 %}text-danger{% endif %}">
+                            {{ summary_data.error_rate|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <div class="summary-stat-item">
+                        <div class="summary-stat-label">Avg Daily</div>
+                        <div class="summary-stat-value">{{ summary_data.avg_requests_per_day|floatformat:1 }}</div>
+                    </div>
+                </div>
+
+                <!-- Status Code Distribution -->
+                {% if summary_data.status_codes %}
+                <div class="status-distribution">
+                    <h4>Status Code Distribution</h4>
+                    <div class="status-bars">
+                        {% for code, count in summary_data.status_codes.items %}
+                        <div class="status-bar-item">
+                            <span class="status-label">{{ code }}</span>
+                            <div class="status-bar-container">
+                                <div class="status-bar-fill {{ code|slice:':1' }}xx" 
+                                     style="width: {% widthratio count summary_data.total_requests 100 %}%"></div>
+                            </div>
+                            <span class="status-count">{{ count|intcomma }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Top IPs Preview -->
+                {% if summary_data.top_ips %}
+                <div class="top-preview">
+                    <h4>Top IP Addresses</h4>
+                    <div class="preview-list">
+                        {% for ip, count in summary_data.top_ips.items|slice:":5" %}
+                        <div class="preview-item">
+                            <span class="preview-key">{{ ip }}</span>
+                            <span class="preview-value">{{ count|intcomma }} requests</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Suspicious IPs Alert -->
+                {% if summary_data.suspicious_ips %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>{{ summary_data.suspicious_ips|length }}</strong> suspicious IP(s) detected in this report.
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div class="no-summary">
+                    <i class="fas fa-chart-line"></i>
+                    <h4>No Summary Data Available</h4>
+                    <p>The report was generated but summary data could not be displayed.</p>
+                    <p class="small text-muted mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Download the report to view the complete analysis.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Download Section -->
+    <div class="download-section">
+        <div class="download-card">
+            <div class="download-icon">
+                <i class="fas fa-download"></i>
+            </div>
+            <div class="download-content">
+                <h3>Ready to Download?</h3>
+                <p>Your {{ report.get_format_display|upper }} report is ready. Click the button below to save it to your device.</p>
+                <div class="download-actions">
+                    <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary btn-large">
+                        <i class="fas fa-download me-2"></i>
+                        Download {{ report.get_format_display|upper }} Report
+                    </a>
+                    {% if report.format == 'html' %}
+                    <a href="{% url 'reports:preview_report' report.id %}" class="btn btn-outline btn-large">
+                        <i class="fas fa-eye me-2"></i>
+                        Preview in Browser
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Related Actions -->
+    <div class="related-actions">
+        <h4>Related Actions</h4>
+        <div class="actions-grid">
+            <a href="{% url 'reports:generate_report' %}?upload={{ report.upload.id }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="action-label">Generate Similar</div>
+                <div class="action-desc">Create another report from same log</div>
+            </a>
+            <a href="{% url 'analytics_view' report.upload.id %}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="action-label">View Analytics</div>
+                <div class="action-desc">Explore detailed analytics</div>
+            </a>
+            <a href="{% url 'reports:report_list' %}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-list-ul"></i>
+                </div>
+                <div class="action-label">All Reports</div>
+                <div class="action-desc">View your report history</div>
+            </a>
+        </div>
+    </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                    Delete Report
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>"{{ report.title }}"</strong>?</p>
+                <p class="text-muted small">This action cannot be undone. The report file will be permanently removed.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'reports:delete_report' report.id %}" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-2"></i>
+                    Delete Permanently
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Report Detail Container */
+    .report-detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem 0.5rem;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+    }
+
+    .breadcrumb-link {
+        color: var(--ls-muted);
+        text-decoration: none;
+    }
+
+    .breadcrumb-link:hover {
+        color: var(--ls-orange);
+    }
+
+    .breadcrumb-separator {
+        color: var(--ls-muted);
+        font-size: 0.7rem;
+    }
+
+    .breadcrumb-current {
+        color: var(--ls-navy);
+        font-weight: 500;
+    }
+
+    /* Header */
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .report-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .report-meta-badges {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.75rem;
+    }
+
+    .format-badge, .type-badge, .time-badge {
+        padding: 0.35rem 0.9rem;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .format-badge.pdf { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+    .format-badge.csv { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+    .format-badge.html { background: rgba(255, 122, 0, 0.1); color: var(--ls-orange); }
+    .format-badge.json { background: rgba(107, 114, 128, 0.1); color: var(--ls-muted); }
+
+    .type-badge.summary { background: rgba(255, 122, 0, 0.1); color: var(--ls-orange); }
+    .type-badge.detailed { background: rgba(0, 100, 200, 0.1); color: #0066cc; }
+    .type-badge.security { background: rgba(239, 68, 68, 0.1); color: var(--ls-danger); }
+    .type-badge.traffic { background: rgba(22, 163, 74, 0.1); color: var(--ls-success); }
+
+    .time-badge {
+        background: var(--ls-cream);
+        color: var(--ls-muted);
+    }
+
+    .report-description {
+        color: var(--ls-muted);
+        font-size: 1rem;
+        margin: 1rem 0 0 0;
+        max-width: 600px;
+    }
+
+    .header-actions {
+        position: relative;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-primary:hover {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        color: var(--ls-navy);
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+
+    .btn-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        background: transparent;
+        color: var(--ls-navy);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu-custom {
+        position: absolute;
+        top: calc(100% + 5px);
+        right: 0;
+        min-width: 240px;
+        background: white;
+        border-radius: var(--radius-md);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        padding: 0.5rem 0;
+        display: none;
+        z-index: 1000;
+        border: 1px solid rgba(26,30,50,0.06);
+    }
+
+    .dropdown-menu-custom.show {
+        display: block;
+        animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 1rem;
+        color: var(--ls-navy);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .dropdown-item:hover {
+        background: var(--ls-cream);
+        color: var(--ls-orange);
+    }
+
+    .dropdown-item i {
+        width: 18px;
+        color: var(--ls-muted);
+    }
+
+    .dropdown-item:hover i {
+        color: var(--ls-orange);
+    }
+
+    .dropdown-divider {
+        margin: 0.5rem 0;
+        border-top: 1px solid rgba(26,30,50,0.06);
+    }
+
+    .text-danger {
+        color: var(--ls-danger) !important;
+    }
+
+    .text-danger i {
+        color: var(--ls-danger) !important;
+    }
+
+    .text-danger:hover {
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 122, 0, 0.08);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--ls-cream);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1.2rem;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--ls-navy);
+        line-height: 1.2;
+        margin-bottom: 0.15rem;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-tip {
+        font-size: 0.65rem;
+        color: var(--ls-muted);
+        margin-top: 0.25rem;
+    }
+
+    /* Detail Grid */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Cards */
+    .source-info-card,
+    .summary-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .card-header-custom {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .card-header-custom i {
+        font-size: 1.2rem;
+    }
+
+    .card-header-custom h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    /* Source Info */
+    .source-file-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    .file-icon-large {
+        font-size: 3rem;
+        color: var(--ls-orange);
+    }
+
+    .file-details {
+        flex: 1;
+    }
+
+    .file-name {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+        word-break: break-word;
+    }
+
+    .file-meta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .log-type-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .log-type-badge.apache { background: rgba(255, 122, 0, 0.1); color: var(--ls-orange); }
+    .log-type-badge.nginx { background: rgba(0, 150, 0, 0.1); color: #009900; }
+    .log-type-badge.iis { background: rgba(0, 100, 200, 0.1); color: #0066cc; }
+
+    .upload-date {
+        color: var(--ls-muted);
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .source-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .source-stat-item {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    .stat-name {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-number {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+    }
+
+    .action-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .action-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        color: var(--ls-navy);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .action-link:hover {
+        background: rgba(255, 122, 0, 0.1);
+        color: var(--ls-orange);
+    }
+
+    .action-link i {
+        width: 20px;
+        color: var(--ls-orange);
+    }
+
+    /* Summary Stats */
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    .summary-stat-label {
+        font-size: 0.7rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+    }
+
+    .summary-stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+    }
+
+    .text-danger {
+        color: var(--ls-danger) !important;
+    }
+
+    /* Status Distribution */
+    .status-distribution {
+        margin-bottom: 2rem;
+    }
+
+    .status-distribution h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 1rem;
+    }
+
+    .status-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .status-bar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-label {
+        min-width: 40px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+    }
+
+    .status-bar-container {
+        flex: 1;
+        height: 8px;
+        background: rgba(26, 30, 50, 0.06);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .status-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+    }
+
+    .status-bar-fill.2xx { background: var(--ls-success); }
+    .status-bar-fill.3xx { background: var(--ls-warning); }
+    .status-bar-fill.4xx { background: var(--ls-orange); }
+    .status-bar-fill.5xx { background: var(--ls-danger); }
+
+    .status-count {
+        min-width: 50px;
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+        text-align: right;
+    }
+
+    /* Top Preview */
+    .top-preview h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 1rem;
+    }
+
+    .preview-list {
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        padding: 0.75rem;
+    }
+
+    .preview-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .preview-item:last-child {
+        border-bottom: none;
+    }
+
+    .preview-key {
+        font-size: 0.85rem;
+        color: var(--ls-navy);
+        font-family: monospace;
+    }
+
+    .preview-value {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+    }
+
+    /* Alert */
+    .alert-warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        color: #92400e;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+    }
+
+    .alert-warning i {
+        color: #f59e0b;
+    }
+
+    /* No Summary */
+    .no-summary {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--ls-muted);
+    }
+
+    .no-summary i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .no-summary h4 {
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+    }
+
+    .no-summary p {
+        font-size: 0.9rem;
+    }
+
+    /* Download Section */
+    .download-section {
+        margin-bottom: 2rem;
+    }
+
+    .download-card {
+        background: linear-gradient(135deg, var(--ls-cream), white);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .download-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--ls-orange);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 10px 25px rgba(255, 122, 0, 0.3);
+    }
+
+    .download-content {
+        flex: 1;
+    }
+
+    .download-content h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .download-content p {
+        color: var(--ls-muted);
+        margin: 0 0 1.5rem 0;
+    }
+
+    .download-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-large {
+        padding: 0.8rem 2rem;
+        font-size: 1rem;
+    }
+
+    /* Related Actions */
+    .related-actions h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 1rem;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        text-align: center;
+        text-decoration: none;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        transition: all 0.2s ease;
+    }
+
+    .action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 122, 0, 0.08);
+        border-color: var(--ls-orange);
+    }
+
+    .action-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--ls-cream);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1.2rem;
+        margin: 0 auto 1rem;
+    }
+
+    .action-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 0.25rem;
+    }
+
+    .action-desc {
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+    }
+
+    /* Modal */
+    .modal-content {
+        border: none;
+        border-radius: var(--radius-lg);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        padding: 1.25rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(26, 30, 50, 0.04);
+        padding: 1.25rem;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        color: var(--ls-navy);
+        padding: 0.5rem 1.5rem;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+
+    .btn-danger {
+        background: var(--ls-danger);
+        color: white;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .report-header {
+            flex-direction: column;
+        }
+
+        .action-buttons {
+            width: 100%;
+        }
+
+        .btn-primary,
+        .btn-outline {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .download-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .download-actions {
+            flex-direction: column;
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .source-file-info {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // More actions dropdown
+    const moreActionsBtn = document.getElementById('moreActionsBtn');
+    const moreActionsMenu = document.getElementById('moreActionsMenu');
+    
+    if (moreActionsBtn && moreActionsMenu) {
+        moreActionsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            moreActionsMenu.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!moreActionsBtn.contains(e.target) && !moreActionsMenu.contains(e.target)) {
+                moreActionsMenu.classList.remove('show');
+            }
+        });
+    }
+    
+    // Delete confirmation modal
+    const deleteBtn = document.getElementById('deleteReportBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        });
+    }
+    
+    // Format file size display
+    document.querySelectorAll('.file-size').forEach(el => {
+        const bytes = parseInt(el.dataset.bytes);
+        if (bytes > 1048576) {
+            el.textContent = (bytes / 1048576).toFixed(2) + ' MB';
+        } else if (bytes > 1024) {
+            el.textContent = (bytes / 1024).toFixed(2) + ' KB';
+        } else {
+            el.textContent = bytes + ' bytes';
+        }
+    });
+});
+</script>
 {% endblock %}

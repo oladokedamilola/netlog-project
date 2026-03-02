@@ -1,0 +1,140 @@
+C:\Users\PC\Desktop\NetLog\netlog
+│
+├── .gitignore
+├── db.sqlite3
+├── manage.py
+├── README.md
+├── requirements.txt
+│
+├── accounts
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── auth_backend.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── signals.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   └── __pycache__/
+│
+├── analytics
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── api.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── utils/
+│   └── __pycache__/
+│
+├── logs
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── parsers/
+│   │   ├── __init__.py
+│   │   ├── apache.py
+│   │   ├── base.py
+│   │   └── __pycache__/
+│   ├── utils/
+│   │   ├── parser_selector.py
+│   │   └── __pycache__/
+│   └── __pycache__/
+│
+├── netlog
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── wsgi.py
+│   └── __pycache__/
+│
+├── reports
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── utils/
+│   └── __pycache__/
+│
+├── static
+│   ├── css/
+│   └── js/
+│       └── main.js
+│
+├── templates
+│   ├── accounts/
+│   │   ├── dashboard.html
+│   │   ├── login.html
+│   │   └── register.html
+│   │
+│   ├── analytics/
+│   │
+│   ├── logs/
+│   │   ├── history.html
+│   │   ├── upload.html
+│   │   └── upload_detail.html
+│   │
+│   └── reports/
+│       ├── delete_confirm.html
+│       ├── detail.html
+│       ├── generate.html
+│       ├── preview.html
+│       └── templates/
+│           ├── html_report.html
+│           └── pdf_report.html
+│
+└── media/
+
+
+
+
+<!-- Option 1: Clock animation (currently used) -->
+https://cdn.dribbble.com/users/2469324/screenshots/6528918/clock_dribbble.gif
+
+<!-- Option 2: Security timeout animation -->
+https://cdn.dribbble.com/users/1138875/screenshots/3665260/security_loop.gif
+
+<!-- Option 3: Rate limit animation -->
+https://cdn.dribbble.com/users/879147/screenshots/2644404/dribbble_clock_800x600.gif
+
+<!-- Option 4: Loading/timeout animation -->
+https://cdn.dribbble.com/users/235707/screenshots/1765211/clock-loading.gif
+
+<!-- Option 5: Warning animation -->
+https://cdn.dribbble.com/users/206412/screenshots/5579919/media/0e6b8b10b282a0278c4f4aa0b9ab4caa.gif
+
+
+
+
+
+
+<!-- Option 1: Email verification animation (currently used) -->
+https://cdn.dribbble.com/users/239549/screenshots/1626650/media/0af37be1d73517f0cef3cc2c9daa4534.gif
+
+<!-- Option 2: Paper plane sending animation -->
+https://cdn.dribbble.com/users/239549/screenshots/1584854/media/2daa51089d6756a0a2efb5c7187d3f9d.gif
+
+<!-- Option 3: Check your email animation -->
+https://cdn.dribbble.com/users/235707/screenshots/1774022/media/8e73c7048dfd4488fc86f245c0d2809c.gif
+
+<!-- Option 4: Envelope opening animation -->
+https://cdn.dribbble.com/users/1138875/screenshots/3665260/envelope.gif
+
+<!-- Option 5: Mail sent animation -->
+https://cdn.dribbble.com/users/879147/screenshots/2644404/mail.gif

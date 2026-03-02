@@ -1,0 +1,81 @@
+{% extends "errors/base_error.html" %}
+{% load static %}
+
+{% block error_icon %}
+<div class="error-icon">
+    <i class="fas fa-bug"></i>
+</div>
+{% endblock %}
+
+{% block error_code %}500{% endblock %}
+
+{% block error_name %}Server Error{% endblock %}
+
+{% block error_description %}
+Oops! Something went wrong on our servers. Our team has been notified and is working on it.
+{% endblock %}
+
+{% block error_details %}
+<div class="error-details">
+    <i class="fas fa-tools" style="color: var(--warning-color); margin-right: 10px;"></i>
+    <strong>Error Reference:</strong> #{{ request.META.REQUEST_ID|default:"NETLOG" }}{{ request.META.HTTP_X_REQUEST_ID|default:"" }}<br>
+    <small>Please include this reference if you contact support.</small>
+</div>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="javascript:location.reload()" class="btn btn-secondary">
+    <i class="fas fa-redo-alt"></i> Try Again
+</a>
+<a href="/" class="btn btn-primary">
+    <i class="fas fa-home"></i> Go Home
+</a>
+<a href="/contact?subject=500%20Error%20{{ request.META.REQUEST_ID|default:'' }}" class="btn btn-outline">
+    <i class="fas fa-headset"></i> Report Issue
+</a>
+{% endblock %}
+
+{% block help_section %}
+<div class="help-section">
+    <div class="help-title">
+        <i class="fas fa-clock" style="color: var(--warning-color); margin-right: 10px;"></i>
+        While We Fix This, You Can:
+    </div>
+    
+    <div class="help-grid">
+        <a href="/dashboard" class="help-item" style="text-decoration: none;">
+            <i class="fas fa-chart-bar"></i>
+            <h4>Check Dashboard</h4>
+            <p>View existing analytics</p>
+        </a>
+        <a href="/reports" class="help-item" style="text-decoration: none;">
+            <i class="fas fa-file-pdf"></i>
+            <h4>Download Reports</h4>
+            <p>Access generated reports</p>
+        </a>
+        <a href="/profile" class="help-item" style="text-decoration: none;">
+            <i class="fas fa-user-cog"></i>
+            <h4>Profile Settings</h4>
+            <p>Update your preferences</p>
+        </a>
+        <a href="/faq" class="help-item" style="text-decoration: none;">
+            <i class="fas fa-question"></i>
+            <h4>Visit FAQ</h4>
+            <p>Find quick answers</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-details {
+        background: linear-gradient(135deg, #fff8e7, #ffffff);
+        border-left-color: var(--warning-color);
+    }
+    
+    .error-footer {
+        background: linear-gradient(135deg, #f5f5f5, #e8e8e8);
+    }
+</style>
+{% endblock %}

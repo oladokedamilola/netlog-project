@@ -1,269 +1,1498 @@
-<!--templates/analytics/analytics.html-->
 {% extends "base_user.html" %}
-{% block title %}Analytics - LogSight{% endblock %}
+{% load static %}
+{% load humanize %} 
+{% load analytics_extras %}
+
+{% block title %}Analytics - {{ upload.file.name|slice:"17:"|truncatechars:30 }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-3">Analytics for: {{ upload.file.name }}</h2>
-    <p>
-        <strong>Log Type:</strong> {{ upload.log_type }} | 
-        <strong>Uploaded At:</strong> {{ upload.uploaded_at|date:"Y-m-d H:i" }}
-    </p>
+<div class="analytics-container">
+    <!-- Header -->
+    <div class="analytics-header">
+        <div class="header-content">
+            <div class="breadcrumb-nav">
+                <a href="{% url 'dashboard' %}" class="breadcrumb-link">Dashboard</a>
+                <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                <a href="{% url 'logs:upload_history' %}" class="breadcrumb-link">Upload History</a>
+                <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                <a href="{% url 'logs:upload_detail' upload.id %}" class="breadcrumb-link">Upload Details</a>
+                <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                <span class="breadcrumb-current">Analytics</span>
+            </div>
+            <h1 class="header-title">
+                <i class="fas fa-chart-line me-2" style="color: var(--ls-orange);"></i>
+                Log Analytics
+            </h1>
+            <p class="header-subtitle">{{ upload.file.name|slice:"17:"|truncatechars:50 }}</p>
+        </div>
+        <div class="header-actions">
+            <div class="dropdown">
+                <button class="btn btn-outline dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-2"></i>
+                    <span class="btn-text">Export Report</span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>PDF Report</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>CSV Data</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-file-code me-2"></i>JSON Export</a></li>
+                </ul>
+            </div>
+            <a href="{% url 'reports:generate_report' %}?upload={{ upload.id }}" class="btn btn-primary">
+                <i class="fas fa-file-alt me-2"></i>
+                <span class="btn-text">Generate Report</span>
+            </a>
+        </div>
+    </div>
 
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mb-4" id="analyticsTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="traffic-tab" data-bs-toggle="tab" data-bs-target="#traffic" type="button" role="tab">Traffic</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="status-tab" data-bs-toggle="tab" data-bs-target="#status" type="button" role="tab">Status Codes</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="ip-tab" data-bs-toggle="tab" data-bs-target="#ip" type="button" role="tab">Top IPs</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="endpoints-tab" data-bs-toggle="tab" data-bs-target="#endpoints" type="button" role="tab">Endpoints</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="errors-tab" data-bs-toggle="tab" data-bs-target="#errors" type="button" role="tab">Error Spikes</button>
-        </li>
-    </ul>
-
-    <!-- Tab Contents -->
-    <div class="tab-content" id="analyticsTabsContent">
-
-        <!-- Overview -->
-        <div class="tab-pane fade show active" id="overview" role="tabpanel">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="card p-3 shadow-sm text-center">
-                        <h5>Total Requests</h5>
-                        <h3>{{ total_requests }}</h3>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card p-3 shadow-sm text-center">
-                        <h5>Parsed Entries</h5>
-                        <h3>{{ parsed_entries }}</h3>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card p-3 shadow-sm text-center">
-                        <h5>Total Errors (4xx + 5xx)</h5>
-                        <h3>{{ total_errors }}</h3>
-                    </div>
+    <!-- Summary Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-file-lines"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value">{{ total_requests|default:"0"|intcomma }}</div>
+                <div class="stat-trend">
+                    <i class="fas fa-chart-line me-1"></i>
+                    <span>{{ analysis.avg_requests_per_day|floatformat:0 }}/day</span>
                 </div>
             </div>
         </div>
 
-        <!-- Traffic -->
-        <div class="tab-pane fade" id="traffic" role="tabpanel">
-            <div class="row mb-3">
-                <div class="col-md-6 mb-3">
-                    <div class="card p-3 shadow-sm">
-                        <h5>Hourly Traffic</h5>
-                        <canvas id="hourlyTrafficChart"></canvas>
-                    </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <div class="card p-3 shadow-sm">
-                        <h5>Daily Traffic</h5>
-                        <canvas id="dailyTrafficChart"></canvas>
-                    </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Unique IPs</div>
+                <div class="stat-value">{{ analysis.unique_ips|default:"0"|intcomma }}</div>
+                <div class="stat-trend">
+                    <i class="fas fa-calendar me-1"></i>
+                    <span>{{ analysis.time_period_days|floatformat:1 }} days</span>
                 </div>
             </div>
         </div>
 
-        <!-- Status Codes -->
-        <div class="tab-pane fade" id="status" role="tabpanel">
-            <div class="row mb-3">
-                <div class="col-md-6 mb-3">
-                    <div class="card p-3 shadow-sm">
-                        <h5>Status Code Distribution</h5>
-                        <canvas id="statusDistributionChart"></canvas>
-                    </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <div class="card p-3 shadow-sm">
-                        <h5>Error Trends</h5>
-                        <canvas id="errorTrendsChart"></canvas>
-                    </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Error Rate</div>
+                <div class="stat-value">{{ analysis.error_rate|floatformat:1 }}%</div>
+                <div class="stat-trend {% if percent_change > 0 %}trend-up{% elif percent_change < 0 %}trend-down{% endif %}">
+                    <i class="fas fa-arrow-{% if percent_change > 0 %}up{% else %}down{% endif %} me-1"></i>
+                    <span>{{ percent_change|floatformat:1 }}% from yesterday</span>
                 </div>
             </div>
         </div>
 
-        <!-- Top IPs -->
-        <div class="tab-pane fade" id="ip" role="tabpanel">
-            <div class="card p-3 shadow-sm mb-3">
-                <h5>Top IPs</h5>
-                <table class="table table-striped">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-label">Time Range</div>
+                <div class="stat-value">{{ analysis.daily_distribution|length }} days</div>
+                <div class="stat-trend">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    <span>{{ first_date }} - {{ last_date }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        <!-- Hourly Distribution Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-clock me-2" style="color: var(--ls-orange);"></i>
+                    Hourly Distribution
+                </h3>
+                <div class="chart-legend">
+                    <span class="legend-dot" style="background: var(--ls-orange);"></span>
+                    <span>Requests</span>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="hourlyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Status Codes Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-pie me-2" style="color: var(--ls-orange);"></i>
+                    Status Codes
+                </h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Daily Distribution Chart -->
+        <div class="chart-card full-width">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-calendar-alt me-2" style="color: var(--ls-orange);"></i>
+                    Daily Request Trend
+                </h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Tables Grid -->
+    <div class="tables-grid">
+        <!-- Top IPs Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="fas fa-network-wired me-2" style="color: var(--ls-orange);"></i>
+                    Top IP Addresses
+                </h3>
+                {% if analysis.suspicious_ips %}
+                <span class="suspicious-badge">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    {{ analysis.suspicious_ips|length }} suspicious
+                </span>
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>IP Address</th>
                             <th>Requests</th>
-                            <th>Suspicious Activity</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for ip in top_ips %}
-                        <tr class="{% if ip.suspicious %}table-danger{% endif %}">
-                            <td>{{ ip.ip_address }}</td>
-                            <td>{{ ip.requests_count }}</td>
-                            <td>{{ ip.suspicious|yesno:"Yes,No" }}</td>
+                        {% for ip_data in top_ips %}
+                        <tr class="{% if ip_data.suspicious %}suspicious-row{% endif %}">
+                            <td class="ip-cell">
+                                <span class="ip-address">{{ ip_data.ip_address }}</span>
+                            </td>
+                            <td class="number-cell">{{ ip_data.requests_count|intcomma }}</td>
+                            <td class="status-cell">
+                                {% if ip_data.suspicious %}
+                                <span class="badge-suspicious">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    Suspicious
+                                </span>
+                                {% else %}
+                                <span class="badge-normal">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Normal
+                                </span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3" class="text-center">No IP data available.</td></tr>
+                        <tr>
+                            <td colspan="3" class="text-center">No data available</td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Endpoints -->
-        <div class="tab-pane fade" id="endpoints" role="tabpanel">
-            <div class="card p-3 shadow-sm mb-3">
-                <h5>Most Visited Endpoints</h5>
-                <table class="table table-striped">
+        <!-- Top Endpoints Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="fas fa-link me-2" style="color: var(--ls-orange);"></i>
+                    Most Accessed Endpoints
+                </h3>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Endpoint / URL</th>
+                            <th>URL</th>
                             <th>Requests</th>
                             <th>Errors</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for endpoint in endpoints %}
-                        <tr class="{% if endpoint.error_count > 0 %}table-warning{% endif %}">
-                            <td>{{ endpoint.url }}</td>
-                            <td>{{ endpoint.requests_count }}</td>
-                            <td>{{ endpoint.error_count }}</td>
+                        <tr>
+                            <td class="url-cell">
+                                <div class="url-content" title="{{ endpoint.full_url }}">
+                                    {{ endpoint.url }}
+                                </div>
+                            </td>
+                            <td class="number-cell">{{ endpoint.requests_count|intcomma }}</td>
+                            <td class="error-cell">
+                                {% if endpoint.error_count > 0 %}
+                                <span class="error-count">{{ endpoint.error_count }}</span>
+                                {% else %}
+                                <span class="no-errors">0</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3" class="text-center">No endpoint data available.</td></tr>
+                        <tr>
+                            <td colspan="3" class="text-center">No data available</td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
 
-        <!-- Error Spikes -->
-        <div class="tab-pane fade" id="errors" role="tabpanel">
-            <div class="card p-3 shadow-sm mb-3">
-                <h5>Error Spikes</h5>
-                <canvas id="errorSpikeChart"></canvas>
-            </div>
-            <div class="card p-3 shadow-sm">
-                <p><strong>Current Window Errors:</strong> {{ current_errors }}</p>
-                <p><strong>Previous Window Errors:</strong> {{ previous_errors }}</p>
-                <p><strong>Percentage Change:</strong> {{ percent_change|floatformat:2 }}%</p>
-            </div>
+    <!-- Recent Entries Table -->
+    <div class="recent-entries-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-list-ul me-2" style="color: var(--ls-orange);"></i>
+                Recent Log Entries
+            </h3>
+            <span class="entry-count">Last {{ entries|length }} entries</span>
         </div>
-
+        <div class="table-responsive">
+            <table class="entries-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>IP</th>
+                        <th>Method</th>
+                        <th>URL</th>
+                        <th>Status</th>
+                        <th>User Agent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td class="timestamp-cell">
+                            <span class="timestamp">{{ entry.timestamp|date:"H:i:s" }}</span>
+                            <span class="date">{{ entry.timestamp|date:"m/d" }}</span>
+                        </td>
+                        <td class="ip-cell">
+                            <span class="ip-address">{{ entry.ip_address }}</span>
+                        </td>
+                        <td class="method-cell">
+                            <span class="method-badge {{ entry.method|lower|default:'unknown' }}">
+                                {{ entry.method|default:"-" }}
+                            </span>
+                        </td>
+                        <td class="url-cell">
+                            <div class="url-content" title="{{ entry.url }}">
+                                {{ entry.url|truncatechars:40|default:"-" }}
+                            </div>
+                        </td>
+                        <td class="status-cell">
+                            {% if entry.status_code %}
+                            <span class="status-code {{ entry.status_code|slice:':1' }}xx">
+                                {{ entry.status_code }}
+                            </span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="ua-cell">
+                            <div class="user-agent" title="{{ entry.user_agent }}">
+                                {{ entry.user_agent|truncatechars:30|default:"-" }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No entries found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<style>
+    /* CSS Variables */
+    :root {
+        --touch-target-size: 44px;
+        --mobile-padding: 1rem;
+        --card-spacing: 1rem;
+    }
+
+    /* Global reset to prevent horizontal scrolling */
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Analytics Container - Fixed padding: removed left padding, added right padding */
+    .analytics-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: clamp(0.75rem, 3vw, 1rem) 0 clamp(0.75rem, 3vw, 1rem) clamp(0.5rem, 2vw, 1rem);
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Header */
+    .analytics-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        width: 100%;
+        padding-right: clamp(0.5rem, 2vw, 1rem); /* Added right padding */
+    }
+
+    .header-content {
+        flex: 1;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+        max-width: 100%;
+    }
+
+    .breadcrumb-link {
+        color: var(--ls-muted);
+        text-decoration: none;
+        min-height: var(--touch-target-size);
+        display: inline-flex;
+        align-items: center;
+        padding: 0 0.25rem;
+        white-space: nowrap;
+    }
+
+    .breadcrumb-link:hover {
+        color: var(--ls-orange);
+    }
+
+    .breadcrumb-separator {
+        color: var(--ls-muted);
+        font-size: 0.7rem;
+        flex-shrink: 0;
+    }
+
+    .breadcrumb-current {
+        color: var(--ls-navy);
+        font-weight: 500;
+        padding: 0 0.25rem;
+        white-space: nowrap;
+    }
+
+    .header-title {
+        font-size: clamp(1.25rem, 5vw, 1.75rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+        word-break: break-word;
+        max-width: 100%;
+    }
+
+    .header-subtitle {
+        color: var(--ls-muted);
+        margin: 0;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        word-break: break-word;
+        max-width: 100%;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        width: 100%;
+        max-width: 100%;
+        padding-right: clamp(0.5rem, 2vw, 1rem); /* Added right padding */
+    }
+
+    .btn-primary, .btn-outline {
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        font-size: 16px;
+        min-height: var(--touch-target-size);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        flex: 1;
+    }
+
+    .btn-primary:hover {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        color: var(--ls-navy);
+        flex: 1;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    .dropdown {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .dropdown-toggle {
+        width: 100%;
+    }
+
+    .dropdown-menu {
+        min-width: 100%;
+        padding: 0.5rem 0;
+        margin-top: 0.25rem;
+        background: white;
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        border-radius: var(--radius-md);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        color: var(--ls-navy);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        transition: background 0.2s ease;
+        min-height: var(--touch-target-size);
+        white-space: nowrap;
+    }
+
+    .dropdown-item:hover {
+        background: var(--ls-cream);
+        color: var(--ls-orange);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+        margin-bottom: 2rem;
+        width: 100%;
+        padding-right: clamp(0.5rem, 2vw, 1rem); /* Added right padding */
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1rem, 3vw, 1.5rem);
+        display: flex;
+        align-items: center;
+        gap: clamp(0.75rem, 2vw, 1rem);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        transition: all 0.2s ease;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 122, 0, 0.08);
+    }
+
+    .stat-icon {
+        width: clamp(48px, 8vw, 56px);
+        height: clamp(48px, 8vw, 56px);
+        background: var(--ls-cream);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: clamp(1.25rem, 4vw, 1.5rem);
+        flex-shrink: 0;
+    }
+
+    .stat-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .stat-label {
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stat-value {
+        font-size: clamp(1.25rem, 5vw, 1.75rem);
+        font-weight: 700;
+        color: var(--ls-navy);
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+        word-break: break-word;
+    }
+
+    .stat-trend {
+        font-size: clamp(0.7rem, 2.2vw, 0.75rem);
+        color: var(--ls-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-trend span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stat-trend.trend-up {
+        color: var(--ls-success);
+    }
+
+    .stat-trend.trend-down {
+        color: var(--ls-danger);
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+        margin-bottom: 2rem;
+        width: 100%;
+        padding-right: clamp(0.5rem, 2vw, 1rem); /* Added right padding */
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1rem, 3vw, 1.5rem);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        width: 100%;
+        min-width: 0;
+    }
+
+    .chart-card.full-width {
+        grid-column: span 2;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .chart-title {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .chart-legend {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+        color: var(--ls-muted);
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .chart-container {
+        height: clamp(250px, 50vw, 300px);
+        position: relative;
+        width: 100%;
+    }
+
+    /* Tables Grid */
+    .tables-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+        margin-bottom: 2rem;
+        width: 100%;
+        padding-right: clamp(0.5rem, 2vw, 1rem); /* Added right padding */
+    }
+
+    .table-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1rem, 3vw, 1.5rem);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        width: 100%;
+        min-width: 0;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .table-title {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .suspicious-badge {
+        padding: 0.3rem 0.8rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--ls-danger);
+        border-radius: 20px;
+        font-size: clamp(0.7rem, 2.5vw, 0.75rem);
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0;
+        width: 100%;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 300px;
+    }
+
+    .data-table th {
+        text-align: left;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        word-break: break-word;
+    }
+
+    .suspicious-row {
+        background: rgba(239, 68, 68, 0.02);
+    }
+
+    .ip-cell {
+        max-width: 100px;
+    }
+
+    .ip-address {
+        font-family: monospace;
+        font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+        word-break: break-all;
+    }
+
+    .number-cell {
+        white-space: nowrap;
+    }
+
+    .status-cell {
+        white-space: nowrap;
+    }
+
+    .badge-suspicious, .badge-normal {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+    .badge-suspicious {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--ls-danger);
+    }
+
+    .badge-normal {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ls-success);
+    }
+
+    .url-cell {
+        max-width: 150px;
+    }
+
+    .url-content {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+    }
+
+    .error-count {
+        color: var(--ls-danger);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .no-errors {
+        color: var(--ls-muted);
+        white-space: nowrap;
+    }
+
+    /* Recent Entries */
+    .recent-entries-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1rem, 3vw, 1.5rem);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        width: 100%;
+        margin-right: clamp(0.5rem, 2vw, 1rem); /* Added right margin */
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .card-title {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .entry-count {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+        white-space: nowrap;
+    }
+
+    .entries-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 500px;
+    }
+
+    .entries-table th {
+        text-align: left;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        white-space: nowrap;
+    }
+
+    .entries-table td {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+        word-break: break-word;
+    }
+
+    .entries-table tr:hover td {
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    .timestamp-cell {
+        white-space: nowrap;
+    }
+
+    .timestamp {
+        font-weight: 500;
+        display: block;
+        font-size: 0.9rem;
+    }
+
+    .date {
+        font-size: 0.7rem;
+        color: var(--ls-muted);
+    }
+
+    .method-cell {
+        white-space: nowrap;
+    }
+
+    .method-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .method-badge.get {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ls-success);
+    }
+
+    .method-badge.post {
+        background: rgba(255, 122, 0, 0.1);
+        color: var(--ls-orange);
+    }
+
+    .method-badge.put {
+        background: rgba(0, 100, 200, 0.1);
+        color: #0066cc;
+    }
+
+    .method-badge.delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--ls-danger);
+    }
+
+    .method-badge.unknown {
+        background: rgba(107, 114, 128, 0.1);
+        color: var(--ls-muted);
+    }
+
+    .status-code {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+
+    .status-code.2xx {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ls-success);
+    }
+
+    .status-code.3xx {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--ls-warning);
+    }
+
+    .status-code.4xx {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--ls-danger);
+    }
+
+    .status-code.5xx {
+        background: rgba(239, 68, 68, 0.15);
+        color: #b91c1c;
+    }
+
+    .ua-cell {
+        max-width: 120px;
+    }
+
+    .user-agent {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--ls-muted);
+        font-size: 0.8rem;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 1100px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .charts-grid,
+        .tables-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-card.full-width {
+            grid-column: span 1;
+        }
+
+        .stats-grid {
+            gap: 1rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .analytics-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .header-content {
+            width: 100%;
+        }
+
+        .header-actions {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn-text {
+            display: inline;
+        }
+
+        .dropdown {
+            width: 100%;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .chart-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .chart-legend {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .table-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .suspicious-badge {
+            align-self: flex-start;
+        }
+
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .entry-count {
+            align-self: flex-start;
+        }
+
+        .entries-table th:nth-child(6),
+        .entries-table td:nth-child(6) {
+            display: none;
+        }
+
+        .ua-cell {
+            display: none;
+        }
+
+        .data-table {
+            min-width: 250px;
+        }
+
+        .entries-table {
+            min-width: 400px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .entries-table th:nth-child(3),
+        .entries-table td:nth-child(3),
+        .entries-table th:nth-child(4),
+        .entries-table td:nth-child(4) {
+            display: none;
+        }
+
+        .method-cell,
+        .url-cell {
+            display: none;
+        }
+
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) {
+            display: none;
+        }
+
+        .number-cell {
+            display: none;
+        }
+
+        .ip-cell {
+            max-width: none;
+        }
+
+        .entries-table {
+            min-width: 300px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .entries-table th:nth-child(5),
+        .entries-table td:nth-child(5) {
+            display: none;
+        }
+
+        .status-cell {
+            display: none;
+        }
+
+        .data-table th:nth-child(3),
+        .data-table td:nth-child(3) {
+            display: none;
+        }
+
+        .entries-table {
+            min-width: 250px;
+        }
+    }
+
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .stat-card:hover,
+        .btn-primary:hover,
+        .btn-outline:hover {
+            transform: none;
+        }
+
+        .btn-primary:active,
+        .btn-outline:active {
+            transform: scale(0.98);
+        }
+
+        .dropdown-item:active {
+            background: var(--ls-cream);
+        }
+    }
+
+    /* Landscape mode optimizations */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .chart-container {
+            height: 200px;
+        }
+
+        .stats-grid {
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+        .stat-card,
+        .chart-card,
+        .table-card,
+        .recent-entries-card {
+            border-width: 2px;
+        }
+
+        .badge-suspicious,
+        .badge-normal {
+            border: 1px solid currentColor;
+        }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .stat-card,
+        .btn-primary,
+        .btn-outline,
+        .dropdown-item {
+            transition: none;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+        .header-actions,
+        .dropdown,
+        .btn-primary,
+        .btn-outline {
+            display: none;
+        }
+
+        .stat-card,
+        .chart-card,
+        .table-card,
+        .recent-entries-card {
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #ccc;
+        }
+    }
+</style>
+
+<!-- Mobile Meta Viewport (ensure in base template) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
 
-    // === Hourly Traffic Chart ===
-    const hourlyCtx = document.getElementById('hourlyTrafficChart').getContext('2d');
-    const hourlyLabels = {{ hourly_chart|safe }}.map(item => item.hour.slice(11,16)); // HH:MM
-    const hourlyCounts = {{ hourly_chart|safe }}.map(item => item.count);
+    // Helper function to safely parse JSON
+    function safeJSONParse(data, defaultValue = []) {
+        try {
+            return typeof data === 'string' ? JSON.parse(data) : data;
+        } catch (e) {
+            console.error('Error parsing JSON:', e);
+            return defaultValue;
+        }
+    }
 
-    new Chart(hourlyCtx, {
-        type: 'line',
-        data: {
-            labels: hourlyLabels,
-            datasets: [{
-                label: 'Requests per Hour',
-                data: hourlyCounts,
-                borderColor: '#FF7A00',
-                backgroundColor: 'rgba(255,122,0,0.2)',
-                fill: true,
-                tension: 0.2,
-            }]
-        },
-        options: { responsive: true }
+    // Parse chart data
+    const hourlyData = safeJSONParse('{{ hourly_chart|escapejs }}');
+    const statusData = safeJSONParse('{{ status_codes|escapejs }}');
+    const dailyData = safeJSONParse('{{ daily_chart|escapejs }}');
+
+    // Initialize charts with improved labeling
+    function initCharts() {
+        try {
+            // Hourly Chart - Improved labeling
+            const hourlyCtx = document.getElementById('hourlyChart')?.getContext('2d');
+            if (hourlyCtx && hourlyData.length) {
+                new Chart(hourlyCtx, {
+                    type: 'line',
+                    data: {
+                        labels: hourlyData.map(d => {
+                            const hour = parseInt(d.hour);
+                            return hour === 0 ? '12 AM' : 
+                                   hour < 12 ? hour + ' AM' : 
+                                   hour === 12 ? '12 PM' : 
+                                   (hour - 12) + ' PM';
+                        }),
+                        datasets: [{
+                            label: 'Requests',
+                            data: hourlyData.map(d => d.count || 0),
+                            borderColor: '#FF7A00',
+                            backgroundColor: 'rgba(255, 122, 0, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: window.innerWidth < 768 ? 2 : 3,
+                            pointHoverRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        let value = context.parsed.y;
+                                        return value >= 1000 ? (value / 1000).toFixed(1) + 'k requests' : value + ' requests';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(26, 30, 50, 0.05)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value >= 1000 ? (value / 1000) + 'k' : value;
+                                    },
+                                    maxTicksLimit: 6
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    maxTicksLimit: 12,
+                                    font: {
+                                        size: window.innerWidth < 768 ? 9 : 10
+                                    }
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 5,
+                                right: 5
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Status Codes Chart - Improved labeling
+            const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+            if (statusCtx && statusData.length) {
+                const total = statusData.reduce((sum, item) => sum + (item.count || 0), 0);
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusData.map(d => {
+                            const status = d.status_code || 'Unknown';
+                            const count = d.count || 0;
+                            const percentage = ((count / total) * 100).toFixed(1);
+                            return `${status} (${percentage}%)`;
+                        }),
+                        datasets: [{
+                            data: statusData.map(d => d.count || 0),
+                            backgroundColor: ['#FF7A00', '#1A1F36', '#FFF4E6', '#dc3545', '#16a34a'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: window.innerWidth < 768 ? 'bottom' : 'right',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 15,
+                                    font: {
+                                        size: window.innerWidth < 768 ? 10 : 11
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%',
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 5,
+                                right: 5
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Daily Chart - Improved labeling
+            const dailyCtx = document.getElementById('dailyChart')?.getContext('2d');
+            if (dailyCtx && dailyData.length) {
+                new Chart(dailyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dailyData.map(d => {
+                            // Format date to be more readable (e.g., "Mon 3/15")
+                            const dateParts = d.day.split('-');
+                            if (dateParts.length === 3) {
+                                const month = parseInt(dateParts[1]);
+                                const day = parseInt(dateParts[2]);
+                                return `${month}/${day}`;
+                            }
+                            return d.day || '';
+                        }),
+                        datasets: [{
+                            label: 'Requests',
+                            data: dailyData.map(d => d.count || 0),
+                            backgroundColor: '#1A1F36',
+                            borderRadius: 4,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        const index = context[0].dataIndex;
+                                        return dailyData[index].day || '';
+                                    },
+                                    label: function(context) {
+                                        let value = context.parsed.y;
+                                        return value >= 1000 ? (value / 1000).toFixed(1) + 'k requests' : value + ' requests';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(26, 30, 50, 0.05)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value >= 1000 ? (value / 1000) + 'k' : value;
+                                    },
+                                    maxTicksLimit: 5
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    maxTicksLimit: 10,
+                                    font: {
+                                        size: window.innerWidth < 768 ? 9 : 10
+                                    }
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 5,
+                                right: 5
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+        }
+    }
+
+    initCharts();
+
+    // Handle window resize for charts
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            const charts = Chart.instances;
+            if (charts) {
+                Object.values(charts).forEach(chart => {
+                    if (chart && typeof chart.resize === 'function') {
+                        chart.resize();
+                    }
+                });
+            }
+        }, 250);
     });
 
-    // === Daily Traffic Chart ===
-    const dailyCtx = document.getElementById('dailyTrafficChart').getContext('2d');
-    const dailyLabels = {{ daily_chart|safe }}.map(item => item.day);
-    const dailyCounts = {{ daily_chart|safe }}.map(item => item.count);
+    // Handle mobile touch events for dropdown
+    const dropdownToggle = document.querySelector('.dropdown-toggle');
+    if (dropdownToggle && 'ontouchstart' in window) {
+        dropdownToggle.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+    }
 
-    new Chart(dailyCtx, {
-        type: 'bar',
-        data: {
-            labels: dailyLabels,
-            datasets: [{
-                label: 'Requests per Day',
-                data: dailyCounts,
-                backgroundColor: '#1A1F36'
-            }]
-        },
-        options: { responsive: true }
+    // Smooth horizontal scrolling for tables
+    const tableContainers = document.querySelectorAll('.table-responsive');
+    tableContainers.forEach(container => {
+        let isScrolling = false;
+        
+        container.addEventListener('touchstart', function() {
+            isScrolling = true;
+        }, { passive: true });
+
+        container.addEventListener('touchend', function() {
+            isScrolling = false;
+        }, { passive: true });
+
+        container.addEventListener('scroll', function() {
+            if (!isScrolling) return;
+            this.style.cursor = 'grabbing';
+        }, { passive: true });
+
+        container.addEventListener('scrollend', function() {
+            this.style.cursor = 'grab';
+        });
     });
 
-    // === Status Codes Chart ===
-    const statusCtx = document.getElementById('statusDistributionChart').getContext('2d');
-    const statusLabels = {{ status_codes|safe }}.map(item => item.status_code);
-    const statusCounts = {{ status_codes|safe }}.map(item => item.count);
-
-    new Chart(statusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: statusLabels,
-            datasets: [{
-                label: 'Status Codes',
-                data: statusCounts,
-                backgroundColor: ['#FF7A00','#1A1F36','#FFF4E6','#FF7A00','#1A1F36']
-            }]
-        },
-        options: { responsive: true }
+    // Handle orientation change
+    window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+            const charts = Chart.instances;
+            if (charts) {
+                Object.values(charts).forEach(chart => {
+                    if (chart && typeof chart.resize === 'function') {
+                        chart.resize();
+                    }
+                });
+            }
+        }, 200);
     });
-
-    // === Error Trends Chart ===
-    const errorTrendsCtx = document.getElementById('errorTrendsChart').getContext('2d');
-    const errorTrendLabels = {{ daily_errors_chart|safe }}.map(item => item.day);
-    const errorTrendCounts = {{ daily_errors_chart|safe }}.map(item => item.count);
-
-    new Chart(errorTrendsCtx, {
-        type: 'line',
-        data: {
-            labels: errorTrendLabels,
-            datasets: [{
-                label: 'Errors Trend',
-                data: errorTrendCounts,
-                borderColor: '#FF0000',
-                backgroundColor: 'rgba(255,0,0,0.2)',
-                fill: true,
-                tension: 0.2
-            }]
-        },
-        options: { responsive: true }
-    });
-
-    // === Error Spike Chart ===
-    const errorSpikeCtx = document.getElementById('errorSpikeChart').getContext('2d');
-    new Chart(errorSpikeCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Previous Window', 'Current Window'],
-            datasets: [{
-                label: 'Error Count',
-                data: [{{ previous_errors }}, {{ current_errors }}],
-                backgroundColor: ['#1A1F36','#FF7A00']
-            }]
-        },
-        options: { responsive: true }
-    });
-
 });
 </script>
 {% endblock %}

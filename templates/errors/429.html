@@ -1,0 +1,103 @@
+{% extends "errors/base_error.html" %}
+{% load static %}
+
+{% block error_icon %}
+<div class="error-icon">
+    <i class="fas fa-hourglass-half"></i>
+</div>
+{% endblock %}
+
+{% block error_code %}429{% endblock %}
+
+{% block error_name %}Too Many Requests{% endblock %}
+
+{% block error_description %}
+You've made too many requests in a short period. Please wait before trying again.
+{% endblock %}
+
+{% block error_details %}
+<div class="error-details">
+    <i class="fas fa-clock" style="color: var(--warning-color); margin-right: 10px;"></i>
+    <strong>Rate Limit Information:</strong><br>
+    {% if retry_after %}
+    <span>Please wait <strong>{{ retry_after }} seconds</strong> before making another request.</span>
+    {% else %}
+    <span>Rate limit exceeded. Please try again in a few minutes.</span>
+    {% endif %}
+    <br>
+    <small>This helps us maintain service quality for all users.</small>
+</div>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="javascript:history.back()" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Go Back
+</a>
+<a href="/" class="btn btn-primary">
+    <i class="fas fa-home"></i> Go Home
+</a>
+{% endblock %}
+
+{% block help_section %}
+<div class="help-section">
+    <div class="help-title">
+        <i class="fas fa-info-circle" style="color: var(--warning-color); margin-right: 10px;"></i>
+        Why This Happened:
+    </div>
+    
+    <div class="help-grid">
+        <div class="help-item">
+            <i class="fas fa-tachometer-alt"></i>
+            <h4>Rate Limits</h4>
+            <p>Max 3 attempts per hour</p>
+        </div>
+        <div class="help-item">
+            <i class="fas fa-shield-alt"></i>
+            <h4>Security Measure</h4>
+            <p>Protects against abuse</p>
+        </div>
+        <div class="help-item">
+            <i class="fas fa-balance-scale"></i>
+            <h4>Fair Usage</h4>
+            <p>Ensures equal access</p>
+        </div>
+        <a href="/contact" class="help-item" style="text-decoration: none;">
+            <i class="fas fa-envelope"></i>
+            <h4>Contact Support</h4>
+            <p>If you need higher limits</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-details {
+        background: linear-gradient(135deg, #fff3e0, #ffffff);
+        border-left-color: var(--warning-color);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{% if retry_after %}
+<script>
+    // Countdown timer for retry
+    let retryAfter = {{ retry_after }};
+    
+    function updateCountdown() {
+        const countdownElement = document.getElementById('countdown');
+        if (countdownElement) {
+            if (retryAfter > 0) {
+                countdownElement.textContent = retryAfter;
+                retryAfter--;
+            } else {
+                location.reload();
+            }
+        }
+    }
+    
+    setInterval(updateCountdown, 1000);
+</script>
+{% endif %}
+{% endblock %}

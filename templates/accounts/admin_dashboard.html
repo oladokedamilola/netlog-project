@@ -1,0 +1,296 @@
+{% extends 'base_user.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - NetLog{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0" style="color: var(--ls-navy);">
+            <i class="fas fa-shield-alt me-2" style="color: var(--ls-orange);"></i>
+            Admin Dashboard
+        </h1>
+        <div>
+            <a href="{% url 'admin:index' %}" class="btn btn-cta">
+                <i class="fas fa-cog me-2"></i>
+                Django Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-accent h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Users</h6>
+                            <h2 class="mb-0" style="color: var(--ls-navy);">{{ total_users }}</h2>
+                        </div>
+                        <div class="rounded-circle p-3" style="background-color: var(--ls-cream);">
+                            <i class="fas fa-users fa-2x" style="color: var(--ls-orange);"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-check-circle me-1" style="color: var(--ls-success);"></i>
+                        {{ active_users }} active
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-accent h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Logs</h6>
+                            <h2 class="mb-0" style="color: var(--ls-navy);">{{ total_logs }}</h2>
+                        </div>
+                        <div class="rounded-circle p-3" style="background-color: var(--ls-cream);">
+                            <i class="fas fa-file-lines fa-2x" style="color: var(--ls-orange);"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-up me-1" style="color: var(--ls-success);"></i>
+                        {{ logs_today }} today
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-accent h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Reports</h6>
+                            <h2 class="mb-0" style="color: var(--ls-navy);">{{ total_reports }}</h2>
+                        </div>
+                        <div class="rounded-circle p-3" style="background-color: var(--ls-cream);">
+                            <i class="fas fa-chart-simple fa-2x" style="color: var(--ls-orange);"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ reports_this_week }} this week
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-accent h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Blocked IPs</h6>
+                            <h2 class="mb-0" style="color: var(--ls-navy);">{{ blocked_ips }}</h2>
+                        </div>
+                        <div class="rounded-circle p-3" style="background-color: var(--ls-cream);">
+                            <i class="fas fa-ban fa-2x" style="color: var(--ls-orange);"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-shield me-1"></i>
+                        Rate limited
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2" style="color: var(--ls-orange);"></i>
+                        Activity Overview (Last 7 Days)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="activityChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crown me-2" style="color: var(--ls-orange);"></i>
+                        Top Uploaders
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if top_uploaders %}
+                        {% for uploader in top_uploaders %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-2" style="width: 32px; height: 32px;">
+                                        {{ uploader.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0" style="color: var(--ls-navy);">{{ uploader.username }}</h6>
+                                        <small class="text-muted">{{ uploader.email }}</small>
+                                    </div>
+                                </div>
+                                <span class="badge badge--muted">{{ uploader.log_count }} logs</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">No uploads yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Users -->
+    <div class="row g-4">
+        <!-- Recent Activity -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2" style="color: var(--ls-orange);"></i>
+                        Recent Activity
+                    </h5>
+                    <a href="#" class="small" style="color: var(--ls-orange);">View All</a>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if recent_activity %}
+                        {% for activity in recent_activity %}
+                            <div class="d-flex gap-3 mb-3">
+                                <div class="rounded-circle p-2" style="background-color: var(--ls-cream);">
+                                    <i class="fas {{ activity.icon }}" style="color: var(--ls-orange);"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <a href="{{ activity.url }}" class="text-decoration-none">
+                                        <h6 class="mb-1" style="color: var(--ls-navy);">{{ activity.title }}</h6>
+                                    </a>
+                                    <p class="small text-muted mb-1">{{ activity.description }}</p>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i>
+                                        {{ activity.time|timesince }} ago
+                                    </small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No recent activity</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-plus me-2" style="color: var(--ls-orange);"></i>
+                        Recent Users
+                    </h5>
+                    <a href="{% url 'admin:auth_user_changelist' %}" class="small" style="color: var(--ls-orange);">Manage</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_users %}
+                        {% for user in recent_users %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-2" style="width: 32px; height: 32px;">
+                                        {{ user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0" style="color: var(--ls-navy);">{{ user.username }}</h6>
+                                        <small class="text-muted">
+                                            {{ user.email }}
+                                            {% if user.is_superuser %}
+                                                <span class="badge bg-warning text-dark ms-2">Admin</span>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    {{ user.date_joined|timesince }} ago
+                                </small>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">No users yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ last_7_days|safe }},
+            datasets: [{
+                label: 'Logs Uploaded',
+                data: {{ daily_logs|safe }},
+                borderColor: '#FF7A00',
+                backgroundColor: 'rgba(255,122,0,0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'New Users',
+                data: {{ daily_users|safe }},
+                borderColor: '#1A1F36',
+                backgroundColor: 'rgba(26,30,50,0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(26,30,50,0.05)'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+    .badge--muted {
+        background-color: var(--ls-cream);
+        color: var(--ls-navy);
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .avatar {
+        background: linear-gradient(135deg, var(--ls-orange), #e36b00);
+    }
+    
+    #activityChart {
+        max-height: 300px;
+    }
+</style>
+{% endblock %}

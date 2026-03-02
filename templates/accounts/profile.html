@@ -1,0 +1,692 @@
+{% extends 'base_user.html' %}
+{% load static %}
+
+{% block title %}My Profile - NetLog{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Page Header -->
+    <div class="profile-header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <i class="fas fa-user-circle me-2" style="color: var(--ls-orange);"></i>
+                My Profile
+            </h1>
+            <p class="header-subtitle">Manage your personal information and account settings</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'profile_edit' %}" class="btn btn-primary">
+                <i class="fas fa-edit me-2"></i>
+                Edit Profile
+            </a>
+            <a href="{% url 'password_change' %}" class="btn btn-outline">
+                <i class="fas fa-key me-2"></i>
+                Change Password
+            </a>
+        </div>
+    </div>
+
+    <!-- Profile Content Grid -->
+    <div class="profile-grid">
+        <!-- Left Column - Profile Card -->
+        <div class="profile-card-wrapper">
+            <div class="profile-card">
+                <!-- Avatar Section -->
+                <div class="avatar-section">
+                    <div class="avatar-wrapper">
+                        <div class="profile-avatar">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <button class="avatar-upload-btn" disabled title="Change avatar (coming soon)">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="profile-name">
+                        <h2>{{ user.get_full_name|default:user.username }}</h2>
+                        <p class="profile-email">
+                            <i class="fas fa-envelope me-2"></i>{{ user.email }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Verification Badge -->
+                <div class="verification-section">
+                    {% if profile.email_verified %}
+                        <div class="verification-badge verified">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Email Verified
+                        </div>
+                    {% else %}
+                        <div class="verification-badge unverified">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Email Unverified
+                        </div>
+                        <a href="{% url 'resend_verification' %}" class="resend-link">
+                            <i class="fas fa-paper-plane me-1"></i>
+                            Resend verification email
+                        </a>
+                    {% endif %}
+                </div>
+
+                <!-- Organization (if set) -->
+                {% if profile.organization %}
+                    <div class="organization-info">
+                        <i class="fas fa-building me-2" style="color: var(--ls-orange);"></i>
+                        <span>{{ profile.organization }}</span>
+                    </div>
+                {% endif %}
+
+                <!-- Account Stats -->
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Member since</div>
+                        <div class="stat-value">{{ user.date_joined|date:"M d, Y" }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Account age</div>
+                        <div class="stat-value">{{ account_age_days }} days</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Last login</div>
+                        <div class="stat-value">{{ user.last_login|date:"M d, Y"|default:"Never" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Account Settings & Security -->
+        <div class="settings-wrapper">
+            <!-- Account Settings Card -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <i class="fas fa-sliders-h" style="color: var(--ls-orange);"></i>
+                    <h3>Account Settings</h3>
+                </div>
+                <div class="settings-list">
+                    <a href="{% url 'profile_edit' %}" class="settings-item">
+                        <div class="settings-item-icon">
+                            <i class="fas fa-user-edit"></i>
+                        </div>
+                        <div class="settings-item-content">
+                            <div class="settings-item-title">Edit Profile Information</div>
+                            <div class="settings-item-description">Update your name, email, and organization details</div>
+                        </div>
+                        <i class="fas fa-chevron-right settings-item-arrow"></i>
+                    </a>
+
+                    <a href="{% url 'password_change' %}" class="settings-item">
+                        <div class="settings-item-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="settings-item-content">
+                            <div class="settings-item-title">Change Password</div>
+                            <div class="settings-item-description">Update your password to keep your account secure</div>
+                        </div>
+                        <i class="fas fa-chevron-right settings-item-arrow"></i>
+                    </a>
+
+                    <a href="{% url 'profile_notifications' %}" class="settings-item">
+                        <div class="settings-item-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="settings-item-content">
+                            <div class="settings-item-title">Notification Preferences</div>
+                            <div class="settings-item-description">Manage how and when you receive notifications</div>
+                        </div>
+                        <i class="fas fa-chevron-right settings-item-arrow"></i>
+                    </a>
+
+                    <a href="{% url 'profile_security' %}" class="settings-item">
+                        <div class="settings-item-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="settings-item-content">
+                            <div class="settings-item-title">Security Settings</div>
+                            <div class="settings-item-description">Review and manage your account security options</div>
+                        </div>
+                        <i class="fas fa-chevron-right settings-item-arrow"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Danger Zone (for admins only) -->
+            {% if user.is_superuser %}
+            <div class="danger-zone-card">
+                <div class="danger-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Danger Zone</h3>
+                </div>
+                <div class="danger-content">
+                    <p class="danger-description">
+                        As an administrator, you have access to system-wide settings. 
+                        Be careful with these actions as they cannot be undone.
+                    </p>
+                    <a href="{% url 'admin:index' %}" class="btn btn-danger">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Go to Admin Panel
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Delete Account Section -->
+            <div class="delete-account-card">
+                <div class="delete-header">
+                    <i class="fas fa-trash-alt"></i>
+                    <h3>Delete Account</h3>
+                </div>
+                <div class="delete-content">
+                    <p class="delete-description">
+                        Once you delete your account, there is no going back. 
+                        All your data will be permanently removed.
+                    </p>
+                    <a href="{% url 'profile_delete_confirm' %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        Delete Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Profile Container */
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem 0;
+    }
+
+    /* Profile Header */
+    .profile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding: 0 0.5rem;
+    }
+
+    .header-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-subtitle {
+        color: var(--ls-muted);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    /* Profile Grid Layout */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 1.5rem;
+        padding: 0 0.5rem;
+    }
+
+    /* Profile Card */
+    .profile-card-wrapper {
+        position: relative;
+    }
+
+    .profile-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 2rem 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        position: sticky;
+        top: 90px;
+    }
+
+    /* Avatar Section */
+    .avatar-section {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .avatar-wrapper {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .profile-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--ls-orange), #e36b00);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        font-weight: 600;
+        box-shadow: 0 10px 25px rgba(255, 122, 0, 0.25);
+        border: 4px solid white;
+        transition: transform 0.2s ease;
+    }
+
+    .profile-avatar:hover {
+        transform: scale(1.02);
+    }
+
+    .avatar-upload-btn {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--ls-orange);
+        border: 3px solid white;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        opacity: 0.9;
+    }
+
+    .avatar-upload-btn:hover:not(:disabled) {
+        background: var(--ls-orange-600);
+        transform: scale(1.1);
+    }
+
+    .avatar-upload-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .profile-name h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .profile-email {
+        color: var(--ls-muted);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+    }
+
+    /* Verification Section */
+    .verification-section {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .verification-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .verification-badge.verified {
+        background: rgba(22, 163, 74, 0.1);
+        color: var(--ls-success);
+    }
+
+    .verification-badge.unverified {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--ls-warning);
+    }
+
+    .resend-link {
+        display: inline-block;
+        color: var(--ls-orange);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .resend-link:hover {
+        color: var(--ls-orange-600);
+        text-decoration: underline;
+    }
+
+    /* Organization Info */
+    .organization-info {
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        color: var(--ls-navy);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .stat-item {
+        padding: 0.75rem 0.5rem;
+        background: rgba(255, 122, 0, 0.02);
+        border-radius: var(--radius-md);
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+    }
+
+    /* Settings Cards */
+    .settings-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .settings-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .settings-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .settings-header i {
+        font-size: 1.25rem;
+    }
+
+    .settings-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .settings-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(255, 122, 0, 0.02);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .settings-item:hover {
+        background: rgba(255, 122, 0, 0.06);
+        transform: translateX(5px);
+        text-decoration: none;
+    }
+
+    .settings-item-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--ls-cream);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1.1rem;
+    }
+
+    .settings-item-content {
+        flex: 1;
+    }
+
+    .settings-item-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        margin-bottom: 0.25rem;
+    }
+
+    .settings-item-description {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+    }
+
+    .settings-item-arrow {
+        color: var(--ls-muted);
+        font-size: 0.8rem;
+        transition: transform 0.2s ease;
+    }
+
+    .settings-item:hover .settings-item-arrow {
+        transform: translateX(5px);
+        color: var(--ls-orange);
+    }
+
+    /* Danger Zone Card */
+    .danger-zone-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .danger-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .danger-header i {
+        color: var(--ls-danger);
+        font-size: 1.25rem;
+    }
+
+    .danger-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ls-danger);
+        margin: 0;
+    }
+
+    .danger-description {
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.5;
+    }
+
+    .btn-danger {
+        background: var(--ls-danger);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        color: white;
+    }
+
+    /* Delete Account Card */
+    .delete-account-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .delete-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .delete-header i {
+        color: var(--ls-muted);
+        font-size: 1.25rem;
+    }
+
+    .delete-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .delete-description {
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.5;
+    }
+
+    .btn-outline-danger {
+        border: 1px solid var(--ls-danger);
+        color: var(--ls-danger);
+        background: transparent;
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-outline-danger:hover {
+        background: var(--ls-danger);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-card-wrapper {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .profile-card {
+            position: static;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .profile-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .header-actions .btn {
+            flex: 1;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .settings-item {
+            flex-wrap: wrap;
+        }
+
+        .settings-item-arrow {
+            margin-left: auto;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            font-size: 3rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            padding: 0.75rem;
+        }
+
+        .stat-label {
+            margin-bottom: 0;
+        }
+
+        .header-actions {
+            flex-direction: column;
+        }
+
+        .header-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

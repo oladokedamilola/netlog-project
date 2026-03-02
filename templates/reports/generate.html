@@ -4,206 +4,1418 @@
 {% block title %}Generate Report - NetLog{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <!-- Header -->
-            <div class="mb-4">
-                <h1 class="h2 mb-3">📄 Generate Report</h1>
-                <p class="text-muted">Create a detailed analysis report from your log files in multiple formats.</p>
-            </div>
+<div class="report-container">
+    <!-- Page Header -->
+    <div class="report-header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <i class="fas fa-file-alt me-2" style="color: var(--ls-orange);"></i>
+                Generate Report
+            </h1>
+            <p class="header-subtitle">Create comprehensive analysis reports from your log files</p>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="btn btn-outline me-2" id="previewBtn" data-bs-toggle="modal" data-bs-target="#previewModal">
+                <i class="fas fa-eye me-2"></i>
+                <span class="btn-text">Preview Report</span>
+            </button>
+            <a href="{% url 'reports:report_list' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left me-2"></i>
+                <span class="btn-text">Back to Reports</span>
+            </a>
+        </div>
+    </div>
 
-            <!-- Form -->
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
-                    <form method="post" id="reportForm">
-                        {% csrf_token %}
-                        
-                        <!-- Basic Information -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">📝 Report Information</h5>
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label for="{{ form.title.id_for_label }}" class="form-label">Report Title</label>
-                                    {{ form.title }}
-                                    {% if form.title.errors %}
-                                    <div class="text-danger small">{{ form.title.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label for="{{ form.description.id_for_label }}" class="form-label">Description (Optional)</label>
-                                    {{ form.description }}
-                                </div>
-                            </div>
-                        </div>
+    <div class="report-grid">
+        <!-- Main Form Card -->
+        <div class="form-card">
+            <form method="post" id="reportForm" class="report-form" action="{% url 'reports:generate_report' %}">
+                {% csrf_token %}
+                
+                <!-- Progress Steps -->
+                <div class="form-progress">
+                    <div class="progress-step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Basic Info</div>
+                    </div>
+                    <div class="progress-step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Select Data</div>
+                    </div>
+                    <div class="progress-step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Customize</div>
+                    </div>
+                </div>
 
-                        <!-- Log File Selection -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">📁 Select Log File</h5>
-                            <div class="mb-3">
-                                <label for="{{ form.upload.id_for_label }}" class="form-label">Log File</label>
-                                {{ form.upload }}
-                                {% if form.upload.errors %}
-                                <div class="text-danger small">{{ form.upload.errors }}</div>
-                                {% endif %}
+                <!-- Step 1: Basic Information -->
+                <div class="form-step active" id="step1">
+                    <div class="step-header">
+                        <h3>Basic Information</h3>
+                        <p>Provide a title and description for your report</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            <i class="fas fa-heading"></i>
+                            Report Title <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="error-message">{{ form.title.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Give your report a descriptive title</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left"></i>
+                            Description <span class="optional">(Optional)</span>
+                        </label>
+                        {{ form.description }}
+                        <div class="help-text">Add notes or context about this report</div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Data Selection -->
+                <div class="form-step" id="step2">
+                    <div class="step-header">
+                        <h3>Select Data Source</h3>
+                        <p>Choose which log file to analyze</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.upload.id_for_label }}" class="form-label">
+                            <i class="fas fa-file-lines"></i>
+                            Log File <span class="text-danger">*</span>
+                        </label>
+                        {{ form.upload }}
+                        {% if form.upload.errors %}
+                            <div class="error-message">{{ form.upload.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Recent Uploads Quick Select -->
+                    {% if recent_uploads %}
+                        <div class="recent-uploads">
+                            <div class="recent-header">
+                                <i class="fas fa-history"></i>
+                                <span>Recent Uploads</span>
                             </div>
-                            
-                            <!-- Quick access to recent uploads -->
-                            {% if recent_uploads %}
-                            <div class="alert alert-light">
-                                <small class="text-muted">Quick select from recent uploads:</small>
-                                <div class="mt-2">
-                                    {% for upload in recent_uploads %}
-                                    <button type="button" class="btn btn-sm btn-outline-secondary mb-1 me-1" 
-                                            onclick="document.getElementById('id_upload').value = '{{ upload.id }}'">
-                                        {{ upload.filename }} ({{ upload.get_log_type_display }})
+                            <div class="upload-list">
+                                {% for upload in recent_uploads %}
+                                    <button type="button" class="upload-item" data-upload-id="{{ upload.id }}">
+                                        <div class="upload-info">
+                                            <span class="upload-name">{{ upload.file.name|slice:"17:"|truncatechars:30 }}</span>
+                                            <span class="upload-meta">
+                                                <span class="badge {{ upload.log_type }}">{{ upload.get_log_type_display }}</span>
+                                                <span class="date">{{ upload.uploaded_at|date:"M d, Y" }}</span>
+                                            </span>
+                                        </div>
+                                        <i class="fas fa-check check-icon"></i>
                                     </button>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Report Type -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">📊 Report Type</h5>
-                            <div class="row">
-                                {% for choice in form.report_type %}
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        {{ choice.tag }}
-                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
-                                            {{ choice.choice_label }}
-                                        </label>
-                                    </div>
-                                </div>
                                 {% endfor %}
                             </div>
                         </div>
+                    {% endif %}
 
-                        <!-- Format Selection -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">📄 Output Format</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ form.format }}
-                                </div>
-                            </div>
+                    <div class="form-group">
+                        <label for="{{ form.date_range.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            Date Range Filter
+                        </label>
+                        {{ form.date_range }}
+                    </div>
+
+                    <div class="date-range-custom" id="customDateRange">
+                        <div class="form-group">
+                            <label for="{{ form.start_date.id_for_label }}">Start Date</label>
+                            {{ form.start_date }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.end_date.id_for_label }}">End Date</label>
+                            {{ form.end_date }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Customization -->
+                <div class="form-step" id="step3">
+                    <div class="step-header">
+                        <h3>Customize Your Report</h3>
+                        <p>Choose format and content options</p>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label class="form-label">
+                                <i class="fas fa-file-export"></i>
+                                Output Format <span class="text-danger">*</span>
+                            </label>
+                            <!-- SIMPLE DROPDOWN instead of custom radio cards -->
+                            <select name="format" id="id_format" class="filter-select" required>
+                                <option value="" {% if not form.format.value %}selected{% endif %}>Select format</option>
+                                {% for choice in form.format %}
+                                    <option value="{{ choice.data.value }}" {% if choice.data.selected %}selected{% endif %}>
+                                        {{ choice.choice_label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.format.errors %}
+                                <div class="error-message">{{ form.format.errors }}</div>
+                            {% endif %}
                         </div>
 
-                        <!-- Content Options -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">⚙️ Content Options</h5>
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        {{ form.include_summary }}
-                                        <label class="form-check-label" for="{{ form.include_summary.id_for_label }}">
-                                            {{ form.include_summary.label }}
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        {{ form.include_charts }}
-                                        <label class="form-check-label" for="{{ form.include_charts.id_for_label }}">
-                                            {{ form.include_charts.label }}
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        {{ form.include_top_data }}
-                                        <label class="form-check-label" for="{{ form.include_top_data.id_for_label }}">
-                                            {{ form.include_top_data.label }}
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        {{ form.include_recommendations }}
-                                        <label class="form-check-label" for="{{ form.include_recommendations.id_for_label }}">
-                                            {{ form.include_recommendations.label }}
-                                        </label>
-                                    </div>
-                                </div>
+                        <div class="form-group half">
+                            <label class="form-label">
+                                <i class="fas fa-chart-pie"></i>
+                                Report Type
+                            </label>
+                            <div class="type-options">
+                                {% for choice in form.report_type %}
+                                    <label class="type-option">
+                                        {{ choice.tag }}
+                                        <span class="type-name">{{ choice.choice_label }}</span>
+                                    </label>
+                                {% endfor %}
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Date Range Filter -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">📅 Date Range (Optional)</h5>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="{{ form.date_range.id_for_label }}" class="form-label">Filter by Date</label>
-                                    {{ form.date_range }}
-                                </div>
-                            </div>
-                            <div class="row" id="customDateRange" style="display: none;">
-                                <div class="col-md-6 mb-3">
-                                    <label for="{{ form.start_date.id_for_label }}" class="form-label">Start Date</label>
-                                    {{ form.start_date }}
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="{{ form.end_date.id_for_label }}" class="form-label">End Date</label>
-                                    {{ form.end_date }}
-                                </div>
-                            </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-cog"></i>
+                            Content Options
+                        </label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                {{ form.include_summary }}
+                                <span class="checkbox-text">
+                                    <strong>Summary</strong>
+                                    <small>Include executive summary and key metrics</small>
+                                </span>
+                            </label>
+                            <label class="checkbox-item">
+                                {{ form.include_charts }}
+                                <span class="checkbox-text">
+                                    <strong>Charts & Visualizations</strong>
+                                    <small>Add interactive charts and graphs</small>
+                                </span>
+                            </label>
+                            <label class="checkbox-item">
+                                {{ form.include_top_data }}
+                                <span class="checkbox-text">
+                                    <strong>Top Data Tables</strong>
+                                    <small>Include top IPs, endpoints, and user agents</small>
+                                </span>
+                            </label>
+                            <label class="checkbox-item">
+                                {{ form.include_recommendations }}
+                                <span class="checkbox-text">
+                                    <strong>Recommendations</strong>
+                                    <small>Add insights and recommendations</small>
+                                </span>
+                            </label>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Submit Button -->
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'reports:report_list' %}" class="btn btn-outline-secondary me-2">Cancel</a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-file-download me-2"></i>Generate Report
-                            </button>
-                        </div>
-                    </form>
+                <!-- Navigation Buttons -->
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-outline" id="prevStep" disabled>
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Previous
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextStep">
+                        Next
+                        <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" style="display: none;">
+                        <i class="fas fa-file-download me-2"></i>
+                        Generate Report
+                    </button>
+                    <a href="{% url 'reports:report_list' %}" class="btn btn-outline" id="cancelBtn">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview Panel - Now Hidden (will be shown in modal) -->
+        <div class="preview-card d-none">
+            <!-- This is now hidden, kept for structure but not displayed -->
+        </div>
+    </div>
+
+    <!-- Tips Card -->
+    <div class="tips-card">
+        <div class="tips-header">
+            <i class="fas fa-lightbulb" style="color: var(--ls-orange);"></i>
+            <h4>Report Tips</h4>
+        </div>
+        <div class="tips-grid">
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="tip-content">
+                    <strong>PDF Format</strong>
+                    <p>Best for sharing and printing professional reports</p>
                 </div>
             </div>
-
-            <!-- Quick Tips -->
-            <div class="mt-4">
-                <div class="alert alert-info">
-                    <h6 class="alert-heading mb-2">💡 Quick Tips:</h6>
-                    <ul class="mb-0 small">
-                        <li><strong>PDF</strong> is best for sharing and printing professional reports</li>
-                        <li><strong>CSV</strong> is ideal for data analysis in Excel or other tools</li>
-                        <li><strong>HTML</strong> reports can be viewed directly in your browser</li>
-                        <li><strong>JSON</strong> is perfect for integration with other applications</li>
-                    </ul>
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <i class="fas fa-file-csv"></i>
+                </div>
+                <div class="tip-content">
+                    <strong>CSV Format</strong>
+                    <p>Ideal for data analysis in Excel or other tools</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <i class="fas fa-file-code"></i>
+                </div>
+                <div class="tip-content">
+                    <strong>HTML Format</strong>
+                    <p>Interactive reports viewable in any browser</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="tip-content">
+                    <strong>Include Charts</strong>
+                    <p>Visualize trends and patterns in your data</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--ls-navy) 0%, #0b1220 100%); color: white;">
+                <h5 class="modal-title" id="previewModalLabel">
+                    <i class="fas fa-eye me-2" style="color: var(--ls-orange);"></i>
+                    Report Preview
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalPreviewContent">
+                <div class="preview-placeholder text-center py-5">
+                    <i class="fas fa-file-alt fa-4x mb-3" style="color: var(--ls-muted); opacity: 0.3;"></i>
+                    <h4 style="color: var(--ls-navy);">Your report preview will appear here</h4>
+                    <p class="text-muted">Fill out the form and click the preview button to see your report settings</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="background: var(--ls-cream);">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div class="format-badge" id="modalPreviewFormat">
+                        <i class="fas fa-file-pdf"></i>
+                        <span class="ms-2">PDF Format</span>
+                    </div>
+                    <div class="page-count" id="modalPreviewPages">
+                        <i class="fas fa-calculator me-1"></i>
+                        <span>~3-5 pages</span>
+                    </div>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS Variables for consistent spacing */
+    :root {
+        --mobile-padding: 1rem;
+        --touch-target-size: 44px;
+    }
+
+    /* Report Container */
+    .report-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1rem 0.5rem;
+    }
+
+    /* Header */
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .header-title {
+        font-size: clamp(1.25rem, 5vw, 1.75rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+    }
+
+    .header-subtitle {
+        color: var(--ls-muted);
+        margin: 0;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        color: var(--ls-navy);
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--touch-target-size);
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    /* Grid Layout */
+    .report-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        overflow: hidden;
+    }
+
+    .report-form {
+        padding: clamp(1rem, 4vw, 2rem);
+    }
+
+    /* Progress Steps */
+    .form-progress {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2.5rem;
+        position: relative;
+        gap: 0.5rem;
+    }
+
+    .form-progress::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(26, 30, 50, 0.08);
+        z-index: 1;
+    }
+
+    .progress-step {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        text-align: center;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 2px solid rgba(26, 30, 50, 0.12);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: var(--ls-muted);
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .progress-step.active .step-number {
+        background: var(--ls-orange);
+        border-color: var(--ls-orange);
+        color: white;
+        box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.2);
+    }
+
+    .step-label {
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+        color: var(--ls-muted);
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 360px) {
+        .step-label {
+            white-space: normal;
+            line-height: 1.2;
+        }
+    }
+
+    .progress-step.active .step-label {
+        color: var(--ls-orange);
+    }
+
+    /* Form Steps */
+    .form-step {
+        display: none;
+    }
+
+    .form-step.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-header {
+        margin-bottom: 2rem;
+    }
+
+    .step-header h3 {
+        font-size: clamp(1.1rem, 4vw, 1.2rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .step-header p {
+        color: var(--ls-muted);
+        font-size: clamp(0.85rem, 3vw, 0.9rem);
+        margin: 0;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+        font-size: clamp(0.9rem, 3vw, 1rem);
+    }
+
+    .form-label i {
+        color: var(--ls-orange);
+        font-size: 1rem;
+    }
+
+    .optional {
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        font-weight: normal;
+        margin-left: 0.5rem;
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 0.9rem;
+        margin-left: 0.25rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="date"],
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: clamp(0.75rem, 3vw, 0.75rem);
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        border-radius: var(--radius-md);
+        font-size: 16px; /* Prevents zoom on mobile */
+        transition: all 0.2s ease;
+        min-height: var(--touch-target-size);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--ls-orange);
+        box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+    }
+
+    .help-text {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+        margin-top: 0.25rem;
+    }
+
+    .error-message {
+        color: var(--ls-danger);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Recent Uploads */
+    .recent-uploads {
+        margin: 1rem 0 1.5rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        padding: clamp(0.75rem, 3vw, 1rem);
+    }
+
+    .recent-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        color: var(--ls-navy);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .upload-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .upload-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: clamp(0.75rem, 3vw, 0.75rem);
+        background: white;
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: var(--touch-target-size);
+    }
+
+    .upload-item:hover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    .upload-item.selected {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.05);
+    }
+
+    .upload-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        flex: 1;
+        min-width: 0; /* Prevents overflow */
+    }
+
+    .upload-name {
+        font-size: clamp(0.85rem, 3vw, 0.9rem);
+        font-weight: 500;
+        color: var(--ls-navy);
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .upload-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: clamp(0.7rem, 2.5vw, 0.75rem);
+        flex-wrap: wrap;
+    }
+
+    .badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+
+    .badge.apache { background: rgba(255, 122, 0, 0.1); color: var(--ls-orange); }
+    .badge.nginx { background: rgba(0, 150, 0, 0.1); color: #009900; }
+    .badge.iis { background: rgba(0, 100, 200, 0.1); color: #0066cc; }
+
+    .date {
+        color: var(--ls-muted);
+    }
+
+    .check-icon {
+        color: var(--ls-orange);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 1.2rem;
+    }
+
+    .upload-item.selected .check-icon {
+        opacity: 1;
+    }
+
+    /* Date Range */
+    .date-range-custom {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding: clamp(0.75rem, 3vw, 1rem);
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    /* Format Options - SIMPLE DROPDOWN */
+    .filter-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        border-radius: var(--radius-md);
+        font-size: 16px;
+        background-color: white;
+        cursor: pointer;
+        min-height: var(--touch-target-size);
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--ls-orange);
+        box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+    }
+
+    /* Form Row */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Type Options */
+    .type-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .type-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: clamp(0.75rem, 2.5vw, 0.75rem);
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: var(--touch-target-size);
+    }
+
+    .type-option:hover {
+        border-color: var(--ls-orange);
+    }
+
+    .type-option input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        accent-color: var(--ls-orange);
+        cursor: pointer;
+    }
+
+    .type-name {
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        color: var(--ls-navy);
+    }
+
+    /* Checkbox Grid */
+    .checkbox-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: clamp(0.75rem, 2.5vw, 0.75rem);
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: var(--touch-target-size);
+    }
+
+    .checkbox-item:hover {
+        border-color: var(--ls-orange);
+        background: rgba(255, 122, 0, 0.02);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        margin-top: 2px;
+        accent-color: var(--ls-orange);
+        cursor: pointer;
+    }
+
+    .checkbox-text {
+        flex: 1;
+    }
+
+    .checkbox-text strong {
+        display: block;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        color: var(--ls-navy);
+        margin-bottom: 0.25rem;
+    }
+
+    .checkbox-text small {
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+        color: var(--ls-muted);
+        display: block;
+        line-height: 1.4;
+    }
+
+    /* Form Navigation */
+    .form-navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(26, 30, 50, 0.08);
+        gap: 0.75rem;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: var(--touch-target-size);
+        font-size: 16px;
+        flex: 1;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border: none;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(26, 30, 50, 0.08);
+        padding: 1.25rem;
+    }
+
+    .modal-body {
+        padding: 2rem;
+        min-height: 300px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(26, 30, 50, 0.08);
+        padding: 1.25rem;
+    }
+
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+    }
+
+    .format-badge {
+        display: flex;
+        align-items: center;
+        padding: 0.4rem 0.75rem;
+        background: white;
+        border-radius: 20px;
+        color: var(--ls-navy);
+        font-size: 0.9rem;
+    }
+
+    .page-count {
+        display: flex;
+        align-items: center;
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+    }
+
+    /* Tips Card */
+    .tips-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: clamp(1rem, 3vw, 1.5rem);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .tips-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .tips-header h4 {
+        font-size: clamp(0.95rem, 3vw, 1rem);
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+    }
+
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    .tip-icon {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1rem;
+    }
+
+    .tip-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tip-content strong {
+        display: block;
+        font-size: clamp(0.8rem, 2.5vw, 0.85rem);
+        color: var(--ls-navy);
+        margin-bottom: 0.15rem;
+    }
+
+    .tip-content p {
+        font-size: clamp(0.7rem, 2.2vw, 0.75rem);
+        color: var(--ls-muted);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 992px) {
+        .tips-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .report-container {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .report-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .header-actions {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .header-actions .btn-outline {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .date-range-custom {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .tips-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .form-navigation {
+            flex-wrap: wrap;
+        }
+
+        .form-navigation .btn-outline,
+        .form-navigation .btn-primary {
+            flex: 1 1 calc(50% - 0.375rem);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-footer .btn-primary {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .tips-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .checkbox-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-top: 0;
+        }
+
+        .form-navigation {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .form-navigation .btn-outline,
+        .form-navigation .btn-primary {
+            width: 100%;
+            flex: none;
+        }
+
+        .upload-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        .modal-body {
+            padding: 1rem;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .progress-step {
+            gap: 0.25rem;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
+        }
+
+        .form-progress::before {
+            top: 16px;
+        }
+    }
+
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .btn-outline:hover,
+        .btn-primary:hover,
+        .upload-item:hover,
+        .type-option:hover,
+        .checkbox-item:hover {
+            transform: none;
+        }
+
+        .btn-outline:active,
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+    }
+
+    /* Landscape mode optimizations */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .form-step {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .form-step::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .form-step::-webkit-scrollbar-thumb {
+            background: rgba(26, 30, 50, 0.2);
+            border-radius: 4px;
+        }
+
+        .modal-body {
+            max-height: 40vh;
+        }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .btn-outline,
+        .type-option,
+        .checkbox-item,
+        .upload-item {
+            border-width: 2px;
+        }
+
+        .progress-step.active .step-number {
+            border-width: 3px;
+        }
+    }
+
+    /* Reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+        .form-step.active,
+        .btn-primary,
+        .btn-outline,
+        .upload-item,
+        .type-option,
+        .checkbox-item {
+            transition: none;
+            animation: none;
+        }
+    }
+</style>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Show/hide custom date range
+    // Multi-step form navigation
+    const steps = document.querySelectorAll('.progress-step');
+    const formSteps = document.querySelectorAll('.form-step');
+    const prevBtn = document.getElementById('prevStep');
+    const nextBtn = document.getElementById('nextStep');
+    const submitBtn = document.getElementById('submitBtn');
+    const previewBtn = document.getElementById('previewBtn');
+    const modalPreviewContent = document.getElementById('modalPreviewContent');
+    const modalPreviewFormat = document.getElementById('modalPreviewFormat');
+    const modalPreviewPages = document.getElementById('modalPreviewPages');
+    
+    // Form inputs for validation
+    const titleInput = document.getElementById('id_title');
+    const uploadSelect = document.getElementById('id_upload');
+    const formatSelect = document.getElementById('id_format');
+    
+    let currentStep = 1;
+
+    // Function to validate current step
+    function validateStep(step) {
+        if (step === 1) {
+            // Step 1: Title is required
+            return titleInput && titleInput.value.trim() !== '';
+        } else if (step === 2) {
+            // Step 2: Upload is required
+            return uploadSelect && uploadSelect.value && uploadSelect.value !== '';
+        } else if (step === 3) {
+            // Step 3: Format is required
+            return formatSelect && formatSelect.value && formatSelect.value !== '';
+        }
+        return true;
+    }
+
+    // Function to update Next button state
+    function updateNextButton() {
+        const isValid = validateStep(currentStep);
+        nextBtn.disabled = !isValid;
+    }
+
+    // Add input listeners for validation
+    if (titleInput) {
+        titleInput.addEventListener('input', updateNextButton);
+        titleInput.addEventListener('change', updateNextButton);
+    }
+    
+    if (uploadSelect) {
+        uploadSelect.addEventListener('change', updateNextButton);
+    }
+    
+    if (formatSelect) {
+        formatSelect.addEventListener('change', updateNextButton);
+    }
+
+    function showStep(step) {
+        // Update form steps
+        formSteps.forEach(s => s.classList.remove('active'));
+        document.getElementById(`step${step}`).classList.add('active');
+        
+        // Update progress indicators
+        steps.forEach((s, index) => {
+            if (index + 1 <= step) {
+                s.classList.add('active');
+            } else {
+                s.classList.remove('active');
+            }
+        });
+
+        // Update buttons
+        prevBtn.disabled = step === 1;
+        
+        if (step === 3) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'inline-flex';
+            
+            // Also validate step 3 for the submit button (though form will validate on server)
+            const isValid = validateStep(step);
+            submitBtn.disabled = !isValid;
+        } else {
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+            // Update next button state based on current step validation
+            updateNextButton();
+        }
+
+        // Scroll to top of form on mobile
+        if (window.innerWidth <= 768) {
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    prevBtn.addEventListener('click', () => {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (currentStep < 3) {
+            // Validate before moving to next step
+            if (validateStep(currentStep)) {
+                currentStep++;
+                showStep(currentStep);
+            } else {
+                // Show a warning
+                alert('Please fill in all required fields before proceeding.');
+            }
+        }
+    });
+
+    // Date range toggle
     const dateRangeSelect = document.getElementById('id_date_range');
     const customDateRange = document.getElementById('customDateRange');
-    
+
     function toggleCustomDateRange() {
-        if (dateRangeSelect.value === 'custom') {
-            customDateRange.style.display = 'flex';
+        if (dateRangeSelect && dateRangeSelect.value === 'custom') {
+            customDateRange.style.display = 'grid';
         } else {
             customDateRange.style.display = 'none';
         }
     }
-    
-    dateRangeSelect.addEventListener('change', toggleCustomDateRange);
-    toggleCustomDateRange(); // Initial check
-    
-    // Form validation
+
+    if (dateRangeSelect) {
+        dateRangeSelect.addEventListener('change', toggleCustomDateRange);
+        toggleCustomDateRange();
+    }
+
+    // Recent upload selection
+    const uploadItems = document.querySelectorAll('.upload-item');
+    const uploadInput = document.getElementById('id_upload');
+
+    if (uploadItems.length && uploadInput) {
+        uploadItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove selected class from all items
+                uploadItems.forEach(i => i.classList.remove('selected'));
+                
+                // Add selected class to clicked item
+                this.classList.add('selected');
+                
+                // Update hidden input
+                const uploadId = this.dataset.uploadId;
+                uploadInput.value = uploadId;
+                
+                // Trigger change event for validation
+                const event = new Event('change', { bubbles: true });
+                uploadInput.dispatchEvent(event);
+            });
+        });
+    }
+
+    // Function to update modal preview
+    function updateModalPreview() {
+        const format = document.getElementById('id_format');
+        const title = document.getElementById('id_title')?.value;
+        const reportType = document.querySelector('input[name="report_type"]:checked');
+
+        if (modalPreviewContent) {
+            if (title || (format && format.value) || reportType) {
+                let previewHtml = '<div class="preview-active">';
+                
+                if (title) {
+                    previewHtml += `<h4 style="margin:0 0 0.5rem 0; color: var(--ls-navy);">${title}</h4>`;
+                }
+                
+                if (reportType) {
+                    const typeLabel = reportType.closest('.type-option')?.querySelector('.type-name')?.textContent || 'Standard';
+                    previewHtml += `<p style="margin:0.25rem 0;"><strong>Type:</strong> ${typeLabel}</p>`;
+                }
+                
+                if (format && format.value) {
+                    const formatLabel = format.options[format.selectedIndex]?.text || 'PDF';
+                    previewHtml += `<p style="margin:0.25rem 0;"><strong>Format:</strong> ${formatLabel}</p>`;
+                }
+                
+                // Add content options if available
+                const includeSummary = document.getElementById('id_include_summary')?.checked;
+                const includeCharts = document.getElementById('id_include_charts')?.checked;
+                const includeTopData = document.getElementById('id_include_top_data')?.checked;
+                const includeRecommendations = document.getElementById('id_include_recommendations')?.checked;
+                
+                if (includeSummary || includeCharts || includeTopData || includeRecommendations) {
+                    previewHtml += `<p style="margin:0.5rem 0 0.25rem 0;"><strong>Content:</strong></p>`;
+                    previewHtml += `<ul style="margin:0; color: var(--ls-muted);">`;
+                    if (includeSummary) previewHtml += `<li>✓ Summary</li>`;
+                    if (includeCharts) previewHtml += `<li>✓ Charts & Visualizations</li>`;
+                    if (includeTopData) previewHtml += `<li>✓ Top Data Tables</li>`;
+                    if (includeRecommendations) previewHtml += `<li>✓ Recommendations</li>`;
+                    previewHtml += `</ul>`;
+                }
+                
+                previewHtml += '</div>';
+                modalPreviewContent.innerHTML = previewHtml;
+            } else {
+                // Show placeholder if no data
+                modalPreviewContent.innerHTML = `
+                    <div class="preview-placeholder text-center py-5">
+                        <i class="fas fa-file-alt fa-4x mb-3" style="color: var(--ls-muted); opacity: 0.3;"></i>
+                        <h4 style="color: var(--ls-navy);">Your report preview will appear here</h4>
+                        <p class="text-muted">Fill out the form and click the preview button to see your report settings</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update format badge in modal
+        if (modalPreviewFormat && format) {
+            const formatIcon = modalPreviewFormat.querySelector('i');
+            const formatText = modalPreviewFormat.querySelector('span');
+            
+            if (format.value) {
+                if (format.value === 'pdf') {
+                    formatIcon.className = 'fas fa-file-pdf';
+                    formatText.textContent = 'PDF Format';
+                } else if (format.value === 'csv') {
+                    formatIcon.className = 'fas fa-file-csv';
+                    formatText.textContent = 'CSV Format';
+                } else if (format.value === 'html') {
+                    formatIcon.className = 'fas fa-file-code';
+                    formatText.textContent = 'HTML Format';
+                } else if (format.value === 'json') {
+                    formatIcon.className = 'fas fa-file-code';
+                    formatText.textContent = 'JSON Format';
+                }
+            } else {
+                formatIcon.className = 'fas fa-file-pdf';
+                formatText.textContent = 'PDF Format';
+            }
+        }
+    }
+
+    // Preview button click - update modal before showing
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function(e) {
+            updateModalPreview();
+        });
+    }
+
+    // Handle form submission
     const form = document.getElementById('reportForm');
-    form.addEventListener('submit', function(e) {
-        // You can add additional client-side validation here
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-        submitBtn.disabled = true;
+    if (form) {
+        form.addEventListener('submit', function() {
+            // Update the button text
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+                submitBtn.disabled = true;
+            }
+            
+            // Also update preview in modal
+            updateModalPreview();
+            
+            return true;
+        });
+    }
+
+    // Initialize validation state
+    updateNextButton();
+
+    // Handle mobile keyboard
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            setTimeout(() => {
+                this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
     });
 });
 </script>

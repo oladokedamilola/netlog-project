@@ -1,0 +1,54 @@
+{% extends 'base_user.html' %}
+{% load static %}
+
+{% block title %}Notification Settings - NetLog{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--ls-navy) 0%, #0b1220 100%); color: white;">
+                    <h4 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-bell me-2"></i>
+                        Notification Settings
+                    </h4>
+                </div>
+                <div class="card-body p-5 text-center">
+                    <div class="py-5">
+                        <i class="fas fa-tools fa-4x mb-4" style="color: var(--ls-orange); opacity: 0.5;"></i>
+                        <h5 style="color: var(--ls-navy);">Coming Soon!</h5>
+                        <p class="text-muted mb-4">
+                            We're working on notification settings. Soon you'll be able to customize:
+                        </p>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-md);">
+                                    <i class="fas fa-envelope mb-2" style="color: var(--ls-orange);"></i>
+                                    <p class="small mb-0">Email Notifications</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-md);">
+                                    <i class="fas fa-chart-line mb-2" style="color: var(--ls-orange);"></i>
+                                    <p class="small mb-0">Report Alerts</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-md);">
+                                    <i class="fas fa-shield-alt mb-2" style="color: var(--ls-orange);"></i>
+                                    <p class="small mb-0">Security Alerts</p>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{% url 'profile' %}" class="btn btn-outline">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

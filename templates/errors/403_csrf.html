@@ -1,0 +1,79 @@
+{% extends "errors/base_error.html" %}
+{% load static %}
+
+{% block error_icon %}
+<div class="error-icon">
+    <i class="fas fa-shield-virus"></i>
+</div>
+{% endblock %}
+
+{% block error_code %}403{% endblock %}
+
+{% block error_name %}CSRF Verification Failed{% endblock %}
+
+{% block error_description %}
+The security token has expired or is invalid. This helps protect against cross-site request forgery attacks.
+{% endblock %}
+
+{% block error_details %}
+<div class="error-details">
+    <i class="fas fa-key" style="color: var(--danger-color); margin-right: 10px;"></i>
+    <strong>Common Causes:</strong><br>
+    <ul style="margin-top: 5px; padding-left: 20px;">
+        <li>Browser session expired</li>
+        <li>Cookies are disabled</li>
+        <li>Form submitted from another site</li>
+        <li>Using multiple tabs with expired sessions</li>
+    </ul>
+    <br>
+    <small><strong>Solution:</strong> <a href="{{ request.path }}" style="color: var(--primary-color);">Refresh the page</a> and try again.</small>
+</div>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ request.path }}" class="btn btn-secondary">
+    <i class="fas fa-redo-alt"></i> Refresh Page
+</a>
+<a href="/" class="btn btn-primary">
+    <i class="fas fa-home"></i> Go Home
+</a>
+<a href="/logout" class="btn btn-outline">
+    <i class="fas fa-sign-out-alt"></i> Logout & Retry
+</a>
+{% endblock %}
+
+{% block help_section %}
+<div class="help-section">
+    <div class="help-title">
+        <i class="fas fa-cookie-bite" style="color: var(--danger-color); margin-right: 10px;"></i>
+        Cookie Settings:
+    </div>
+    
+    <div class="help-grid">
+        <div class="help-item">
+            <i class="fas fa-cookie"></i>
+            <h4>Enable Cookies</h4>
+            <p>Check browser settings</p>
+        </div>
+        <div class="help-item">
+            <i class="fas fa-history"></i>
+            <h4>Clear Cache</h4>
+            <p>Remove old session data</p>
+        </div>
+        <div class="help-item">
+            <i class="fas fa-incognito"></i>
+            <h4>Private Mode</h4>
+            <p>Try incognito/private mode</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-details {
+        background: linear-gradient(135deg, #fee, #ffffff);
+        border-left-color: var(--danger-color);
+    }
+</style>
+{% endblock %}

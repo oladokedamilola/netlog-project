@@ -1,0 +1,659 @@
+{% extends 'base_user.html' %}
+{% load static %}
+
+{% block title %}My Dashboard - NetLog{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section mb-4">
+        <div class="welcome-content">
+            <h1 class="welcome-title">
+                Welcome back, <span class="highlight">{{ user.get_full_name|default:user.username }}</span>
+            </h1>
+            <p class="welcome-subtitle">
+                Here's what's happening with your logs today.
+            </p>
+        </div>
+        <div class="welcome-actions">
+            <a href="{% url 'logs:upload_log' %}" class="btn btn-primary">
+                <i class="fas fa-cloud-upload-alt me-2"></i>
+                Upload New Log
+            </a>
+        </div>
+    </div>
+
+    <!-- Key Metrics - Simplified to 3 core metrics -->
+    <div class="metrics-grid mb-4">
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(255, 122, 0, 0.1);">
+                <i class="fas fa-file-lines" style="color: var(--ls-orange);"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ total_logs }}</div>
+                <div class="metric-label">Total Logs</div>
+                <div class="metric-trend positive">
+                    <i class="fas fa-arrow-up me-1"></i>
+                    {{ logs_this_week }} this week
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(255, 122, 0, 0.1);">
+                <i class="fas fa-chart-line" style="color: var(--ls-orange);"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ total_reports }}</div>
+                <div class="metric-label">Total Reports</div>
+                <div class="metric-trend neutral">
+                    <i class="fas fa-clock me-1"></i>
+                    Lifetime
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(255, 122, 0, 0.1);">
+                <i class="fas fa-calendar-check" style="color: var(--ls-orange);"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ user.date_joined|date:"M Y" }}</div>
+                <div class="metric-label">Member Since</div>
+                <div class="metric-trend">
+                    {% if user.profile.email_verified %}
+                        <span class="verified-badge">
+                            <i class="fas fa-check-circle me-1"></i>Verified
+                        </span>
+                    {% else %}
+                        <span class="unverified-badge">
+                            <i class="fas fa-exclamation-circle me-1"></i>Unverified
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-grid">
+        <!-- Recent Activity Feed -->
+        <div class="grid-item activity-feed">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-history me-2" style="color: var(--ls-orange);"></i>
+                        Recent Activity
+                    </h5>
+                    {% if recent_activity %}
+                        <a href="#" class="view-all">View all <i class="fas fa-arrow-right ms-1"></i></a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if recent_activity %}
+                        <div class="activity-list">
+                            {% for activity in recent_activity|slice:":5" %}
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas {{ activity.icon }}" style="color: var(--ls-orange);"></i>
+                                    </div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">{{ activity.title }}</div>
+                                        <div class="activity-meta">
+                                            <span class="activity-type">{{ activity.description }}</span>
+                                            <span class="activity-time">{{ activity.time|timesince }} ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <h6>No activity yet</h6>
+                            <p>Upload your first log file to get started</p>
+                            <a href="{% url 'logs:upload_log' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-upload me-2"></i>
+                                Upload Now
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="grid-item recent-logs">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-file-lines me-2" style="color: var(--ls-orange);"></i>
+                        Recent Logs
+                    </h5>
+                    {% if recent_logs %}
+                        <a href="{% url 'logs:upload_history' %}" class="view-all">View all <i class="fas fa-arrow-right ms-1"></i></a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if recent_logs %}
+                        <div class="logs-list">
+                            {% for log in recent_logs %}
+                                <div class="log-item">
+                                    <div class="log-info">
+                                        <div class="log-name">{{ log.file.name|slice:"17:"|truncatechars:25 }}</div>
+                                        <div class="log-meta">
+                                            <span class="log-type">{{ log.get_log_type_display }}</span>
+                                            <span class="log-time">{{ log.uploaded_at|timesince }} ago</span>
+                                        </div>
+                                    </div>
+                                    <a href="#" class="log-action" title="View details">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state small">
+                            <p class="text-muted mb-0">No logs uploaded yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid-item quick-actions">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-bolt me-2" style="color: var(--ls-orange);"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="actions-grid">
+                        <a href="{% url 'logs:upload_log' %}" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="action-label">Upload Log</div>
+                        </a>
+                        <a href="{% url 'reports:generate_report' %}" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="action-label">Generate Report</div>
+                        </a>
+                        <a href="{% url 'logs:upload_history' %}" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="action-label">View History</div>
+                        </a>
+                        <a href="{% url 'profile' %}" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-user-cog"></i>
+                            </div>
+                            <div class="action-label">Profile</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Dashboard Container */
+    .dashboard-container {
+        padding: 0;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .welcome-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .welcome-title .highlight {
+        color: var(--ls-orange);
+        position: relative;
+    }
+
+    .welcome-title .highlight::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--ls-orange), transparent);
+    }
+
+    .welcome-subtitle {
+        color: var(--ls-muted);
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    }
+
+    .btn-primary i {
+        font-size: 0.9rem;
+    }
+
+    .btn-primary.btn-sm {
+        padding: 0.4rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* Metrics Grid - 3 cards */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(26, 30, 50, 0.08);
+    }
+
+    .metric-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .metric-content {
+        flex: 1;
+    }
+
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--ls-navy);
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-label {
+        font-size: 0.9rem;
+        color: var(--ls-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-trend {
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .metric-trend.positive {
+        color: var(--ls-success);
+    }
+
+    .metric-trend.neutral {
+        color: var(--ls-muted);
+    }
+
+    .verified-badge {
+        color: var(--ls-success);
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .unverified-badge {
+        color: var(--ls-warning);
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .grid-item {
+        min-width: 0;
+    }
+
+    /* Cards */
+    .card {
+        background: white;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .card-header {
+        padding: 1.25rem 1.5rem;
+        background: transparent;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .view-all {
+        font-size: 0.85rem;
+        color: var(--ls-orange);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .view-all:hover {
+        color: var(--ls-orange-600);
+        text-decoration: none;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Activity Feed */
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .activity-item:last-child {
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--ls-cream);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .activity-details {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.8rem;
+    }
+
+    .activity-type {
+        color: var(--ls-muted);
+    }
+
+    .activity-time {
+        color: var(--ls-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    /* Logs List */
+    .logs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .log-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+
+    .log-item:hover {
+        background: rgba(255, 122, 0, 0.08);
+    }
+
+    .log-info {
+        flex: 1;
+    }
+
+    .log-name {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        margin-bottom: 0.25rem;
+    }
+
+    .log-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .log-type {
+        color: var(--ls-orange);
+        font-weight: 500;
+    }
+
+    .log-time {
+        color: var(--ls-muted);
+    }
+
+    .log-action {
+        width: 28px;
+        height: 28px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-navy);
+        transition: all 0.2s ease;
+    }
+
+    .log-action:hover {
+        background: var(--ls-orange);
+        color: white;
+    }
+
+    /* Quick Actions Grid */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .action-card {
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        padding: 1.25rem 0.75rem;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .action-card:hover {
+        background: rgba(255, 122, 0, 0.12);
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    .action-icon {
+        font-size: 1.5rem;
+        color: var(--ls-orange);
+        margin-bottom: 0.5rem;
+    }
+
+    .action-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+    }
+
+    /* Empty States */
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+
+    .empty-state.small {
+        padding: 1rem;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: var(--ls-muted);
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h6 {
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .grid-item:first-child {
+            grid-column: span 2;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .metrics-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .welcome-section {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .metrics-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .grid-item:first-child {
+            grid-column: span 1;
+        }
+
+        .metric-card {
+            padding: 1.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+        }
+
+        .actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .activity-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}

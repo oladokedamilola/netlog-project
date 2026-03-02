@@ -1,0 +1,95 @@
+{% extends 'base_user.html' %}
+{% load static %}
+
+{% block title %}Security Settings - NetLog{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--ls-navy) 0%, #0b1220 100%); color: white;">
+                    <h4 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Security Settings
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Password Section -->
+                    <div class="mb-4">
+                        <h5 class="mb-3" style="color: var(--ls-navy);">
+                            <i class="fas fa-key me-2" style="color: var(--ls-orange);"></i>
+                            Password
+                        </h5>
+                        <div class="p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-md);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="mb-1 fw-semibold">Password</p>
+                                    <p class="small text-muted mb-0">Last changed: {{ user.password_change_date|default:"Never" }}</p>
+                                </div>
+                                <a href="{% url 'password_change' %}" class="btn btn-cta btn-sm">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Change Password
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Two-Factor Authentication (Placeholder) -->
+                    <div class="mb-4">
+                        <h5 class="mb-3" style="color: var(--ls-navy);">
+                            <i class="fas fa-mobile-alt me-2" style="color: var(--ls-orange);"></i>
+                            Two-Factor Authentication
+                        </h5>
+                        <div class="p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-md);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="mb-1 fw-semibold">Two-factor authentication</p>
+                                    <p class="small text-muted mb-0">Add an extra layer of security to your account</p>
+                                </div>
+                                <span class="badge bg-secondary">Coming Soon</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Sessions (Placeholder) -->
+                    <div class="mb-4">
+                        <h5 class="mb-3" style="color: var(--ls-navy);">
+                            <i class="fas fa-desktop me-2" style="color: var(--ls-orange);"></i>
+                            Active Sessions
+                        </h5>
+                        <div class="p-3" style="background-color: var(--ls-cream); border-radius: var(--radius-md);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="mb-1 fw-semibold">Current session</p>
+                                    <p class="small text-muted mb-0">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Started: {{ request.session.created|default:"Just now" }}
+                                    </p>
+                                </div>
+                                <span class="badge badge--success">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Back button -->
+                    <div class="text-center mt-4">
+                        <a href="{% url 'profile' %}" class="btn btn-outline">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge--success {
+        background-color: var(--ls-success);
+        color: white;
+        padding: 0.4rem 0.8rem;
+    }
+</style>
+{% endblock %}

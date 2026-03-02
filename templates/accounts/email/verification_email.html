@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - NetLog</title>
+</head>
+<body style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #1A1F36; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafc;">
+    
+    <!-- Main Container -->
+    <div style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(26,30,50,0.08);">
+        
+        <!-- Header with Brand Gradient -->
+        <div style="background: linear-gradient(135deg, #1A1F36 0%, #0b1220 100%); padding: 30px; text-align: center;">
+            <!-- Brand Logo -->
+            <div style="width: 60px; height: 60px; margin: 0 auto 15px; position: relative; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(255,255,255,0) 30%), conic-gradient(from 180deg at 50% 50%, #FF7A00 0deg 70deg, transparent 70deg 150deg, rgba(255,122,0,0.18) 150deg 220deg, #1A1F36 220deg 360deg); box-shadow: 0 4px 18px rgba(0,0,0,0.2);">
+                <div style="width: 60%; height: 60%; margin: 20% auto; border-radius: 50%; background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);"></div>
+            </div>
+            <h1 style="color: #FF7A00; margin: 10px 0 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Welcome to NetLog!</h1>
+            <p style="color: #FFF4E6; margin: 5px 0 0; font-size: 16px; opacity: 0.9;">Network Log Analyzer</p>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 40px 30px;">
+            
+            <!-- Greeting with Celebration -->
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                <p style="font-size: 18px; margin: 0; color: #1A1F36;">
+                    <strong>Hi {{ user.username }},</strong>
+                </p>
+                <p style="font-size: 16px; color: #6b7280; margin: 5px 0 0;">
+                    Thanks for joining NetLog!
+                </p>
+            </div>
+            
+            <!-- Main Message -->
+            <p style="font-size: 16px; margin-bottom: 25px; color: #4a5568;">
+                To complete your registration and activate your account, please verify your email address by clicking the button below:
+            </p>
+            
+            <!-- CTA Button -->
+            <div style="text-align: center; margin: 35px 0;">
+                <a href="{{ verification_url }}" 
+                   style="background-color: #FF7A00; 
+                          color: white; 
+                          padding: 14px 35px; 
+                          text-decoration: none; 
+                          border-radius: 10px; 
+                          font-weight: 700; 
+                          font-size: 16px;
+                          display: inline-block;
+                          box-shadow: 0 6px 18px rgba(255,122,0,0.25);
+                          transition: all 0.3s ease;
+                          border: none;">
+                    <span style="display: inline-block; margin-right: 8px;">✓</span>
+                    Verify Email Address
+                </a>
+            </div>
+            
+            <!-- Alternative Link -->
+            <div style="background-color: #FFF4E6; border-radius: 12px; padding: 20px; margin: 30px 0;">
+                <p style="margin: 0 0 10px; color: #1A1F36; font-weight: 600;">Or copy this link:</p>
+                <p style="background-color: #ffffff; padding: 12px 15px; border-radius: 8px; word-break: break-all; margin: 0; border: 1px solid rgba(26,30,50,0.08);">
+                    <a href="{{ verification_url }}" style="color: #FF7A00; text-decoration: none; font-size: 14px;">{{ verification_url }}</a>
+                </p>
+            </div>
+            
+            <!-- Features Preview -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 35px 0;">
+                <div style="background-color: #FFF4E6; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <p style="margin: 0; color: #1A1F36; font-weight: 600; font-size: 14px;">Log Analysis</p>
+                </div>
+                <div style="background-color: #FFF4E6; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                    <p style="margin: 0; color: #1A1F36; font-weight: 600; font-size: 14px;">Visual Insights</p>
+                </div>
+                <div style="background-color: #FFF4E6; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+                    <p style="margin: 0; color: #1A1F36; font-weight: 600; font-size: 14px;">Pattern Detection</p>
+                </div>
+                <div style="background-color: #FFF4E6; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
+                    <p style="margin: 0; color: #1A1F36; font-weight: 600; font-size: 14px;">Reports</p>
+                </div>
+            </div>
+            
+            <!-- Expiry Info -->
+            <div style="display: flex; align-items: center; gap: 15px; background-color: #f8fafc; border-radius: 10px; padding: 15px; margin: 30px 0;">
+                <div style="width: 40px; height: 40px; background-color: rgba(255,122,0,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 20px;">⏳</span>
+                </div>
+                <div>
+                    <p style="margin: 0; color: #1A1F36; font-weight: 600;">Link Expires Soon</p>
+                    <p style="margin: 5px 0 0; color: #6b7280; font-size: 14px;">
+                        This verification link will expire in <strong style="color: #FF7A00;">24 hours</strong>.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Security Note -->
+            <div style="border-left: 4px solid #FF7A00; background-color: #FFF4E6; padding: 15px; border-radius: 0 8px 8px 0; margin: 30px 0;">
+                <p style="margin: 0; color: #1A1F36; font-size: 14px;">
+                    <span style="font-weight: 700;">🔒 Didn't create an account?</span><br>
+                    If you didn't create an account with {{ site_name }}, you can safely ignore this email.
+                </p>
+            </div>
+            
+            <!-- Next Steps -->
+            <div style="text-align: center; margin: 35px 0 20px;">
+                <p style="color: #1A1F36; font-weight: 600; margin-bottom: 10px;">What's next?</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">
+                    1. Verify your email address<br>
+                    2. Log in to your account<br>
+                    3. Start analyzing your network logs
+                </p>
+            </div>
+            
+            <!-- Divider -->
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 35px 0;">
+            
+            <!-- Footer -->
+            <div style="text-align: center;">
+                <div style="margin-bottom: 20px;">
+                    <a href="#" style="color: #6b7280; text-decoration: none; margin: 0 10px; font-size: 14px;">Twitter</a>
+                    <span style="color: #e2e8f0;">•</span>
+                    <a href="#" style="color: #6b7280; text-decoration: none; margin: 0 10px; font-size: 14px;">GitHub</a>
+                    <span style="color: #e2e8f0;">•</span>
+                    <a href="#" style="color: #6b7280; text-decoration: none; margin: 0 10px; font-size: 14px;">Discord</a>
+                </div>
+                <p style="color: #94a3b8; font-size: 13px; margin: 5px 0;">
+                    This is an automated message, please do not reply to this email.
+                </p>
+                <p style="color: #94a3b8; font-size: 12px; margin: 5px 0;">
+                    &copy; {% now "Y" %} NetLog. All rights reserved.
+                </p>
+                <p style="color: #94a3b8; font-size: 11px; margin: 15px 0 0;">
+                    123 Data Street, San Francisco, CA 94105
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Small print for email clients -->
+    <div style="text-align: center; margin-top: 20px;">
+        <p style="color: #94a3b8; font-size: 11px;">
+            If you're having trouble clicking the button, copy and paste the URL above into your web browser.
+        </p>
+        <p style="color: #94a3b8; font-size: 11px; margin-top: 5px;">
+            <a href="#" style="color: #FF7A00; text-decoration: none;">Unsubscribe</a> from these emails.
+        </p>
+    </div>
+</body>
+</html>

@@ -1,59 +1,163 @@
 {% extends "base_user.html" %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Preview Report - NetLog{% endblock %}
+{% block title %}Preview: {{ report.title }} - NetLog{% endblock %}
 
 {% block content %}
-<div class="container-fluid p-0">
+<div class="preview-container">
     <!-- Preview Header -->
-    <div class="bg-light border-bottom py-3 px-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="h4 mb-1">Preview: {{ report.title }}</h1>
-                <p class="text-muted small mb-0">
-                    {{ report.get_format_display }} Report • Generated {{ report.generated_at|date:"Y-m-d H:i" }}
-                </p>
+    <div class="preview-header">
+        <div class="header-left">
+            <a href="{% url 'reports:report_detail' report.id %}" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="header-info">
+                <h1 class="preview-title">{{ report.title }}</h1>
+                <div class="preview-meta">
+                    <span class="meta-badge format-{{ report.format }}">
+                        <i class="fas {% if report.format == 'pdf' %}fa-file-pdf{% elif report.format == 'csv' %}fa-file-csv{% elif report.format == 'html' %}fa-file-code{% else %}fa-file-code{% endif %} me-1"></i>
+                        {{ report.get_format_display|upper }}
+                    </span>
+                    <span class="meta-badge type-{{ report.report_type }}">
+                        <i class="fas {% if report.report_type == 'summary' %}fa-list-ul{% elif report.report_type == 'detailed' %}fa-chart-bar{% elif report.report_type == 'security' %}fa-shield-alt{% else %}fa-network-wired{% endif %} me-1"></i>
+                        {{ report.get_report_type_display }}
+                    </span>
+                    <span class="meta-badge time">
+                        <i class="far fa-clock me-1"></i>
+                        {{ report.generated_at|date:"M d, Y • H:i" }}
+                    </span>
+                </div>
             </div>
-            <div class="btn-group">
-                <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary">
-                    <i class="fas fa-download me-2"></i>Download
-                </a>
-                <a href="{% url 'reports:report_detail' report.id %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Details
-                </a>
-            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary">
+                <i class="fas fa-download me-2"></i>
+                Download
+            </a>
+            <a href="{% url 'reports:report_detail' report.id %}" class="btn btn-outline">
+                <i class="fas fa-info-circle me-2"></i>
+                Details
+            </a>
         </div>
     </div>
 
     <!-- Preview Content -->
-    <div class="container-fluid py-4 px-0">
+    <div class="preview-content">
         {% if report.format == 'html' and report.file %}
-            <!-- Embedded HTML Report -->
-            <iframe src="{% url 'reports:download_report' report.id %}" 
-                    style="width: 100%; height: calc(100vh - 120px); border: none;"
-                    title="Report Preview">
-            </iframe>
+            <!-- HTML Report Viewer -->
+            <div class="html-viewer">
+                <iframe src="{% url 'reports:download_report' report.id %}" 
+                        class="report-iframe" 
+                        id="reportIframe"
+                        title="Report Preview"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms">
+                </iframe>
+                
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="loading-spinner"></div>
+                    <p>Loading report...</p>
+                </div>
+            </div>
+
+            <!-- Preview Toolbar -->
+            <div class="preview-toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="zoomOut()" title="Zoom Out (Ctrl+-)">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="toolbar-btn" onclick="zoomIn()" title="Zoom In (Ctrl++)">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="resetZoom()" title="Reset Zoom (Ctrl+0)">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="toggleFullscreen()" title="Fullscreen (F11)">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="printReport()" title="Print Report">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <div class="dropdown toolbar-dropdown">
+                        <button class="toolbar-btn" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{% url 'reports:download_report' report.id %}?format=pdf">
+                                <i class="fas fa-file-pdf me-2"></i>Save as PDF
+                            </a>
+                            <a class="dropdown-item" href="#" onclick="copyUrl()">
+                                <i class="fas fa-link me-2"></i>Copy Report URL
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'reports:report_detail' report.id %}">
+                                <i class="fas fa-info-circle me-2"></i>Report Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         {% else %}
-            <!-- Preview Not Available -->
-            <div class="container py-5">
-                <div class="row justify-content-center">
-                    <div class="col-md-8 text-center">
-                        <div class="mb-4">
-                            <i class="fas fa-file-alt fa-4x text-muted"></i>
+            <!-- Non-HTML Report Preview -->
+            <div class="non-html-preview">
+                <div class="preview-card">
+                    <div class="preview-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h2>Preview Not Available</h2>
+                    <p class="preview-message">
+                        Preview is only available for HTML reports. 
+                        Your report is in <strong>{{ report.get_format_display }}</strong> format.
+                    </p>
+                    
+                    <div class="file-info-card">
+                        <div class="file-info-row">
+                            <span class="info-label">File Name:</span>
+                            <span class="info-value">{{ report.file.name|slice:"17:" }}</span>
                         </div>
-                        <h3 class="mb-3">Preview Not Available</h3>
-                        <p class="text-muted mb-4">
-                            Preview is only available for HTML reports. 
-                            For {{ report.get_format_display }} reports, please download the file to view its contents.
-                        </p>
-                        <div class="d-flex justify-content-center gap-3">
-                            <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary btn-lg">
-                                <i class="fas fa-download me-2"></i>Download Report
-                            </a>
-                            <a href="{% url 'reports:report_detail' report.id %}" class="btn btn-outline-secondary btn-lg">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Details
-                            </a>
+                        <div class="file-info-row">
+                            <span class="info-label">File Size:</span>
+                            <span class="info-value">{{ report.file_size|filesizeformat }}</span>
                         </div>
+                        <div class="file-info-row">
+                            <span class="info-label">Format:</span>
+                            <span class="info-value format-badge {{ report.format }}">
+                                {{ report.get_format_display|upper }}
+                            </span>
+                        </div>
+                        <div class="file-info-row">
+                            <span class="info-label">Downloads:</span>
+                            <span class="info-value">{{ report.download_count|intcomma }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-actions">
+                        <a href="{% url 'reports:download_report' report.id %}" class="btn btn-primary btn-large">
+                            <i class="fas fa-download me-2"></i>
+                            Download {{ report.get_format_display|upper }}
+                        </a>
+                        <a href="{% url 'reports:report_detail' report.id %}" class="btn btn-outline btn-large">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Details
+                        </a>
+                    </div>
+                    
+                    <!-- Format-specific tips -->
+                    <div class="format-tips">
+                        <h5><i class="fas fa-lightbulb me-2" style="color: var(--ls-orange);"></i>How to view {{ report.get_format_display }} files:</h5>
+                        {% if report.format == 'pdf' %}
+                        <p>PDF files can be opened with any PDF reader like Adobe Acrobat, your web browser, or most document viewers.</p>
+                        {% elif report.format == 'csv' %}
+                        <p>CSV files can be opened with spreadsheet applications like Microsoft Excel, Google Sheets, or any text editor.</p>
+                        {% elif report.format == 'json' %}
+                        <p>JSON files can be viewed with any text editor or JSON viewer. For better readability, use a JSON formatter.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -61,82 +165,605 @@
     </div>
 </div>
 
-<!-- Preview Controls -->
+<style>
+    /* Preview Container */
+    .preview-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+    }
+
+    /* Preview Header */
+    .preview-header {
+        background: white;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.08);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .back-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--ls-cream);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-navy);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .back-button:hover {
+        background: var(--ls-orange);
+        color: white;
+        transform: translateX(-2px);
+    }
+
+    .header-info {
+        flex: 1;
+    }
+
+    .preview-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .preview-meta {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .meta-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 30px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .meta-badge.format-pdf { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+    .meta-badge.format-csv { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+    .meta-badge.format-html { background: rgba(255, 122, 0, 0.1); color: var(--ls-orange); }
+    .meta-badge.format-json { background: rgba(107, 114, 128, 0.1); color: var(--ls-muted); }
+    .meta-badge.type-summary { background: rgba(255, 122, 0, 0.1); color: var(--ls-orange); }
+    .meta-badge.type-detailed { background: rgba(0, 100, 200, 0.1); color: #0066cc; }
+    .meta-badge.type-security { background: rgba(239, 68, 68, 0.1); color: var(--ls-danger); }
+    .meta-badge.type-traffic { background: rgba(22, 163, 74, 0.1); color: var(--ls-success); }
+    .meta-badge.time { background: var(--ls-cream); color: var(--ls-muted); }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-primary:hover {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.12);
+        color: var(--ls-navy);
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+
+    .btn-large {
+        padding: 0.8rem 2rem;
+        font-size: 1rem;
+    }
+
+    /* Preview Content */
+    .preview-content {
+        flex: 1;
+        position: relative;
+    }
+
+    /* HTML Viewer */
+    .html-viewer {
+        height: calc(100vh - 130px);
+        position: relative;
+        overflow: hidden;
+        background: white;
+    }
+
+    .report-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        transition: transform 0.2s ease;
+        transform-origin: top left;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: opacity 0.3s ease;
+    }
+
+    .loading-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid var(--ls-cream);
+        border-top-color: var(--ls-orange);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Preview Toolbar */
+    .preview-toolbar {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border-radius: 50px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+        padding: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+        z-index: 1000;
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0 0.25rem;
+        border-right: 1px solid rgba(26, 30, 50, 0.08);
+    }
+
+    .toolbar-group:last-child {
+        border-right: none;
+    }
+
+    .toolbar-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 40px;
+        border: none;
+        background: transparent;
+        color: var(--ls-navy);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toolbar-btn:hover {
+        background: var(--ls-cream);
+        color: var(--ls-orange);
+    }
+
+    .zoom-level {
+        min-width: 60px;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+    }
+
+    .toolbar-dropdown {
+        position: relative;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        margin-bottom: 0.5rem;
+        min-width: 200px;
+        background: white;
+        border-radius: var(--radius-md);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        border: 1px solid rgba(26,30,50,0.06);
+        padding: 0.5rem 0;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        color: var(--ls-navy);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .dropdown-item:hover {
+        background: var(--ls-cream);
+        color: var(--ls-orange);
+    }
+
+    .dropdown-item i {
+        width: 18px;
+        color: var(--ls-muted);
+    }
+
+    .dropdown-item:hover i {
+        color: var(--ls-orange);
+    }
+
+    .dropdown-divider {
+        margin: 0.5rem 0;
+        border-top: 1px solid rgba(26,30,50,0.06);
+    }
+
+    /* Non-HTML Preview */
+    .non-html-preview {
+        min-height: calc(100vh - 130px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .preview-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 3rem;
+        max-width: 600px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        border: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .preview-icon {
+        width: 100px;
+        height: 100px;
+        background: var(--ls-cream);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        color: var(--ls-orange);
+        font-size: 3rem;
+    }
+
+    .preview-card h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 1rem;
+    }
+
+    .preview-message {
+        color: var(--ls-muted);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .file-info-card {
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+
+    .file-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .file-info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+        color: var(--ls-muted);
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+    }
+
+    .format-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 30px;
+        font-size: 0.8rem;
+    }
+
+    .format-badge.pdf { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+    .format-badge.csv { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+    .format-badge.html { background: rgba(255, 122, 0, 0.1); color: var(--ls-orange); }
+    .format-badge.json { background: rgba(107, 114, 128, 0.1); color: var(--ls-muted); }
+
+    .preview-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .format-tips {
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        text-align: left;
+        border-left: 4px solid var(--ls-orange);
+    }
+
+    .format-tips h5 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .format-tips p {
+        color: var(--ls-muted);
+        font-size: 0.9rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .preview-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .header-left {
+            width: 100%;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .btn-primary,
+        .btn-outline {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .preview-meta {
+            flex-wrap: wrap;
+        }
+
+        .preview-toolbar {
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+            transform: none;
+            border-radius: var(--radius-md);
+            justify-content: space-between;
+        }
+
+        .toolbar-group {
+            padding: 0;
+        }
+
+        .non-html-preview {
+            padding: 1rem;
+        }
+
+        .preview-card {
+            padding: 2rem;
+        }
+
+        .preview-actions {
+            flex-direction: column;
+        }
+
+        .preview-actions .btn {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .preview-title {
+            font-size: 1.1rem;
+        }
+
+        .meta-badge {
+            font-size: 0.65rem;
+        }
+
+        .toolbar-btn {
+            width: 36px;
+            height: 36px;
+        }
+
+        .zoom-level {
+            min-width: 50px;
+            font-size: 0.75rem;
+        }
+
+        .file-info-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
 {% if report.format == 'html' and report.file %}
-<div class="position-fixed bottom-0 end-0 m-4">
-    <div class="btn-group shadow">
-        <button type="button" class="btn btn-light" onclick="zoomOut()" title="Zoom Out">
-            <i class="fas fa-search-minus"></i>
-        </button>
-        <button type="button" class="btn btn-light" onclick="resetZoom()" title="Reset Zoom">
-            <i class="fas fa-search"></i>
-        </button>
-        <button type="button" class="btn btn-light" onclick="zoomIn()" title="Zoom In">
-            <i class="fas fa-search-plus"></i>
-        </button>
-        <button type="button" class="btn btn-light" onclick="toggleFullscreen()" title="Fullscreen">
-            <i class="fas fa-expand"></i>
-        </button>
-    </div>
-</div>
-
 <script>
-let currentZoom = 1;
-const zoomStep = 0.1;
-const iframe = document.querySelector('iframe');
+document.addEventListener('DOMContentLoaded', function() {
+    const iframe = document.getElementById('reportIframe');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    let currentZoom = 1;
+    const zoomStep = 0.1;
 
-function zoomIn() {
-    currentZoom += zoomStep;
-    iframe.style.transform = `scale(${currentZoom})`;
-    iframe.style.transformOrigin = 'top left';
-}
+    // Hide loading overlay when iframe loads
+    iframe.addEventListener('load', function() {
+        loadingOverlay.classList.add('hidden');
+    });
 
-function zoomOut() {
-    currentZoom = Math.max(0.5, currentZoom - zoomStep);
-    iframe.style.transform = `scale(${currentZoom})`;
-    iframe.style.transformOrigin = 'top left';
-}
+    // Zoom functions
+    window.zoomIn = function() {
+        currentZoom = Math.min(2, currentZoom + zoomStep);
+        updateZoom();
+    };
 
-function resetZoom() {
-    currentZoom = 1;
-    iframe.style.transform = 'scale(1)';
-    iframe.style.transformOrigin = 'top left';
-}
+    window.zoomOut = function() {
+        currentZoom = Math.max(0.5, currentZoom - zoomStep);
+        updateZoom();
+    };
 
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        iframe.requestFullscreen().catch(err => {
-            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+    window.resetZoom = function() {
+        currentZoom = 1;
+        updateZoom();
+    };
+
+    function updateZoom() {
+        iframe.style.transform = `scale(${currentZoom})`;
+        document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+    }
+
+    // Fullscreen
+    window.toggleFullscreen = function() {
+        if (!document.fullscreenElement) {
+            iframe.requestFullscreen().catch(err => {
+                console.log(`Error: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    };
+
+    // Print
+    window.printReport = function() {
+        iframe.contentWindow.print();
+    };
+
+    // Copy URL
+    window.copyUrl = function() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Report URL copied to clipboard!');
         });
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        }
-    }
-}
+    };
 
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey) {
-        switch(e.key) {
-            case '+':
-                e.preventDefault();
-                zoomIn();
-                break;
-            case '-':
-                e.preventDefault();
-                zoomOut();
-                break;
-            case '0':
-                e.preventDefault();
-                resetZoom();
-                break;
-            case 'f':
-                e.preventDefault();
-                toggleFullscreen();
-                break;
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case '+':
+                case '=':
+                    e.preventDefault();
+                    zoomIn();
+                    break;
+                case '-':
+                    e.preventDefault();
+                    zoomOut();
+                    break;
+                case '0':
+                    e.preventDefault();
+                    resetZoom();
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    printReport();
+                    break;
+            }
         }
-    }
+        
+        // F11 for fullscreen
+        if (e.key === 'F11') {
+            e.preventDefault();
+            toggleFullscreen();
+        }
+    });
+
+    // Handle iframe errors
+    iframe.addEventListener('error', function() {
+        loadingOverlay.innerHTML = `
+            <div class="text-danger">
+                <i class="fas fa-exclamation-circle fa-3x mb-3"></i>
+                <p>Failed to load report. Please try downloading instead.</p>
+            </div>
+        `;
+    });
+
+    // Update zoom display
+    updateZoom();
 });
 </script>
 {% endif %}

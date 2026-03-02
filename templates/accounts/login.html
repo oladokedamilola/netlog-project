@@ -5,35 +5,68 @@
 
 {% block extra_css %}
 <style>
+    /* CSS Variables */
+    :root {
+        --touch-target-size: 44px;
+        --mobile-padding: 1rem;
+    }
+
+    /* Global reset for mobile */
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Container adjustments */
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-right: var(--mobile-padding);
+        padding-left: var(--mobile-padding);
+        margin-right: auto;
+        margin-left: auto;
+    }
+
     /* Consistent with register styling */
     .login-card {
         border: none;
-        border-radius: 12px;
+        border-radius: clamp(12px, 3vw, 16px);
         overflow: hidden;
+        width: 100%;
+        margin: 0 auto;
     }
     
     .login-card .card-header {
         background: linear-gradient(135deg, var(--ls-orange), #ff9a3d);
         color: white;
         border: none;
-        padding: 1.5rem;
+        padding: clamp(1rem, 4vw, 1.5rem);
         text-align: center;
     }
     
     .login-card .card-body {
-        padding: 2rem;
+        padding: clamp(1.5rem, 5vw, 2rem);
     }
     
     /* Brand styling - identical to register */
     .brand-section {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: clamp(1rem, 3vw, 2rem);
     }
     
     .brand-logo-small {
-        width: 60px;
-        height: 60px;
-        margin: 0 auto 1rem;
+        width: clamp(50px, 12vw, 60px);
+        height: clamp(50px, 12vw, 60px);
+        margin: 0 auto clamp(0.75rem, 2vw, 1rem);
         position: relative;
         border-radius: 9999px;
         background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(255,255,255,0) 30%),
@@ -52,10 +85,42 @@
         box-shadow: 0 1px 0 rgba(255,255,255,0.5);
     }
     
+    .brand-section h3 {
+        font-size: clamp(1.25rem, 5vw, 1.75rem);
+        margin-bottom: 0.25rem;
+    }
+    
+    .brand-section p {
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        opacity: 0.9;
+        margin: 0;
+    }
+    
     /* Custom form styling - identical to register */
+    .form-control {
+        font-size: 16px; /* Prevents zoom on mobile */
+        padding: clamp(0.6rem, 3vw, 0.75rem) clamp(0.75rem, 4vw, 1rem);
+        height: auto;
+        min-height: var(--touch-target-size);
+        border-radius: clamp(8px, 2vw, 10px);
+        width: 100%;
+    }
+    
     .form-control:focus {
         border-color: var(--ls-orange);
         box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.25);
+    }
+    
+    .form-label {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        font-size: clamp(0.9rem, 3vw, 1rem);
     }
     
     /* Login button - similar styling to register button */
@@ -64,10 +129,17 @@
         border: none;
         color: white;
         font-weight: 600;
-        padding: 0.75rem;
-        border-radius: 10px;
+        padding: clamp(0.6rem, 3vw, 0.75rem);
+        border-radius: clamp(8px, 2vw, 10px);
         transition: all 0.3s ease;
         margin-top: 1rem;
+        font-size: 16px;
+        min-height: var(--touch-target-size);
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
     }
     
     .btn-login:hover {
@@ -85,6 +157,7 @@
     /* Password input wrapper - consistent with register */
     .password-input-wrapper {
         position: relative;
+        width: 100%;
     }
     
     .password-toggle {
@@ -96,16 +169,41 @@
         border: none;
         color: #6c757d;
         cursor: pointer;
-        padding: 4px;
+        padding: 12px; /* Increased for better touch target */
         z-index: 10;
         transition: color 0.2s ease;
+        min-width: var(--touch-target-size);
+        min-height: var(--touch-target-size);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .password-toggle:hover {
         color: #495057;
     }
     
+    .password-toggle i {
+        font-size: 1.2rem;
+    }
+    
     /* Remember me styling */
+    .form-check {
+        min-height: var(--touch-target-size);
+        display: flex;
+        align-items: center;
+        padding-left: 1.8rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-left: -1.8rem;
+        margin-top: 0;
+        cursor: pointer;
+    }
+    
     .form-check-input:checked {
         background-color: var(--ls-orange);
         border-color: var(--ls-orange);
@@ -116,12 +214,24 @@
         box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.25);
     }
     
+    .form-check-label {
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        cursor: pointer;
+        padding-left: 0.25rem;
+        line-height: 1.4;
+    }
+    
     /* Forgot password link */
     .forgot-password-link {
         color: var(--ls-orange);
         text-decoration: none;
         font-weight: 500;
         transition: all 0.2s ease;
+        font-size: clamp(0.8rem, 2.8vw, 0.9rem);
+        min-height: var(--touch-target-size);
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 0;
     }
     
     .forgot-password-link:hover {
@@ -135,8 +245,8 @@
         background: white;
         color: #495057;
         font-weight: 500;
-        padding: 0.75rem;
-        border-radius: 10px;
+        padding: clamp(0.6rem, 3vw, 0.75rem);
+        border-radius: clamp(8px, 2vw, 10px);
         transition: all 0.3s ease;
         margin-bottom: 0.75rem;
         width: 100%;
@@ -144,6 +254,8 @@
         align-items: center;
         justify-content: center;
         gap: 0.75rem;
+        min-height: var(--touch-target-size);
+        font-size: 16px;
     }
     
     .social-login-btn:hover {
@@ -153,12 +265,16 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
     
+    .social-login-btn i {
+        font-size: 1.2rem;
+    }
+    
     /* Divider styling */
     .divider {
         display: flex;
         align-items: center;
         text-align: center;
-        margin: 1.5rem 0;
+        margin: clamp(1rem, 4vw, 1.5rem) 0;
         color: #6c757d;
     }
     
@@ -170,7 +286,8 @@
     }
     
     .divider span {
-        padding: 0 1rem;
+        padding: 0 clamp(0.5rem, 2vw, 1rem);
+        font-size: clamp(0.8rem, 2.8vw, 0.9rem);
     }
     
     /* Error message styling */
@@ -182,6 +299,31 @@
         0%, 100% { transform: translateX(0); }
         10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
         20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .alert {
+        padding: clamp(0.75rem, 3vw, 1rem);
+        border-radius: clamp(8px, 2vw, 10px);
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        word-break: break-word;
+    }
+    
+    .alert i {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    
+    .alert-dismissible .btn-close {
+        padding: 1rem;
+        position: absolute;
+        right: 0;
+        top: 0;
+        min-width: var(--touch-target-size);
+        min-height: var(--touch-target-size);
     }
     
     /* Loading animation */
@@ -198,9 +340,178 @@
     /* Welcome back message */
     .welcome-message {
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: clamp(1rem, 4vw, 1.5rem);
         color: #6c757d;
-        font-size: 0.95rem;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+        padding: 0 0.5rem;
+        line-height: 1.5;
+    }
+    
+    /* Form spacing adjustments */
+    .mb-4 {
+        margin-bottom: clamp(1rem, 4vw, 1.5rem) !important;
+    }
+    
+    /* Text center adjustments */
+    .text-center.mt-4 {
+        margin-top: clamp(1.5rem, 5vw, 2rem) !important;
+    }
+    
+    .text-center p {
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+    }
+    
+    .text-center a {
+        min-height: var(--touch-target-size);
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 0.25rem;
+        font-size: clamp(0.85rem, 3vw, 0.95rem);
+    }
+    
+    /* Security note */
+    .text-muted small {
+        font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Responsive breakpoints */
+    @media (max-width: 768px) {
+        .container.py-5 {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+        
+        .login-card .card-body {
+            padding: 1.25rem;
+        }
+        
+        .row.justify-content-center {
+            margin: 0;
+        }
+        
+        .col-md-8.col-lg-6 {
+            padding: 0;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .container {
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+        
+        .login-card .card-header {
+            padding: 1rem;
+        }
+        
+        .login-card .card-body {
+            padding: 1rem;
+        }
+        
+        .btn-login {
+            padding: 0.75rem;
+        }
+        
+        .password-toggle {
+            padding: 10px;
+        }
+        
+        .password-toggle i {
+            font-size: 1.1rem;
+        }
+    }
+    
+    @media (max-width: 360px) {
+        .container {
+            padding-right: 0.5rem;
+            padding-left: 0.5rem;
+        }
+        
+        .login-card .card-body {
+            padding: 0.75rem;
+        }
+        
+        .form-check {
+            padding-left: 1.6rem;
+        }
+        
+        .form-check-input {
+            margin-left: -1.6rem;
+        }
+        
+        .brand-section h3 {
+            font-size: 1.2rem;
+        }
+    }
+    
+    /* Landscape mode optimizations */
+    @media (max-height: 600px) and (orientation: landscape) {
+        .container.py-5 {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .brand-section {
+            margin-bottom: 0.5rem;
+        }
+        
+        .brand-logo-small {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .mb-4 {
+            margin-bottom: 0.75rem !important;
+        }
+    }
+    
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .btn-login:hover,
+        .social-login-btn:hover,
+        .forgot-password-link:hover {
+            transform: none;
+        }
+        
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+        
+        .password-toggle:hover {
+            color: #6c757d;
+        }
+        
+        .password-toggle:active {
+            color: #495057;
+        }
+    }
+    
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+        .btn-login {
+            border: 2px solid #000;
+        }
+        
+        .form-control {
+            border: 2px solid #000;
+        }
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .btn-login,
+        .social-login-btn,
+        .login-error {
+            transition: none;
+            animation: none;
+        }
+        
+        .spinner {
+            animation: none;
+        }
     }
 </style>
 {% endblock %}
@@ -208,7 +519,7 @@
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+        <div class="col-md-8 col-lg-6 col-xl-5">
             <div class="card login-card shadow-lg">
                 <div class="card-header">
                     <div class="brand-section">
@@ -261,7 +572,8 @@
                                    value="{{ form.username.value|default:'' }}"
                                    required
                                    autocomplete="email"
-                                   autofocus>
+                                   autofocus
+                                   inputmode="email">
                             <div class="invalid-feedback">
                                 Please enter a valid email address.
                             </div>
@@ -280,7 +592,7 @@
                                        placeholder="Enter your password" 
                                        required
                                        autocomplete="current-password">
-                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)">
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)" aria-label="Show password">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -290,8 +602,8 @@
                             
                             <!-- Forgot Password Link -->
                             <div class="text-end mt-2">
-                                <a href="#" class="forgot-password-link small">
-                                    <i class="fas fa-key me-1"></i>Forgot your password?
+                                <a href="{% url 'password_reset_request' %}" class="forgot-password-link small">
+                                    <i class="fas fa-key me-1"></i>Forgot password?
                                 </a>
                             </div>
                         </div>
@@ -315,8 +627,7 @@
                         </div>
                         
                         <!-- Social Login Options (Optional) -->
-                        <!-- Uncomment if you have social auth configured -->
-                        {% comment %} {#
+                        {% comment %}
                         <div class="mb-3">
                             <button type="button" class="social-login-btn">
                                 <i class="fab fa-google text-danger"></i>
@@ -327,7 +638,7 @@
                                 Continue with GitHub
                             </button>
                         </div>
-                        #} {% endcomment %}
+                        {% endcomment %}
                         
                         <!-- Register Link -->
                         <div class="text-center mt-4">
@@ -347,7 +658,7 @@
                 </div>
             </div>
             
-            <!-- Security Note - Consistent with register -->
+            <!-- Security Note -->
             <div class="text-center mt-4">
                 <small class="text-muted">
                     <i class="fas fa-shield-alt me-1"></i>
@@ -384,6 +695,8 @@
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         
+        if (!loginForm || !submitBtn || !emailInput || !passwordInput) return;
+        
         // Real-time validation
         function validateForm() {
             const email = emailInput.value.trim();
@@ -400,9 +713,17 @@
             return isEmailValid && password !== '';
         }
         
-        // Validate on input
-        emailInput.addEventListener('input', validateForm);
-        passwordInput.addEventListener('input', validateForm);
+        // Validate on input with debounce for better performance
+        let validationTimeout;
+        emailInput.addEventListener('input', function() {
+            clearTimeout(validationTimeout);
+            validationTimeout = setTimeout(validateForm, 300);
+        });
+        
+        passwordInput.addEventListener('input', function() {
+            clearTimeout(validationTimeout);
+            validationTimeout = setTimeout(validateForm, 300);
+        });
         
         // Form submission
         loginForm.addEventListener('submit', function(e) {
@@ -429,11 +750,8 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner spinner me-2"></i>Signing In...';
             
-            // Add slight delay to show loading state
-            setTimeout(() => {
-                // Actually submit the form
-                loginForm.submit();
-            }, 300);
+            // Actually submit the form
+            loginForm.submit();
         });
         
         // Auto-focus email field if empty
@@ -445,8 +763,8 @@
         loginForm.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const focusedElement = document.activeElement;
-                if (focusedElement === passwordInput) {
-                    // Trigger form submission when Enter is pressed in password field
+                if (focusedElement === passwordInput || focusedElement === emailInput) {
+                    e.preventDefault();
                     submitBtn.click();
                 }
             }
@@ -467,12 +785,31 @@
             // Show success message for password reset
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.setAttribute('role', 'alert');
             alertDiv.innerHTML = `
                 <i class="fas fa-check-circle me-2"></i>
-                Your password has been reset successfully. You can now login with your new password.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <span>Your password has been reset successfully. You can now login with your new password.</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
             loginForm.insertBefore(alertDiv, loginForm.firstChild);
+        }
+        
+        // Handle touch events for mobile
+        if ('ontouchstart' in window) {
+            const buttons = document.querySelectorAll('.btn-login, .password-toggle, .forgot-password-link');
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function() {
+                    this.style.opacity = '0.7';
+                }, { passive: true });
+                
+                button.addEventListener('touchend', function() {
+                    this.style.opacity = '1';
+                });
+                
+                button.addEventListener('touchcancel', function() {
+                    this.style.opacity = '1';
+                });
+            });
         }
     });
 </script>

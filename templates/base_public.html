@@ -5,8 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LogSight - Transform network log files into actionable insights with our powerful log analysis platform.">
-    <title>{% block title %}LogSight - Network Log Analyzer{% endblock %}</title>
+    <meta name="description" content="NetLog - Transform network log files into actionable insights with our powerful log analysis platform.">
+    <title>{% block title %}NetLog - Network Log Analyzer{% endblock %}</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
@@ -14,10 +14,9 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="icon" href="{% static 'images/fav.png' %}">
     
-    <!-- Custom base styles -->
-
     {% block extra_css %}
     {% endblock %}
+    
     <style>
         /* Flash message animations */
         .flash-messages-container {
@@ -56,7 +55,7 @@
             }
         }
         
-        /* Custom alert styling matching your theme */
+        /* Custom alert styling */
         .alert-custom {
             background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
             border: 1px solid rgba(26, 30, 50, 0.08);
@@ -108,7 +107,7 @@
             color: #94a3b8;
         }
         
-        /* Mobile menu toggle */
+        /* Mobile menu toggle - FIXED POSITIONING */
         .mobile-menu-toggle {
             display: none;
             background: none;
@@ -116,12 +115,17 @@
             color: var(--ls-navy);
             font-size: 1.5rem;
             cursor: pointer;
-            padding: 0.5rem;
+            padding: 0.75rem;
+            margin-right: -0.75rem;
+            z-index: 1100;
+            position: relative;
         }
         
         @media (max-width: 768px) {
             .mobile-menu-toggle {
-                display: block;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             .nav-links {
@@ -129,50 +133,204 @@
                 top: 70px;
                 left: 0;
                 right: 0;
+                bottom: 0;
                 background: rgba(255, 255, 255, 0.98);
                 backdrop-filter: blur(10px);
                 flex-direction: column;
-                padding: 1rem;
+                padding: 2rem 1rem;
                 box-shadow: 0 10px 30px rgba(26, 30, 50, 0.1);
-                transform: translateY(-100%);
+                transform: translateX(100%);
                 opacity: 0;
                 visibility: hidden;
                 transition: all 0.3s ease;
-                z-index: 1000;
+                z-index: 1050;
+                height: calc(100vh - 70px);
+                overflow-y: auto;
+                pointer-events: none;
             }
             
             .nav-links.active {
-                transform: translateY(0);
+                transform: translateX(0);
                 opacity: 1;
                 visibility: visible;
+                pointer-events: all;
             }
             
-            .nav-links a {
-                padding: 0.75rem 1rem;
+            .nav-links a, 
+            .nav-links .dropdown,
+            .nav-links .btn-cta,
+            .nav-links .notification-bell {
+                padding: 1rem !important;
                 width: 100%;
                 text-align: center;
+                font-size: 1.1rem;
+                margin: 0.25rem 0;
+            }
+            
+            .nav-links .user-dropdown {
+                width: 100%;
+            }
+            
+            .nav-links .user-dropdown .user-avatar {
+                width: 100%;
+                justify-content: center;
+                padding: 1rem !important;
+                border: 1px solid rgba(26, 30, 50, 0.08);
+            }
+            
+            .nav-links .user-dropdown .dropdown-menu {
+                position: static !important;
+                transform: none !important;
+                width: 100%;
+                margin-top: 0.5rem;
+                box-shadow: none;
+                border: 1px solid rgba(26, 30, 50, 0.08);
+            }
+            
+            .nav-links .notification-bell {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            
+            .nav-links .notification-bell .notification-badge {
+                position: relative;
+                top: auto;
+                right: auto;
+                display: inline-flex;
             }
             
             .flash-messages-container {
                 top: 60px;
+                padding: 0 1rem;
+            }
+            
+            .flash-message {
+                max-width: 100%;
             }
         }
         
-        /* Avatar for logged-in users */
-        .user-avatar {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            border-radius: var(--radius-md);
-            transition: background 0.2s ease;
+        @media (max-width: 480px) {
+            .nav-links {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+            
+            .nav-links a, 
+            .nav-links .dropdown,
+            .nav-links .btn-cta,
+            .nav-links .notification-bell {
+                padding: 0.875rem !important;
+                font-size: 1rem;
+            }
         }
         
-        .user-avatar:hover {
+        /* Avatar styling */
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--ls-orange), #e36b00);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(255,122,0,0.2);
+        }
+        
+        /* User dropdown styling */
+        .user-dropdown .user-avatar {
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: var(--ls-navy);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: var(--radius-md);
+        }
+        
+        .user-dropdown .user-avatar:hover {
             background: rgba(26, 30, 50, 0.04);
         }
         
-        /* Skip to main content link for accessibility */
+        .user-dropdown .dropdown-menu {
+            min-width: 240px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(26,30,50,0.12);
+            border-radius: var(--radius-md);
+            padding: 0.5rem 0;
+            margin-top: 8px;
+            border: 1px solid rgba(26,30,50,0.04);
+        }
+        
+        .user-dropdown .dropdown-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--ls-navy);
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+        
+        .user-dropdown .dropdown-item i {
+            width: 20px;
+            color: var(--ls-muted);
+            transition: color 0.2s ease;
+        }
+        
+        .user-dropdown .dropdown-item:hover {
+            background-color: var(--ls-cream);
+            color: var(--ls-orange);
+        }
+        
+        .user-dropdown .dropdown-item:hover i {
+            color: var(--ls-orange);
+        }
+        
+        .user-dropdown .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: rgba(26,30,50,0.06);
+        }
+        
+        /* Notification bell */
+        .notification-bell {
+            position: relative;
+            padding: 0.5rem;
+            color: var(--ls-navy);
+            transition: color 0.2s ease;
+        }
+        
+        .notification-bell:hover {
+            color: var(--ls-orange);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--ls-orange);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            box-shadow: 0 2px 4px rgba(255,122,0,0.3);
+        }
+        
+        /* Skip to main content link */
         .skip-link {
             position: absolute;
             top: -40px;
@@ -188,182 +346,185 @@
         .skip-link:focus {
             top: 0;
         }
+        
+        /* Header adjustments */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(26,30,50,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-links a:not(.btn-cta) {
+            color: var(--ls-navy);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-links a:not(.btn-cta):hover {
+            background: rgba(26, 30, 50, 0.04);
+            color: var(--ls-orange);
+        }
+        
+        .btn-cta {
+            background: var(--ls-orange);
+            color: white;
+            padding: 0.5rem 1.2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(255,122,0,0.2);
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-cta:hover {
+            background: var(--ls-orange-600);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255,122,0,0.3);
+            color: white;
+        }
     </style>
 </head>
 <body>
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<!-- Navbar -->
-<header class="header">
-    <div class="header-inner container">
-        <a href="{% url 'home' %}" class="brand">
-            <div class="brand-logo"></div>
-            <div>
-                <span class="brand-title">NetLog</span>  <!-- Changed from LogSight -->
-                <span class="brand-sub">Network Log Analyzer</span>  <!-- Updated tagline -->
-            </div>
-        </a>
-        
-        <!-- Mobile menu toggle button -->
-        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation menu">
-            <i class="fas fa-bars"></i>
-        </button>
-        
-        <!-- Navigation Links - Dynamic based on auth status -->
-        <nav class="nav-links" id="mainNav">
-            <a href="{% url 'home' %}">
-                <i class="fas fa-home me-1"></i>Home
-            </a>
-            <a href="#features">
-                <i class="fas fa-star me-1"></i>Features
-            </a>
-            <a href="#pricing">
-                <i class="fas fa-tag me-1"></i>Pricing
+    <!-- Navbar -->
+    <header class="header">
+        <div class="header-inner container">
+            <!-- Brand -->
+            <a href="{% url 'home' %}" class="brand">
+                <div class="brand-logo"></div>
+                <div>
+                    <span class="brand-title">NetLog</span>
+                    <span class="brand-sub">Network Log Analyzer</span>
+                </div>
             </a>
             
-            {% if user.is_authenticated %}
-                <!-- Authenticated User Links -->
-                <a href="{% url 'dashboard' %}">
-                    <i class="fas fa-chart-bar me-1"></i>Dashboard
-                </a>
-                <a href="{% url 'logs:upload_log' %}">
-                    <i class="fas fa-upload me-1"></i>Upload Log
-                </a>
-                <a href="{% url 'reports:report_list' %}">
-                    <i class="fas fa-file-alt me-1"></i>Reports
+            <!-- Mobile menu toggle button - Fixed positioning -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <!-- Navigation Links -->
+            <nav class="nav-links" id="mainNav">
+                <!-- Home link always visible -->
+                <a href="{% url 'home' %}">
+                    <i class="fas fa-home me-1"></i>Home
                 </a>
                 
-                <!-- User Dropdown (Optional) -->
-                <div class="dropdown user-dropdown">
-                    <button class="user-avatar dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                        <div class="avatar">{{ user.username|first|upper }}</div>
-                        <span class="d-none d-md-inline">{{ user.username }}</span>
-                        <i class="fas fa-chevron-down small"></i>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <a class="dropdown-item" href="{% url 'logs:upload_history' %}">
-                            <i class="fas fa-history me-2"></i>Upload History
-                        </a>
-                        <a class="dropdown-item" href="{% url 'reports:generate_report' %}">
-                            <i class="fas fa-plus-circle me-2"></i>Generate Report
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">
-                            <i class="fas fa-user-cog me-2"></i>Profile Settings
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{% url 'logout' %}">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a>
+                {% if user.is_authenticated %}
+                    <!-- Authenticated User Links -->
+                    
+                    <!-- Notification Bell (placeholder) -->
+                    <a href="#" class="notification-bell" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </a>
+                    
+                    <!-- User Dropdown -->
+                    <div class="dropdown user-dropdown">
+                        <button class="user-avatar dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar">{{ user.username|first|upper }}</div>
+                            <span class="d-none d-md-inline">{{ user.username|truncatechars:12 }}</span>
+                            <i class="fas fa-chevron-down small"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'dashboard' %}">
+                                    <i class="fas fa-chart-pie"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'profile' %}">
+                                    <i class="fas fa-user"></i>
+                                    My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'logs:upload_log' %}">
+                                    <i class="fas fa-upload"></i>
+                                    Upload Log
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'reports:report_list' %}">
+                                    <i class="fas fa-file-alt"></i>
+                                    My Reports
+                                </a>
+                            </li>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <!-- Settings submenu -->
+                            <li>
+                                <a class="dropdown-item" href="{% url 'profile_security' %}">
+                                    <i class="fas fa-shield-alt"></i>
+                                    Security
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'profile_notifications' %}">
+                                    <i class="fas fa-bell"></i>
+                                    Notifications
+                                </a>
+                            </li>
+                            
+                            <!-- Admin link for superusers/staff -->
+                            {% if user.is_superuser or user.is_staff %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'admin:index' %}">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Admin Panel
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <li>
+                                <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Logout
+                                </a>
+                            </li>
+                        </ul>
                     </div>
-                </div>
-                
-                <!-- Simple Logout (Alternative to dropdown) -->
-                <!-- 
-                <a href="{% url 'logout' %}" class="btn btn-outline">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                </a>
-                -->
-            {% else %}
-                <!-- Guest User Links -->
-                <a href="{% url 'login' %}">
-                    <i class="fas fa-sign-in-alt me-1"></i>Login
-                </a>
-                <a href="{% url 'register' %}" class="btn-cta">
-                    <i class="fas fa-rocket me-1"></i>Get Started Free
-                </a>
-            {% endif %}
-        </nav>
-    </div>
-</header>
+                    
+                {% else %}
+                    <!-- Guest User Links -->
+                    <a href="{% url 'login' %}">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login
+                    </a>
+                    <a href="{% url 'register' %}" class="btn-cta">
+                        <i class="fas fa-rocket me-1"></i>Get Started
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
 
-<!-- Add Bootstrap JS for dropdown if not already included -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<style>
-/* Dropdown Styles */
-.user-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.user-dropdown .user-avatar {
-    background: none;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    cursor: pointer;
-    color: inherit;
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-
-.user-dropdown .user-avatar:hover {
-    background-color: rgba(0,0,0,0.05);
-    border-radius: 4px;
-}
-
-.user-dropdown .avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.user-dropdown .dropdown-menu {
-    min-width: 200px;
-    border: none;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    border-radius: 8px;
-    padding: 8px 0;
-    margin-top: 8px;
-}
-
-.user-dropdown .dropdown-item {
-    padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    transition: all 0.2s ease;
-}
-
-.user-dropdown .dropdown-item:hover {
-    background-color: #f8f9fa;
-    color: #1A1F36;
-}
-
-.user-dropdown .dropdown-divider {
-    margin: 6px 0;
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-    .user-dropdown .user-avatar span {
-        display: none;
-    }
-    
-    .user-dropdown .dropdown-menu {
-        position: fixed !important;
-        top: auto !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        width: 90vw;
-        max-width: 300px;
-    }
-}
-</style>
-
-
-
-    <!-- Flash Messages Container (Fixed Position) -->
+    <!-- Flash Messages Container -->
     <div class="flash-messages-container" id="flashContainer">
         {% if messages %}
             {% for message in messages %}
@@ -376,7 +537,7 @@
                         {% elif message.tags == 'error' or message.tags == 'danger' %}
                             <i class="fas fa-times-circle text-danger"></i>
                         {% else %}
-                            <i class="fas fa-info-circle text-primary"></i>
+                            <i class="fas fa-info-circle" style="color: var(--ls-orange);"></i>
                         {% endif %}
                         <div style="flex: 1;">
                             {{ message }}
@@ -391,7 +552,7 @@
     </div>
 
     <!-- Main Content -->
-    <main id="main-content" class="container my-5">
+    <main id="main-content" class="container">
         {% block content %}{% endblock %}
     </main>
 
@@ -403,8 +564,8 @@
                     <a href="{% url 'home' %}" class="brand mb-3 d-inline-block">
                         <div class="brand-logo"></div>
                         <div>
-                            <span class="brand-title text-white">LogSight</span>
-                            <span class="brand-sub">Data Pulse</span>
+                            <span class="brand-title text-white">NetLog</span>
+                            <span class="brand-sub">Network Log Analyzer</span>
                         </div>
                     </a>
                     <p class="mb-3" style="color: #94a3b8;">
@@ -422,19 +583,17 @@
                     <h5 class="text-white mb-3">Product</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="#">Features</a></li>
-                        <li class="mb-2"><a href="#">Pricing</a></li>
-                        <li class="mb-2"><a href="#">Upload Logs</a></li>
-                        <li class="mb-2"><a href="#">Dashboard</a></li>
+                        <li class="mb-2"><a href="#">Documentation</a></li>
+                        <li class="mb-2"><a href="#">API</a></li>
                     </ul>
                 </div>
                 
                 <div class="col-lg-2 col-md-4 mb-4">
                     <h5 class="text-white mb-3">Resources</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#">Documentation</a></li>
                         <li class="mb-2"><a href="#">Blog</a></li>
                         <li class="mb-2"><a href="#">Support</a></li>
-                        <li class="mb-2"><a href="#">API</a></li>
+                        <li class="mb-2"><a href="#">Community</a></li>
                     </ul>
                 </div>
                 
@@ -442,7 +601,6 @@
                     <h5 class="text-white mb-3">Company</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="#">About</a></li>
-                        <li class="mb-2"><a href="#">Careers</a></li>
                         <li class="mb-2"><a href="#">Contact</a></li>
                         <li class="mb-2"><a href="#">Legal</a></li>
                     </ul>
@@ -451,7 +609,7 @@
                 <div class="col-lg-2 mb-4">
                     <h5 class="text-white mb-3">Stay Updated</h5>
                     <p class="small" style="color: #94a3b8;">
-                        Subscribe to our newsletter for the latest updates and features.
+                        Subscribe to our newsletter for updates.
                     </p>
                     <form class="subscribe-form">
                         <div class="input-group mb-2">
@@ -460,7 +618,7 @@
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
-                        <small class="text-muted">We respect your privacy. Unsubscribe at any time.</small>
+                        <small class="text-muted">We respect your privacy.</small>
                     </form>
                 </div>
             </div>
@@ -469,12 +627,12 @@
             
             <div class="row align-items-center">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    <span style="color: #94a3b8;">&copy; {% now "Y" %} LogSight. All rights reserved.</span>
+                    <span style="color: #94a3b8;">&copy; {% now "Y" %} NetLog. All rights reserved.</span>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
-                    <a href="#" class="me-3">Privacy Policy</a>
-                    <a href="#" class="me-3">Terms of Service</a>
-                    <a href="#">Cookie Policy</a>
+                    <a href="#" class="me-3">Privacy</a>
+                    <a href="#" class="me-3">Terms</a>
+                    <a href="#">Cookies</a>
                 </div>
             </div>
         </div>
@@ -490,107 +648,123 @@
         const mainNav = document.getElementById('mainNav');
         
         if (mobileMenuToggle && mainNav) {
-            mobileMenuToggle.addEventListener('click', () => {
+            mobileMenuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
                 mainNav.classList.toggle('active');
                 const icon = mobileMenuToggle.querySelector('i');
                 if (mainNav.classList.contains('active')) {
                     icon.classList.remove('fa-bars');
                     icon.classList.add('fa-times');
+                    // Prevent body scrolling when menu is open
+                    document.body.style.overflow = 'hidden';
                 } else {
                     icon.classList.remove('fa-times');
                     icon.classList.add('fa-bars');
+                    document.body.style.overflow = '';
                 }
+            });
+            
+            // Close menu when clicking a link inside
+            mainNav.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mainNav.classList.remove('active');
+                    const icon = mobileMenuToggle.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                    document.body.style.overflow = '';
+                });
             });
             
             // Close menu when clicking outside on mobile
             document.addEventListener('click', (event) => {
                 if (window.innerWidth <= 768 && 
+                    mainNav.classList.contains('active') &&
                     !mainNav.contains(event.target) && 
                     !mobileMenuToggle.contains(event.target)) {
                     mainNav.classList.remove('active');
                     const icon = mobileMenuToggle.querySelector('i');
                     icon.classList.remove('fa-times');
                     icon.classList.add('fa-bars');
+                    document.body.style.overflow = '';
+                }
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    mainNav.classList.remove('active');
+                    const icon = mobileMenuToggle.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                    document.body.style.overflow = '';
                 }
             });
         }
         
-        // Enhanced flash message handling with auto-dismiss
-        document.addEventListener('DOMContentLoaded', () => {
-            const flashMessages = document.querySelectorAll('.flash-message');
-            
-            flashMessages.forEach(message => {
-                const timeout = parseInt(message.getAttribute('data-timeout')) || 7000;
+        // Enhanced flash message handling
+document.addEventListener('DOMContentLoaded', () => {
+    const flashMessages = document.querySelectorAll('.flash-message');
+    
+    flashMessages.forEach(message => {
+        const timeout = parseInt(message.getAttribute('data-timeout')) || 7000;
+        let dismissTimer;
+        
+        // Start animation
+        setTimeout(() => {
+            message.style.opacity = '1';
+            message.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // Function to start the dismiss timer
+        function startDismissTimer() {
+            dismissTimer = setTimeout(() => {
+                message.classList.add('hide');
                 
-                // Start animation
+                // Remove from DOM after animation completes
                 setTimeout(() => {
-                    message.style.opacity = '1';
-                    message.style.transform = 'translateY(0)';
-                }, 10);
-                
-                // Auto-dismiss after timeout
-                const dismissTimer = setTimeout(() => {
-                    message.classList.add('hide');
-                    
-                    // Remove from DOM after animation completes
-                    setTimeout(() => {
-                        if (message.parentNode) {
-                            message.parentNode.removeChild(message);
-                        }
-                    }, 300);
-                }, timeout);
-                
-                // Add click handler to close button
-                const closeBtn = message.querySelector('.btn-close');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', () => {
-                        clearTimeout(dismissTimer);
-                        message.classList.add('hide');
-                        setTimeout(() => {
-                            if (message.parentNode) {
-                                message.parentNode.removeChild(message);
-                            }
-                        }, 300);
-                    });
-                }
-                
-                // Pause auto-dismiss on hover
-                message.addEventListener('mouseenter', () => {
-                    clearTimeout(dismissTimer);
-                });
-                
-                message.addEventListener('mouseleave', () => {
-                    const newTimer = setTimeout(() => {
-                        message.classList.add('hide');
-                        setTimeout(() => {
-                            if (message.parentNode) {
-                                message.parentNode.removeChild(message);
-                            }
-                        }, 300);
-                    }, timeout);
-                    
-                    // Store the timer ID for cleanup
-                    message.setAttribute('data-timer', newTimer);
-                });
+                    if (message.parentNode) {
+                        message.parentNode.removeChild(message);
+                    }
+                }, 300);
+            }, timeout);
+        }
+        
+        // Function to clear the dismiss timer
+        function clearDismissTimer() {
+            if (dismissTimer) {
+                clearTimeout(dismissTimer);
+                dismissTimer = null;
+            }
+        }
+        
+        // Start the initial timer
+        startDismissTimer();
+        
+        // Add click handler to close button
+        const closeBtn = message.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                clearDismissTimer();
+                message.classList.add('hide');
+                setTimeout(() => {
+                    if (message.parentNode) {
+                        message.parentNode.removeChild(message);
+                    }
+                }, 300);
             });
+        }
+        
+        // Pause auto-dismiss on hover
+        message.addEventListener('mouseenter', () => {
+            clearDismissTimer();
         });
         
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const href = this.getAttribute('href');
-                if (href !== '#') {
-                    e.preventDefault();
-                    const target = document.querySelector(href);
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                }
-            });
+        // Resume auto-dismiss when mouse leaves
+        message.addEventListener('mouseleave', () => {
+            startDismissTimer();
         });
+    });
+});
     </script>
 
     {% block extra_js %}{% endblock %}

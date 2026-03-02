@@ -1,41 +1,766 @@
 {% extends "base_user.html" %}
-{% block title %}Upload History - LogSight{% endblock %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Upload History - NetLog{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-4">Upload History</h2>
-
-    <div class="card shadow-sm p-3">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>File Name</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Uploaded At</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for upload in uploads %}
-                    <tr>
-                        <td>{{ upload.file.name|truncatechars:30 }}</td>
-                        <td>{{ upload.log_type }}</td>
-                        <td>{{ upload.status }}</td>
-                        <td>{{ upload.created_at|date:"Y-m-d H:i" }}</td>
-                        <td>
-                            <a href="{% url 'upload_detail' upload.id %}" class="btn btn-sm btn-warning">View</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">No uploads yet.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="history-container">
+    <!-- Page Header -->
+    <div class="history-header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <i class="fas fa-history me-2" style="color: var(--ls-orange);"></i>
+                Upload History
+            </h1>
+            <p class="header-subtitle">View and manage all your uploaded log files</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'logs:upload_log' %}" class="btn btn-primary">
+                <i class="fas fa-cloud-upload-alt me-2"></i>
+                Upload New Log
+            </a>
         </div>
     </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+        <div class="stat-summary-card">
+            <div class="stat-summary-icon">
+                <i class="fas fa-file-lines"></i>
+            </div>
+            <div class="stat-summary-content">
+                <div class="stat-summary-value">{{ uploads|length|intcomma }}</div>
+                <div class="stat-summary-label">Total Uploads</div>
+            </div>
+        </div>
+        
+        <div class="stat-summary-card">
+            <div class="stat-summary-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-summary-content">
+                <div class="stat-summary-value">
+                    {% with total=0 %}
+                        {% for upload in uploads %}
+                            {% if upload.entries_count %}
+                                {% with total=total|add:upload.entries_count %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if uploads %}
+                            {{ uploads.0.entries_count|default:"0"|intcomma }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="stat-summary-label">Total Entries</div>
+            </div>
+        </div>
+        
+        <div class="stat-summary-card">
+            <div class="stat-summary-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-summary-content">
+                <div class="stat-summary-value">
+                    {% if uploads %}
+                        {{ uploads.0.uploaded_at|date:"M d, Y" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+                <div class="stat-summary-label">Latest Upload</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Uploads Grid -->
+    <div class="uploads-grid">
+        {% for upload in uploads %}
+            <div class="upload-card" data-upload-id="{{ upload.id }}" data-status="{{ upload.status|default:'completed'|lower }}">
+                <!-- Card Header -->
+                <div class="card-header-custom">
+                    <div class="file-type-icon">
+                        {% if upload.log_type == 'apache' %}
+                            <i class="fab fa-linux"></i>
+                        {% elif upload.log_type == 'nginx' %}
+                            <i class="fab fa-nginx"></i>
+                        {% elif upload.log_type == 'iis' %}
+                            <i class="fab fa-windows"></i>
+                        {% else %}
+                            <i class="fas fa-code"></i>
+                        {% endif %}
+                    </div>
+                    <div class="file-type-badge {{ upload.log_type }}">
+                        {{ upload.get_log_type_display }}
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body-custom">
+                    <div class="file-info">
+                        <div class="file-name" title="{{ upload.file.name }}">
+                            <i class="fas fa-file-lines me-2" style="color: var(--ls-orange);"></i>
+                            {{ upload.file.name|slice:"17:"|truncatechars:25 }}
+                        </div>
+                        
+                        <div class="file-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>{{ upload.uploaded_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-clock"></i>
+                                <span>{{ upload.uploaded_at|time:"g:i A" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Preview -->
+                    <div class="stats-preview">
+                        <div class="stat-preview-item">
+                            <div class="stat-preview-label">Entries</div>
+                            <div class="stat-preview-value">{{ upload.entries_count|default:"0"|intcomma }}</div>
+                        </div>
+                        <div class="stat-preview-item">
+                            <div class="stat-preview-label">Status</div>
+                            <div class="stat-preview-value">
+                                <span class="status-dot {{ upload.status|default:'completed'|lower }}"></span>
+                                <span class="status-text">
+                                    {% if upload.status == 'completed' %}
+                                        Completed
+                                    {% elif upload.status == 'processing' %}
+                                        Processing
+                                    {% elif upload.status == 'failed' %}
+                                        Failed
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="stat-preview-item">
+                            <div class="stat-preview-label">Size</div>
+                            <div class="stat-preview-value">{{ upload.file.size|filesizeformat }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Indicator -->
+                    {% if upload.status == 'processing' %}
+                        <div class="processing-indicator">
+                            <div class="spinner"></div>
+                            <span>Analyzing log file...</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- Error Message (if failed) -->
+                    {% if upload.status == 'failed' and upload.error_message %}
+                        <div class="error-message" title="{{ upload.error_message }}">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ upload.error_message|truncatechars:50 }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Quick Stats Preview (only for completed uploads) -->
+                    {% if upload.status == 'completed' and upload.entries_count %}
+                        <div class="quick-stats-preview">
+                            <div class="quick-stat-row">
+                                <span class="quick-stat-label">2xx</span>
+                                <div class="quick-stat-bar">
+                                    <div class="quick-stat-fill success" style="width: 60%"></div>
+                                </div>
+                                <span class="quick-stat-value">60%</span>
+                            </div>
+                            <div class="quick-stat-row">
+                                <span class="quick-stat-label">3xx</span>
+                                <div class="quick-stat-bar">
+                                    <div class="quick-stat-fill warning" style="width: 25%"></div>
+                                </div>
+                                <span class="quick-stat-value">25%</span>
+                            </div>
+                            <div class="quick-stat-row">
+                                <span class="quick-stat-label">4xx/5xx</span>
+                                <div class="quick-stat-bar">
+                                    <div class="quick-stat-fill error" style="width: 15%"></div>
+                                </div>
+                                <span class="quick-stat-value">15%</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Card Footer -->
+                <div class="card-footer-custom">
+                    {% if upload.status == 'completed' %}
+                        <a href="{% url 'analytics_view' upload.id %}" class="btn-view-details">
+                            <span>View Analysis</span>
+                            <i class="fas fa-chart-line"></i>
+                        </a>
+                    {% elif upload.status == 'processing' %}
+                        <button class="btn-view-details" disabled>
+                            <span>Processing...</span>
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </button>
+                    {% elif upload.status == 'failed' %}
+                        <button class="btn-view-details failed" disabled title="{{ upload.error_message }}">
+                            <span>Failed</span>
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </button>
+                    {% else %}
+                        <a href="{% url 'logs:upload_detail' upload.id %}" class="btn-view-details">
+                            <span>View Details</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h3>No uploads yet</h3>
+                <p>Get started by uploading your first log file</p>
+                <a href="{% url 'logs:upload_log' %}" class="btn btn-primary">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                    Upload Now
+                </a>
+            </div>
+        {% endfor %}
+    </div>
 </div>
+
+<style>
+    /* History Container */
+    .history-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem 0.5rem;
+    }
+
+    /* Header */
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .header-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        margin: 0 0 0.25rem 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-subtitle {
+        color: var(--ls-muted);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .btn-primary {
+        background: var(--ls-orange);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-primary:hover {
+        background: var(--ls-orange-600);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+        color: white;
+    }
+
+    /* Stats Summary */
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-summary-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+
+    .stat-summary-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--ls-cream);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1.2rem;
+    }
+
+    .stat-summary-content {
+        flex: 1;
+    }
+
+    .stat-summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ls-navy);
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-summary-label {
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Uploads Grid */
+    .uploads-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Upload Card */
+    .upload-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 1px solid rgba(26, 30, 50, 0.04);
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .upload-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(255, 122, 0, 0.12);
+        border-color: var(--ls-orange);
+    }
+
+    /* Card Header */
+    .card-header-custom {
+        padding: 1rem 1.25rem;
+        background: var(--ls-cream);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .file-type-icon {
+        font-size: 1.5rem;
+        color: var(--ls-orange);
+    }
+
+    .file-type-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .file-type-badge.apache {
+        background: rgba(255, 122, 0, 0.1);
+        color: var(--ls-orange);
+    }
+
+    .file-type-badge.nginx {
+        background: rgba(0, 150, 0, 0.1);
+        color: #009900;
+    }
+
+    .file-type-badge.iis {
+        background: rgba(0, 100, 200, 0.1);
+        color: #0066cc;
+    }
+
+    .file-type-badge.custom {
+        background: rgba(128, 0, 128, 0.1);
+        color: purple;
+    }
+
+    /* Card Body */
+    .card-body-custom {
+        padding: 1.25rem;
+        flex: 1;
+    }
+
+    .file-info {
+        margin-bottom: 1rem;
+    }
+
+    .file-name {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        word-break: break-word;
+    }
+
+    .file-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: var(--ls-muted);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .meta-item i {
+        font-size: 0.75rem;
+        color: var(--ls-orange);
+    }
+
+    /* Stats Preview */
+    .stats-preview {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+    }
+
+    .stat-preview-item {
+        text-align: center;
+    }
+
+    .stat-preview-label {
+        font-size: 0.7rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-preview-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-dot.completed {
+        background: var(--ls-success);
+        box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+    }
+
+    .status-dot.processing {
+        background: var(--ls-warning);
+        animation: pulse 1.5s infinite;
+    }
+
+    .status-dot.failed {
+        background: var(--ls-danger);
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    }
+
+    .status-dot.pending {
+        background: var(--ls-muted);
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Processing Indicator */
+    .processing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: var(--ls-cream);
+        border-radius: var(--radius-md);
+        color: var(--ls-orange);
+        font-size: 0.8rem;
+    }
+
+    .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 122, 0, 0.2);
+        border-top-color: var(--ls-orange);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Error Message */
+    .error-message {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: var(--radius-md);
+        color: var(--ls-danger);
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        cursor: help;
+    }
+
+    /* Quick Stats Preview */
+    .quick-stats-preview {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .quick-stat-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .quick-stat-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .quick-stat-label {
+        min-width: 45px;
+        font-size: 0.75rem;
+        color: var(--ls-muted);
+    }
+
+    .quick-stat-bar {
+        flex: 1;
+        height: 4px;
+        background: rgba(26, 30, 50, 0.06);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .quick-stat-fill {
+        height: 100%;
+        border-radius: 10px;
+    }
+
+    .quick-stat-fill.success {
+        background: var(--ls-success);
+    }
+
+    .quick-stat-fill.warning {
+        background: var(--ls-warning);
+    }
+
+    .quick-stat-fill.error {
+        background: var(--ls-danger);
+    }
+
+    .quick-stat-value {
+        min-width: 35px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        text-align: right;
+    }
+
+    /* Card Footer */
+    .card-footer-custom {
+        padding: 1rem 1.25rem;
+        background: rgba(255, 122, 0, 0.02);
+        border-top: 1px solid rgba(26, 30, 50, 0.04);
+    }
+
+    .btn-view-details {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.5rem;
+        background: transparent;
+        border: 1px solid rgba(26, 30, 50, 0.08);
+        border-radius: var(--radius-md);
+        color: var(--ls-navy);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-view-details:hover:not(:disabled) {
+        background: var(--ls-orange);
+        border-color: var(--ls-orange);
+        color: white;
+    }
+
+    .btn-view-details:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-view-details.failed {
+        border-color: var(--ls-danger);
+        color: var(--ls-danger);
+    }
+
+    .btn-view-details i {
+        transition: transform 0.2s ease;
+    }
+
+    .btn-view-details:hover:not(:disabled) i {
+        transform: translateX(4px);
+    }
+
+    .btn-view-details.failed i {
+        color: var(--ls-danger);
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--radius-lg);
+        border: 2px dashed rgba(26, 30, 50, 0.08);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--ls-orange);
+        opacity: 0.3;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        color: var(--ls-navy);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--ls-muted);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stats-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .uploads-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .history-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .file-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-preview {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+        .stat-preview-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-preview-label {
+            margin-bottom: 0;
+        }
+    }
+</style>
+
+<!-- Auto-refresh for processing status -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if there are any processing uploads
+    const processingCards = document.querySelectorAll('[data-status="processing"]');
+    
+    if (processingCards.length > 0) {
+        console.log(`Found ${processingCards.length} processing upload(s). Monitoring status...`);
+        
+        // Function to check status of a single upload
+        function checkUploadStatus(uploadId, card) {
+            fetch(`/analytics/${uploadId}/status/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        console.log(`Upload ${uploadId} completed! Reloading...`);
+                        location.reload();
+                    } else if (data.status === 'failed') {
+                        console.log(`Upload ${uploadId} failed.`);
+                        // Optionally update the card UI without reload
+                        card.setAttribute('data-status', 'failed');
+                        // You could update the UI here without reload
+                        location.reload(); // Simple solution: reload to show error
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                });
+        }
+        
+        // Check status every 3 seconds
+        const intervalId = setInterval(() => {
+            const currentProcessingCards = document.querySelectorAll('[data-status="processing"]');
+            
+            if (currentProcessingCards.length === 0) {
+                clearInterval(intervalId);
+                return;
+            }
+            
+            currentProcessingCards.forEach(card => {
+                const uploadId = card.dataset.uploadId;
+                checkUploadStatus(uploadId, card);
+            });
+        }, 3000);
+    }
+});
+</script>
 {% endblock %}

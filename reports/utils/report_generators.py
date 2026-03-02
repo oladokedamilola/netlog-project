@@ -1,3 +1,4 @@
+# reports\utils\report_generators.py
 import json
 import csv
 import io
@@ -74,13 +75,19 @@ def generate_pdf_report(report_data):
         # Title
         story.append(Paragraph(report_data['title'], title_style))
         
-        # Generated timestamp and metadata
+        # Get analysis data
+        analysis = report_data.get('analysis')
+        
+        # Generate timestamp and metadata
+        upload = report_data.get('upload')
+        upload_filename = upload.file.name if upload and hasattr(upload, 'file') else 'Log File'
+        
         metadata_text = f"""
         <para alignment="center">
         <font size="9" color="gray">
         Generated: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | 
         Report Type: {report_data.get('report_type', 'Summary').title()} | 
-        Source: {report_data['upload'].filename if hasattr(report_data['upload'], 'filename') else 'Log File'}
+        Source: {upload_filename}
         </font>
         </para>
         """
@@ -96,19 +103,20 @@ def generate_pdf_report(report_data):
         # Executive Summary
         story.append(Paragraph("Executive Summary", heading2_style))
         
-        analysis = report_data.get('analysis', {})
-        if hasattr(analysis, 'total_requests'):
-            total_requests = analysis.total_requests
-            unique_ips = analysis.unique_ips
-            error_rate = analysis.error_rate
-            time_period = analysis.time_period_days
-            avg_daily = analysis.avg_requests_per_day
+        # Safely extract metrics from analysis object
+        if analysis:
+            total_requests = getattr(analysis, 'total_requests', 0)
+            unique_ips = getattr(analysis, 'unique_ips', 0)
+            error_rate = getattr(analysis, 'error_rate', 0)
+            time_period = getattr(analysis, 'time_period_days', 0)
+            avg_daily = getattr(analysis, 'avg_requests_per_day', 0)
         else:
-            total_requests = analysis.get('total_requests', 0)
-            unique_ips = analysis.get('unique_ips', 0)
-            error_rate = analysis.get('error_rate', 0)
-            time_period = analysis.get('time_period_days', 0)
-            avg_daily = analysis.get('avg_requests_per_day', 0)
+            # Try to get from dictionary (fallback)
+            total_requests = report_data.get('analysis', {}).get('total_requests', 0)
+            unique_ips = report_data.get('analysis', {}).get('unique_ips', 0)
+            error_rate = report_data.get('analysis', {}).get('error_rate', 0)
+            time_period = report_data.get('analysis', {}).get('time_period_days', 0)
+            avg_daily = report_data.get('analysis', {}).get('avg_requests_per_day', 0)
         
         # Summary metrics table
         summary_data = [
@@ -157,13 +165,50 @@ def generate_pdf_report(report_data):
         # Top IP Addresses
         story.append(Paragraph("Top IP Addresses", heading2_style))
         
-        top_ips = analysis.top_ips if hasattr(analysis, 'top_ips') else analysis.get('top_ips', {})
-        suspicious_ips = analysis.suspicious_ips if hasattr(analysis, 'suspicious_ips') else analysis.get('suspicious_ips', [])
+        # Get top_ips safely
+        if analysis:
+            top_ips = getattr(analysis, 'top_ips', {})
+            suspicious_ips = getattr(analysis, 'suspicious_ips', [])
+        else:
+            top_ips = report_data.get('analysis', {}).get('top_ips', {})
+            suspicious_ips = report_data.get('analysis', {}).get('suspicious_ips', [])
         
         ip_data = [['Rank', 'IP Address', 'Requests', 'Percentage', 'Status']]
-        for idx, (ip, count) in enumerate(list(top_ips.items())[:10], 1):
+        
+        # Handle both dict and list formats
+        if isinstance(top_ips, dict):
+            ip_items = list(top_ips.items())[:10]
+        elif isinstance(top_ips, list):
+            # If it's a list, assume it's a list of dicts or tuples
+            ip_items = []
+            for idx, item in enumerate(top_ips[:10]):
+                if isinstance(item, dict):
+                    ip = item.get('ip_address') or item.get('ip') or f"IP-{idx+1}"
+                    count = item.get('count') or item.get('requests') or 0
+                elif isinstance(item, (tuple, list)) and len(item) >= 2:
+                    ip, count = item[0], item[1]
+                else:
+                    ip = f"IP-{idx+1}"
+                    count = 0
+                ip_items.append((ip, count))
+        else:
+            ip_items = []
+        
+        for idx, (ip, count) in enumerate(ip_items, 1):
             percentage = (count / total_requests * 100) if total_requests > 0 else 0
-            is_suspicious = any(s.get('ip') == ip for s in suspicious_ips) if suspicious_ips else False
+            
+            # Check if IP is suspicious
+            is_suspicious = False
+            if suspicious_ips:
+                if isinstance(suspicious_ips, list):
+                    for s in suspicious_ips:
+                        if isinstance(s, dict) and (s.get('ip') == ip or s.get('ip_address') == ip):
+                            is_suspicious = True
+                            break
+                        elif s == ip:
+                            is_suspicious = True
+                            break
+            
             status = "⚠️ Suspicious" if is_suspicious else "✓ Normal"
             ip_data.append([str(idx), ip, f"{count:,}", f"{percentage:.1f}%", status])
         
@@ -181,7 +226,7 @@ def generate_pdf_report(report_data):
                 ('ALIGN', (0, 1), (0, -1), 'CENTER'),
                 ('ALIGN', (2, 1), (3, -1), 'CENTER'),
                 ('TEXTCOLOR', (4, 1), (4, -1), 
-                 colors.red if 'Suspicious' in ip_data[1][4] else colors.green),
+                 colors.red if ip_data[1][4].startswith('⚠️') else colors.green),
             ]))
             story.append(ip_table)
         else:
@@ -192,7 +237,11 @@ def generate_pdf_report(report_data):
         # Status Code Distribution
         story.append(Paragraph("Status Code Distribution", heading2_style))
         
-        status_codes = analysis.status_codes if hasattr(analysis, 'status_codes') else analysis.get('status_codes', {})
+        # Get status_codes safely
+        if analysis:
+            status_codes = getattr(analysis, 'status_codes', {})
+        else:
+            status_codes = report_data.get('analysis', {}).get('status_codes', {})
         
         status_data = [['Status', 'Count', 'Percentage']]
         for code, count in status_codes.items():
@@ -211,10 +260,6 @@ def generate_pdf_report(report_data):
                 ('BACKGROUND', (0, 1), (-1, -1), colors.white),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
                 ('ALIGN', (1, 1), (2, -1), 'CENTER'),
-                ('TEXTCOLOR', (0, 1), (0, -1), 
-                 colors.red if '4' in status_data[1][0] or '5' in status_data[1][0] 
-                 else colors.green if '2' in status_data[1][0] 
-                 else colors.blue),
             ]))
             story.append(status_table)
         else:
@@ -227,12 +272,20 @@ def generate_pdf_report(report_data):
             story.append(PageBreak())
             story.append(Paragraph("Recommendations & Action Items", heading2_style))
             
+            # Count suspicious IPs safely
+            suspicious_count = 0
+            if suspicious_ips:
+                if isinstance(suspicious_ips, list):
+                    suspicious_count = len(suspicious_ips)
+                elif isinstance(suspicious_ips, (int, str)):
+                    suspicious_count = 1
+            
             recommendations = [
                 ("Monitor Error Rates", 
                  f"Current error rate is {error_rate:.2f}%. Set up alerts for error rates above 5%."),
                 
                 ("Review Suspicious IPs", 
-                 f"{len(suspicious_ips) if suspicious_ips else 0} IP(s) flagged. Consider blocking or monitoring."),
+                 f"{suspicious_count} IP(s) flagged. Consider blocking or monitoring."),
                 
                 ("Optimize Performance", 
                  "Review server response times and optimize slow endpoints."),

@@ -1,9 +1,13 @@
-# Python
+# ============================================================================
+# PYTHON
+# ============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -19,16 +23,67 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Django
-*.log
-local_settings.py
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ============================================================================
+# DJANGO
+# ============================================================================
+# Database
+*.sqlite3
+*.db
 db.sqlite3
 db.sqlite3-journal
-/media/
-/staticfiles/
 
-# Environments
+# Media files
+/media/
+/media_root/
+/static/
+/staticfiles/
+/static_root/
+/collected_static/
+
+# Local settings
+local_settings.py
+.env.local
+.env.production
+.env.development
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Django migrations (keep __init__.py, ignore everything else)
+**/migrations/*.py
+!**/migrations/__init__.py
+**/migrations/*.pyc
+**/migrations/__pycache__/
+**/migrations/*.py.bak
+
+# Django secret key
+.secret_key
+secret_key.txt
+
+# ============================================================================
+# ENVIRONMENTS
+# ============================================================================
 .env
 .venv
 env/
@@ -36,45 +91,139 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.envrc
 
+# Virtual environment
+venv/
+ENV/
+env/
+
+# ============================================================================
 # IDE
+# ============================================================================
+# VS Code
 .vscode/
+.vscode/settings.json
+.vscode/workspace.json
+*.code-workspace
+
+# PyCharm
 .idea/
+*.iml
+*.iws
+.idea_modules/
+
+# Vim/Sublime/Emacs
 *.swp
 *.swo
 *~
+*.sublime-workspace
+*.sublime-project
 
-
+# ============================================================================
 # OS
+# ============================================================================
+# macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Coverage
-.coverage
-htmlcov/
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 
-# Test
+# ============================================================================
+# PROJECT-SPECIFIC
+# ============================================================================
+# Test files
 test.db
 test_*.db
-
-# Cache
-.cache
+test_*.sqlite3
+test_*.py
 
 # Temporary files
 *.tmp
 *.temp
+*.bak
+*.swp
+*.swo
+*~
 
-# Database
-*.sqlite3
-*.db
+# Cache
+.cache/
+__pycache__/
+*.pyc
 
-# Django migrations (ignore generated files, keep package)
-**/migrations/*.py
-!**/migrations/__init__.py
-**/migrations/*.pyc
-**/migrations/__pycache__/
+# Uploads (project specific)
+/uploads/
+/media/uploads/
+/logs_uploads/
+/uploaded_files/
+
+# Reports (generated)
+/reports/generated/
+/reports/output/
+/generated_reports/
+*.pdf
+*.csv
+*.html
+*.json
+!**/templates/**/*.html
+
+# ============================================================================
+# SECURITY
+# ============================================================================
+# Secret files
+.secret
+.secrets
+*.key
+*.pem
+*.crt
+*.cert
+
+# ============================================================================
+# DEBUGGING
+# ============================================================================
+debug.log
+debug.log.*
+*.pid
+*.pid.lock
+
+# ============================================================================
+# MISC
+# ============================================================================
+# Backup files
+*.backup
+*.bak
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Log files
+log_files

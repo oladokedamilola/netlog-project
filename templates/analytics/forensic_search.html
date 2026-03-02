@@ -1,0 +1,837 @@
+{% extends 'base_user.html' %}
+{% load static %}
+{% load humanize %}
+{% load analytics_extras %}
+
+{% block title %}Forensic Search - NetLog{% endblock %}
+
+
+{% block content %}
+<style>
+    /* Forensic Search Specific Styles */
+    .search-header {
+        background: linear-gradient(135deg, #1a1f36 0%, #0b1220 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        margin-bottom: 2rem;
+    }
+    
+    .search-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .search-subtitle {
+        color: rgba(255,255,255,0.8);
+        font-size: 1rem;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(26,30,50,0.06);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .filter-header {
+        background: var(--ls-cream);
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(26,30,50,0.06);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .filter-header h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+    }
+    
+    .filter-body {
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-body.collapsed {
+        display: none;
+    }
+    
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-group {
+        margin-bottom: 1rem;
+    }
+    
+    .filter-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--ls-muted);
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filter-input {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        border: 1px solid rgba(26,30,50,0.08);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--ls-orange);
+        box-shadow: 0 0 0 3px rgba(255,122,0,0.1);
+    }
+    
+    .filter-select {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        border: 1px solid rgba(26,30,50,0.08);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        background-color: white;
+        cursor: pointer;
+    }
+    
+    .search-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-small {
+        background: white;
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        border: 1px solid rgba(26,30,50,0.04);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .stat-icon-small {
+        width: 48px;
+        height: 48px;
+        background: var(--ls-cream);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ls-orange);
+        font-size: 1.2rem;
+    }
+    
+    .stat-content-small {
+        flex: 1;
+    }
+    
+    .stat-value-small {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ls-navy);
+        line-height: 1.2;
+    }
+    
+    .stat-label-small {
+        font-size: 0.8rem;
+        color: var(--ls-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .results-table-container {
+        background: white;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(26,30,50,0.04);
+        overflow: hidden;
+        margin-top: 2rem;
+    }
+    
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .results-table th {
+        background: var(--ls-cream);
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--ls-navy);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--ls-orange);
+    }
+    
+    .results-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(26,30,50,0.04);
+        font-size: 0.9rem;
+    }
+    
+    .results-table tr:hover td {
+        background: rgba(255,122,0,0.02);
+    }
+    
+    .ip-badge {
+        font-family: monospace;
+        background: var(--ls-cream);
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-2xx { background: rgba(22,163,74,0.1); color: #16a34a; }
+    .status-3xx { background: rgba(245,158,11,0.1); color: #f59e0b; }
+    .status-4xx { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .status-5xx { background: rgba(239,68,68,0.15); color: #b91c1c; }
+    
+    .method-badge {
+        background: var(--ls-cream);
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .url-cell {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--ls-muted);
+    }
+    
+    .user-agent-cell {
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--ls-muted);
+        font-size: 0.85rem;
+    }
+    
+    .search-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .btn-filter-toggle {
+        background: white;
+        border: 1px solid rgba(26,30,50,0.08);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem 1rem;
+        color: var(--ls-navy);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-filter-toggle:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+    
+    .btn-export {
+        background: white;
+        border: 1px solid rgba(26,30,50,0.08);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem 1rem;
+        color: var(--ls-navy);
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-export:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 2rem 1rem;
+    }
+    
+    .pagination-link {
+        padding: 0.5rem 1rem;
+        border: 1px solid rgba(26,30,50,0.08);
+        border-radius: var(--radius-sm);
+        color: var(--ls-navy);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination-link:hover {
+        border-color: var(--ls-orange);
+        color: var(--ls-orange);
+    }
+    
+    .pagination-link.active {
+        background: var(--ls-orange);
+        border-color: var(--ls-orange);
+        color: white;
+    }
+    
+    .selected-row {
+        background: rgba(255,122,0,0.05) !important;
+    }
+    
+    .export-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .export-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: white;
+        border: 1px solid rgba(26,30,50,0.08);
+        border-radius: var(--radius-sm);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 10;
+        min-width: 150px;
+    }
+    
+    .export-dropdown:hover .export-menu {
+        display: block;
+    }
+    
+    .export-item {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: var(--ls-navy);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: background 0.2s ease;
+    }
+    
+    .export-item:hover {
+        background: var(--ls-cream);
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .search-header {
+            padding: 1.5rem;
+        }
+        
+        .search-title {
+            font-size: 1.5rem;
+        }
+        
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .results-table {
+            min-width: 800px;
+        }
+        
+        .results-table-container {
+            overflow-x: auto;
+        }
+        
+        .stat-card-small {
+            padding: 1rem;
+        }
+        
+        .stat-value-small {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+
+
+
+<div class="container-fluid py-4">
+    <!-- Search Header -->
+    <div class="search-header">
+        <h1 class="search-title">
+            <i class="fas fa-search me-3"></i>
+            Forensic Search
+        </h1>
+        <p class="search-subtitle">
+            Search through historical log entries with advanced filters. 
+            Investigate incidents, trace IP addresses, and export evidence for forensic analysis.
+        </p>
+    </div>
+
+    <!-- Search Stats -->
+    <div class="search-stats">
+        <div class="stat-card-small">
+            <div class="stat-icon-small">
+                <i class="fas fa-file-lines"></i>
+            </div>
+            <div class="stat-content-small">
+                <div class="stat-value-small">{{ total_matching|intcomma }}</div>
+                <div class="stat-label-small">Matching Entries</div>
+            </div>
+        </div>
+        
+        <div class="stat-card-small">
+            <div class="stat-icon-small">
+                <i class="fas fa-globe"></i>
+            </div>
+            <div class="stat-content-small">
+                <div class="stat-value-small">{{ unique_ips_count|intcomma }}</div>
+                <div class="stat-label-small">Unique IPs</div>
+            </div>
+        </div>
+        
+        <div class="stat-card-small">
+            <div class="stat-icon-small">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content-small">
+                <div class="stat-value-small">{{ page_obj.paginator.num_pages }}</div>
+                <div class="stat-label-small">Total Pages</div>
+            </div>
+        </div>
+        
+        <div class="stat-card-small">
+            <div class="stat-icon-small">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content-small">
+                <div class="stat-value-small">{{ page_obj.start_index }} - {{ page_obj.end_index }}</div>
+                <div class="stat-label-small">Current Range</div>
+            </div>
+        </div>
+    </div>
+
+<!-- Search Filters -->
+<div class="filter-card">
+    <div class="filter-header" onclick="toggleFilters()">
+        <h5>
+            <i class="fas fa-sliders-h me-2" style="color: var(--ls-orange);"></i>
+            Search Filters
+            {% if query or ip_filter or status_filter or method_filter or date_from or date_to or upload_filter %}
+            <span class="badge bg-warning ms-2">Active Filters</span>
+            {% endif %}
+        </h5>
+        <i class="fas fa-chevron-down" id="filterToggleIcon"></i>
+    </div>
+    
+    <div class="filter-body" id="filterBody">
+        <form method="GET" action="{% url 'forensic_search' %}" id="searchForm">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <div class="filter-label">Keyword Search</div>
+                    <input type="text" 
+                           name="q" 
+                           class="filter-input" 
+                           placeholder="Search in URL, User Agent, IP..." 
+                           value="{{ query }}">
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-label">IP Address</div>
+                    <input type="text" 
+                           name="ip" 
+                           class="filter-input" 
+                           placeholder="e.g., 192.168.1.1" 
+                           value="{{ ip_filter }}"
+                           list="ip-suggestions">
+                    <datalist id="ip-suggestions">
+                        {% for ip in unique_ips %}
+                        <option value="{{ ip }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <div class="filter-label">Status Code</div>
+                    <select name="status" class="filter-select">
+                        <option value="">All Status Codes</option>
+                        {% for code in unique_status_codes %}
+                        <option value="{{ code }}" {% if status_filter == code|stringformat:"i" %}selected{% endif %}>
+                            {{ code }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not unique_status_codes %}
+                    <small class="text-muted">No status codes found in your logs</small>
+                    {% endif %}
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-label">HTTP Method</div>
+                    <select name="method" class="filter-select">
+                        <option value="">All Methods</option>
+                        {% for m in unique_methods %}
+                        <option value="{{ m }}" {% if method_filter == m %}selected{% endif %}>
+                            {{ m }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not unique_methods %}
+                    <small class="text-muted">No methods found in your logs</small>
+                    {% endif %}
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-label">Log Source</div>
+                    <select name="upload" class="filter-select">
+                        <option value="">All Sources</option>
+                        {% for upload in user_uploads %}
+                        <option value="{{ upload.id }}" {% if upload_filter == upload.id|stringformat:"i" %}selected{% endif %}>
+                            {{ upload.get_log_type_display }} - {{ upload.uploaded_at|date:"M d, Y" }} ({{ upload.entries.count }} entries)
+                        </option>
+                        {% empty %}
+                        <option value="" disabled>No uploads found</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <div class="filter-label">Date From</div>
+                    <input type="date" name="date_from" class="filter-input" value="{{ date_from }}">
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-label">Date To</div>
+                    <input type="date" name="date_to" class="filter-input" value="{{ date_to }}">
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-label">Sort By</div>
+                    <select name="sort" class="filter-select">
+                        <option value="-timestamp" {% if sort_by == '-timestamp' %}selected{% endif %}>Newest First</option>
+                        <option value="timestamp" {% if sort_by == 'timestamp' %}selected{% endif %}>Oldest First</option>
+                        <option value="ip_address" {% if sort_by == 'ip_address' %}selected{% endif %}>IP Address (A-Z)</option>
+                        <option value="-ip_address" {% if sort_by == '-ip_address' %}selected{% endif %}>IP Address (Z-A)</option>
+                        <option value="status_code" {% if sort_by == 'status_code' %}selected{% endif %}>Status Code (Low-High)</option>
+                        <option value="-status_code" {% if sort_by == '-status_code' %}selected{% endif %}>Status Code (High-Low)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <button type="button" class="btn-filter-toggle" onclick="clearFilters()">
+                    <i class="fas fa-undo"></i>
+                    Clear Filters
+                </button>
+                
+                <div class="search-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>
+                        Search
+                    </button>
+                    
+                    <div class="export-dropdown">
+                        <button type="button" class="btn-export" {% if not page_obj %}disabled{% endif %}>
+                            <i class="fas fa-download me-2"></i>
+                            Export
+                        </button>
+                        <div class="export-menu">
+                            <a href="#" class="export-item" onclick="exportResults('csv')">
+                                <i class="fas fa-file-csv me-2"></i>
+                                Export as CSV
+                            </a>
+                            <a href="#" class="export-item" onclick="exportResults('json')">
+                                <i class="fas fa-file-code me-2"></i>
+                                Export as JSON
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <!-- Search Results -->
+    <div class="results-table-container">
+        <div class="table-responsive">
+            <table class="results-table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th width="40">
+                            <input type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+                        </th>
+                        <th>Timestamp</th>
+                        <th>IP Address</th>
+                        <th>Method</th>
+                        <th>URL</th>
+                        <th>Status</th>
+                        <th>User Agent</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in page_obj %}
+                    <tr data-id="{{ entry.id }}" onclick="toggleRowSelection(this)">
+                        <td>
+                            <input type="checkbox" class="row-checkbox" value="{{ entry.id }}" onclick="event.stopPropagation()">
+                        </td>
+                        <td>{{ entry.timestamp|date:"Y-m-d H:i:s" }}</td>
+                        <td>
+                            <span class="ip-badge">{{ entry.ip_address }}</span>
+                        </td>
+                        <td>
+                            {% if entry.method %}
+                            <span class="method-badge">{{ entry.method }}</span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="url-cell" title="{{ entry.url }}">
+                                {{ entry.url|default:"-"|truncatechars:60 }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if entry.status_code %}
+                                {% with code_class=entry.status_code|stringformat:"s"|slice:":1" %}
+                                <span class="status-badge status-{{ code_class }}xx">
+                                    {{ entry.status_code }}
+                                </span>
+                                {% endwith %}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="user-agent-cell" title="{{ entry.user_agent }}">
+                                {{ entry.user_agent|default:"-"|truncatechars:40 }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ entry.upload.get_log_type_display }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="fas fa-search fa-3x mb-3" style="color: var(--ls-muted);"></i>
+                            <h5 style="color: var(--ls-muted);">No results found</h5>
+                            <p class="text-muted">Try adjusting your search filters</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{% url_replace page=1 %}" class="pagination-link">&laquo;</a>
+            <a href="?{% url_replace page=page_obj.previous_page_number %}" class="pagination-link">&lsaquo;</a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="pagination-link active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?{% url_replace page=num %}" class="pagination-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <a href="?{% url_replace page=page_obj.next_page_number %}" class="pagination-link">&rsaquo;</a>
+            <a href="?{% url_replace page=page_obj.paginator.num_pages %}" class="pagination-link">&raquo;</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Toggle filters on mobile
+    function toggleFilters() {
+        const filterBody = document.getElementById('filterBody');
+        const icon = document.getElementById('filterToggleIcon');
+        
+        filterBody.classList.toggle('collapsed');
+        icon.classList.toggle('fa-chevron-down');
+        icon.classList.toggle('fa-chevron-up');
+    }
+    
+    // Clear all filters
+    function clearFilters() {
+        const form = document.getElementById('searchForm');
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.name !== 'csrfmiddlewaretoken') {
+                input.value = '';
+            }
+        });
+        form.submit();
+    }
+    
+    // Row selection for export
+    let selectedRows = new Set();
+    
+    function toggleRowSelection(row) {
+        const checkbox = row.querySelector('.row-checkbox');
+        checkbox.checked = !checkbox.checked;
+        
+        if (checkbox.checked) {
+            row.classList.add('selected-row');
+            selectedRows.add(checkbox.value);
+        } else {
+            row.classList.remove('selected-row');
+            selectedRows.delete(checkbox.value);
+        }
+        
+        updateSelectAll();
+    }
+    
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+            const row = checkbox.closest('tr');
+            
+            if (selectAll.checked) {
+                row.classList.add('selected-row');
+                selectedRows.add(checkbox.value);
+            } else {
+                row.classList.remove('selected-row');
+                selectedRows.delete(checkbox.value);
+            }
+        });
+    }
+    
+    function updateSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+        
+        if (checkedCount === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+        } else if (checkedCount === checkboxes.length) {
+            selectAll.checked = true;
+            selectAll.indeterminate = false;
+        } else {
+            selectAll.indeterminate = true;
+        }
+    }
+    
+    // Export selected results
+    function exportResults(format) {
+        if (selectedRows.size === 0) {
+            alert('Please select at least one row to export');
+            return;
+        }
+        
+        fetch('{% url "export_search_results" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                entry_ids: Array.from(selectedRows),
+                format: format
+            })
+        })
+        .then(response => {
+            if (format === 'csv') {
+                return response.blob();
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (format === 'csv') {
+                const url = window.URL.createObjectURL(data);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'search_results.csv';
+                a.click();
+            } else if (format === 'json') {
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = window.URL.createObjectURL(dataBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'search_results.json';
+                a.click();
+            }
+        });
+    }
+    
+    // Preserve URL parameters in pagination
+    document.querySelectorAll('.pagination-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = new URL(this.href);
+            const currentParams = new URLSearchParams(window.location.search);
+            
+            // Preserve all current search params
+            currentParams.forEach((value, key) => {
+                if (key !== 'page') {
+                    url.searchParams.set(key, value);
+                }
+            });
+            
+            window.location.href = url.toString();
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Template tag for url_replace (add to your templatetags if not exists)
+    // This is a helper for pagination
+    function urlReplace(params) {
+        const url = new URL(window.location.href);
+        Object.keys(params).forEach(key => {
+            if (params[key]) {
+                url.searchParams.set(key, params[key]);
+            } else {
+                url.searchParams.delete(key);
+            }
+        });
+        return url.toString();
+    }
+</script>
+{% endblock %}

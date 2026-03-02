@@ -1,0 +1,562 @@
+{% extends "base_public.html" %}
+{% load static %}
+
+{% block title %}NetLog - Privacy Policy{% endblock %}
+
+{% block page_title %}Privacy <span>Policy</span>{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Privacy Policy</li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <!-- Sidebar Navigation -->
+            <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+                <div class="card-body">
+                    <h5 class="card-title mb-3" style="color: var(--secondary-color);">
+                        <i class="fas fa-shield-alt me-2" style="color: var(--primary-color);"></i>Privacy Overview
+                    </h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link py-2 px-0" href="#introduction">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Introduction
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#data-collection">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Data We Collect
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#data-usage">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            How We Use Data
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#data-sharing">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Data Sharing
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#data-security">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Data Security
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#cookies">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Cookies & Tracking
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#your-rights">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Your Rights
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#children">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Children's Privacy
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#changes">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Policy Changes
+                        </a>
+                        <a class="nav-link py-2 px-0" href="#contact">
+                            <i class="fas fa-chevron-right me-2" style="color: var(--primary-color); font-size: 0.8rem;"></i>
+                            Contact Us
+                        </a>
+                    </nav>
+                    
+                    <!-- Data Protection Badge -->
+                    <div class="mt-4 p-3 bg-light rounded text-center">
+                        <i class="fas fa-shield-alt fa-2x mb-2" style="color: var(--primary-color);"></i>
+                        <h6 class="mb-1">GDPR Compliant</h6>
+                        <small class="text-muted">We respect your privacy rights</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm mb-4 animate-fade-in-up">
+                <div class="card-body p-5">
+                    <!-- Header with Trust Seals -->
+                    <div class="row mb-4 pb-4 border-bottom">
+                        <div class="col-md-8">
+                            <span class="badge bg-success px-3 py-2 mb-3">
+                                <i class="fas fa-check-circle me-2"></i>Last Updated: January 1, 2025
+                            </span>
+                            <h2 class="h3 mb-3" style="color: var(--secondary-color);">Your Privacy Matters</h2>
+                            <p class="text-muted">At NetLog, we take your privacy seriously. This policy describes how we collect, use, and protect your personal information.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex justify-content-end align-items-center h-100">
+                                <div class="text-center">
+                                    <i class="fas fa-lock fa-3x mb-2" style="color: var(--primary-color);"></i>
+                                    <div class="small text-muted">256-bit Encryption</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="introduction" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">1.</span> Introduction
+                        </h3>
+                        <p>NetLog ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our log analysis platform and related services.</p>
+                        <p>Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site or use our services.</p>
+                        
+                        <div class="alert alert-primary mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> This policy applies to all information collected through our website, API, and any related services.
+                        </div>
+                    </div>
+                    
+                    <div id="data-collection" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">2.</span> Information We Collect
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-0 bg-light mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-user me-2" style="color: var(--primary-color);"></i>
+                                            Personal Information
+                                        </h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Name and email address</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Account credentials</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Billing information</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Company/organization</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 bg-light mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-database me-2" style="color: var(--primary-color);"></i>
+                                            Log Data
+                                        </h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> IP addresses</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Request timestamps</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> HTTP methods and status codes</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> URLs and user agents</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h5 class="mb-3">Automatic Data Collection</h5>
+                            <p>When you visit our website, we automatically collect certain information about your device, including:</p>
+                            <ul>
+                                <li>Browser type and version</li>
+                                <li>Operating system</li>
+                                <li>Time zone setting</li>
+                                <li>Referring websites</li>
+                                <li>Pages viewed and click patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div id="data-usage" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">3.</span> How We Use Your Information
+                        </h3>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Purpose</th>
+                                        <th>Legal Basis</th>
+                                        <th>Data Used</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Service Provision</td>
+                                        <td>Contract performance</td>
+                                        <td>Account data, log files</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Analytics & Improvements</td>
+                                        <td>Legitimate interests</td>
+                                        <td>Usage data, device info</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Security & Fraud Prevention</td>
+                                        <td>Legal obligation</td>
+                                        <td>IP addresses, activity logs</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Marketing Communications</td>
+                                        <td>Consent</td>
+                                        <td>Email, preferences</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Legal Compliance</td>
+                                        <td>Legal obligation</td>
+                                        <td>All relevant data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div id="data-sharing" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">4.</span> Information Sharing and Disclosure
+                        </h3>
+                        
+                        <p>We may share your information in the following situations:</p>
+                        
+                        <div class="row">
+                            <div class="col-lg-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="fas fa-cloud fa-2x" style="color: var(--primary-color);"></i>
+                                    </div>
+                                    <div>
+                                        <h5>Service Providers</h5>
+                                        <p class="text-muted">We share data with trusted vendors who assist in operating our service (hosting, payment processing, analytics).</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="fas fa-gavel fa-2x" style="color: var(--primary-color);"></i>
+                                    </div>
+                                    <div>
+                                        <h5>Legal Requirements</h5>
+                                        <p class="text-muted">We may disclose information if required by law or to protect our rights.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="fas fa-handshake fa-2x" style="color: var(--primary-color);"></i>
+                                    </div>
+                                    <div>
+                                        <h5>Business Transfers</h5>
+                                        <p class="text-muted">In case of merger or acquisition, your data may be transferred.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="fas fa-users fa-2x" style="color: var(--primary-color);"></i>
+                                    </div>
+                                    <div>
+                                        <h5>With Your Consent</h5>
+                                        <p class="text-muted">We'll share information when we have your explicit consent.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-success mt-3">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>We never sell your personal data to third parties.</strong>
+                        </div>
+                    </div>
+                    
+                    <div id="data-security" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">5.</span> Data Security
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-shield-alt me-2" style="color: var(--primary-color);"></i>
+                                            Security Measures
+                                        </h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-lock text-success me-2"></i> 256-bit SSL/TLS encryption</li>
+                                            <li class="mb-2"><i class="fas fa-key text-success me-2"></i> Regular security audits</li>
+                                            <li class="mb-2"><i class="fas fa-user-shield text-success me-2"></i> Access controls & authentication</li>
+                                            <li class="mb-2"><i class="fas fa-database text-success me-2"></i> Encrypted data storage</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-certificate me-2" style="color: var(--primary-color);"></i>
+                                            Certifications
+                                        </h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> SOC 2 Type II compliant</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> GDPR compliant</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> ISO 27001 certified</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> HIPAA compliant (upon request)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="mt-3">While we implement these security measures, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security.</p>
+                    </div>
+                    
+                    <div id="cookies" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">6.</span> Cookies and Tracking Technologies
+                        </h3>
+                        
+                        <p>We use cookies and similar tracking technologies to track activity on our service and hold certain information.</p>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center p-3">
+                                    <i class="fas fa-cookie-bite fa-3x mb-2" style="color: var(--primary-color);"></i>
+                                    <h6>Essential Cookies</h6>
+                                    <small class="text-muted">Required for basic functionality</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3">
+                                    <i class="fas fa-chart-line fa-3x mb-2" style="color: var(--primary-color);"></i>
+                                    <h6>Analytics Cookies</h6>
+                                    <small class="text-muted">Help us improve our service</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3">
+                                    <i class="fas fa-ad fa-3x mb-2" style="color: var(--primary-color);"></i>
+                                    <h6>Marketing Cookies</h6>
+                                    <small class="text-muted">Personalize advertisements</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="mt-3">You can control cookies through your browser settings. However, disabling certain cookies may limit your ability to use some features.</p>
+                        
+                        <a href="/cookies/" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-cog me-2"></i>Manage Cookie Preferences
+                        </a>
+                    </div>
+                    
+                    <div id="your-rights" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">7.</span> Your Privacy Rights
+                        </h3>
+                        
+                        <p>Depending on your location, you may have the following rights regarding your personal data:</p>
+                        
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to access</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to rectification</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to erasure</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to restrict processing</li>
+                                </ul>
+                            </div>
+                            <div class="col-sm-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to data portability</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to object</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to withdraw consent</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Right to lodge a complaint</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-light mt-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Exercise Your Rights</h5>
+                                <p>To exercise any of these rights, please contact us at privacy@netlog.com. We will respond within 30 days.</p>
+                                <a href="/privacy-request/" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Privacy Request
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="children" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">8.</span> Children's Privacy
+                        </h3>
+                        
+                        <p>Our Service is not intended for individuals under the age of 18 ("Children"). We do not knowingly collect personally identifiable information from anyone under the age of 18.</p>
+                        
+                        <p>If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us. If we become aware that we have collected personal information from children without verification of parental consent, we take steps to remove that information from our servers.</p>
+                    </div>
+                    
+                    <div id="changes" class="mb-5">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">9.</span> Changes to This Privacy Policy
+                        </h3>
+                        
+                        <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.</p>
+                        
+                        <p>You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.</p>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-history me-2"></i>
+                            <strong>Version History:</strong> 
+                            <a href="#" class="alert-link">View previous versions</a>
+                        </div>
+                    </div>
+                    
+                    <div id="contact" class="mb-4">
+                        <h3 class="h4 mb-3" style="color: var(--secondary-color);">
+                            <span style="color: var(--primary-color);">10.</span> Contact Us
+                        </h3>
+                        
+                        <p>If you have any questions about this Privacy Policy, please contact our Data Protection Officer:</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-envelope fa-2x me-3" style="color: var(--primary-color);"></i>
+                                    <div>
+                                        <strong>Email:</strong><br>
+                                        <a href="mailto:privacy@netlog.com">privacy@netlog.com</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-phone-alt fa-2x me-3" style="color: var(--primary-color);"></i>
+                                    <div>
+                                        <strong>Phone:</strong><br>
+                                        <a href="tel:+15551234567">+1 (555) 123-4567</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-map-marker-alt fa-2x me-3" style="color: var(--primary-color);"></i>
+                                    <div>
+                                        <strong>Mail:</strong><br>
+                                        123 Tech Street<br>
+                                        San Francisco, CA 94105
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-clock fa-2x me-3" style="color: var(--primary-color);"></i>
+                                    <div>
+                                        <strong>DPO Available:</strong><br>
+                                        Mon-Fri, 9am-6pm PST
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Processing Agreement -->
+                    <div class="card border-primary mt-5">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="card-title text-primary">
+                                        <i class="fas fa-file-contract me-2"></i>
+                                        Data Processing Agreement
+                                    </h5>
+                                    <p class="mb-0 text-muted">For customers requiring a DPA for GDPR compliance, we provide a standard Data Processing Agreement.</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <a href="/dpa.pdf" class="btn btn-outline-primary">
+                                        <i class="fas fa-download me-2"></i>Download DPA
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Agreement Checkbox -->
+                    <div class="card border-0 bg-light mt-5">
+                        <div class="card-body">
+                            <form id="privacyAgreeForm" onsubmit="return false;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="agreePrivacy" required>
+                                    <label class="form-check-label" for="agreePrivacy">
+                                        I have read and agree to the Privacy Policy
+                                    </label>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-primary" onclick="acceptPrivacy()" disabled id="acceptPrivacyBtn">
+                                        <i class="fas fa-check me-2"></i>I Understand
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable accept button when checkbox is checked
+    document.getElementById('agreePrivacy').addEventListener('change', function() {
+        document.getElementById('acceptPrivacyBtn').disabled = !this.checked;
+    });
+    
+    function acceptPrivacy() {
+        alert('Thank you for reviewing our Privacy Policy. You may now proceed.');
+    }
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Table styles */
+    .table {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: var(--secondary-color);
+        color: white;
+        border: none;
+    }
+    
+    /* Card hover effects */
+    .card.bg-light {
+        transition: all 0.3s ease;
+    }
+    
+    .card.bg-light:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    /* Trust badges */
+    .badge {
+        font-size: 0.9rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .table {
+            font-size: 0.9rem;
+        }
+        
+        .d-flex.align-items-center {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .me-3 {
+            margin-right: 0 !important;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
