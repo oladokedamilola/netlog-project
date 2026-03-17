@@ -1,3 +1,4 @@
+# accounts/views.py
 """
 Accounts App Views
 =================
